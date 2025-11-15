@@ -318,21 +318,21 @@
                 <div class="kpi-card fade-in">
                     <h2 class="kpi-title">Causas</h2>
                     <p class="kpi-description">Acceder para descargar los registros.</p>
-                    <a href="#" class="kpi-link" id="causas-link">Acceder a Causas</a>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-causas" class="kpi-link" id="causas-link">Acceder a Causas</a>
                     <button class="btn-datos" id="causas-datos">Acceder a los Datos</button>
                 </div>
 
                 <div class="kpi-card fade-in">
                     <h2 class="kpi-title">Pase y Asignación</h2>
                     <p class="kpi-description">Acceder para descargar los registros.</p>
-                    <a href="#" class="kpi-link" id="pase-link">Acceder a Pases</a>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-pase" class="kpi-link" id="pase-link">Acceder a Pases</a>
                     <button class="btn-datos" id="pase-datos">Acceder a los Datos</button>
                 </div>
 
                 <div class="kpi-card fade-in">
                     <h2 class="kpi-title">Atención al Público</h2>
                     <p class="kpi-description">Acceder para descargar los registros.</p>
-                    <a href="#" class="kpi-link" id="atencion-link">Acceder a Atención</a>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-atencion" class="kpi-link" id="atencion-link">Acceder a Atención</a>
                     <button class="btn-datos" id="atencion-datos">Acceder a los Datos</button>
                 </div>
             </div>
@@ -374,36 +374,20 @@
         btnIngresar.addEventListener('click', mostrarAplicacion);
         volverBtn.addEventListener('click', volverAlInicio);
         
-        // Enlaces de ejemplo (puedes cambiarlos por URLs reales)
-        causasLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('En un futuro, este enlace llevará al módulo de Causas');
-        });
-        
-        paseLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('En un futuro, este enlace llevará al módulo de Pase y Asignación');
-        });
-        
-        atencionLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('En un futuro, este enlace llevará al módulo de Atención al Público');
-        });
-        
-        // Event Listeners para los nuevos botones de datos
+        // Event Listeners para los botones de datos
         causasDatos.addEventListener('click', (e) => {
             e.preventDefault();
-            alert('Accediendo a los datos de Causas para descargar registros');
+            window.location.href = "https://sistemadigital.github.io/resguardo/resguardo-causas";
         });
         
         paseDatos.addEventListener('click', (e) => {
             e.preventDefault();
-            alert('Accediendo a los datos de Pase y Asignación para descargar registros');
+            window.location.href = "https://sistemadigital.github.io/resguardo/resguardo-pase";
         });
         
         atencionDatos.addEventListener('click', (e) => {
             e.preventDefault();
-            alert('Accediendo a los datos de Atención al Público para descargar registros');
+            window.location.href = "https://sistemadigital.github.io/resguardo/resguardo-atencion";
         });
     </script>
 </body>
