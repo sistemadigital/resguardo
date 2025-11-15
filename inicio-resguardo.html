@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Resguardo Digital</title>
+    <style>
+        /* Estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Página de inicio - Estilo similar al original */
+        #pagina-inicio {
+            display: flex;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 50%, #28a745 100%);
+        }
+
+        .contenedor-titulo {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .titulo-principal {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            background: linear-gradient(135deg, #ffffff 0%, #e0f7fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .subtitulo {
+            font-size: clamp(1rem, 2vw, 1.4rem);
+            font-weight: 300;
+            margin-bottom: 30px;
+            opacity: 0.95;
+            line-height: 1.4;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            max-width: 500px;
+        }
+
+        .contenedor-login {
+            width: 400px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .login-titulo {
+            font-size: 1.8rem;
+            color: #0f4c75;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .btn-ingresar {
+            width: 100%;
+            padding: 15px;
+            background-color: #1e7b34;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .btn-ingresar:hover {
+            background-color: #28a745;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Página de aplicación */
+        #pagina-app {
+            display: none;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+
+        /* Encabezado */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .app-title {
+            font-size: 2.2rem;
+            font-weight: 300;
+            color: #0f4c75;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #0f4c75;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1b6ca8;
+        }
+
+        /* Tarjetas KPI */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .kpi-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #0f4c75, #1b6ca8);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .kpi-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #0f4c75;
+            margin-bottom: 15px;
+        }
+
+        .kpi-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            flex-grow: 1;
+        }
+
+        .kpi-link {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #0f4c75;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            text-align: center;
+            align-self: flex-start;
+        }
+
+        .kpi-link:hover {
+            background-color: #1b6ca8;
+        }
+
+        /* Botón adicional para acceder a datos */
+        .btn-datos {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            text-align: center;
+            align-self: flex-start;
+            margin-top: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-datos:hover {
+            background-color: #218838;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #pagina-inicio {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .contenedor-titulo {
+                padding: 40px 20px;
+            }
+
+            .contenedor-login {
+                width: 100%;
+                box-shadow: none;
+                padding: 30px;
+            }
+            
+            .titulo-principal {
+                font-size: 2rem;
+            }
+            
+            .subtitulo {
+                font-size: 1.1rem;
+            }
+            
+            .app-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .header-buttons {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            .kpi-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <!-- Página de inicio -->
+    <div id="pagina-inicio">
+        <div class="contenedor-titulo">
+            <h1 class="titulo-principal">Sistema de Resguardo Digital</h1>
+            <p class="subtitulo">Defensoría Civil y Comercial 6<br>Poder Judicial de Misiones</p>
+        </div>
+        <div class="contenedor-login">
+            <h2 class="login-titulo">Acceso al Sistema</h2>
+            <button class="btn-ingresar" id="btn-ingresar">Ingresar a la Aplicación</button>
+        </div>
+    </div>
+
+    <!-- Página de aplicación -->
+    <div id="pagina-app">
+        <div class="container">
+            <div class="app-header">
+                <h1 class="app-title">Sistema de Resguardo Digital</h1>
+                <div class="header-buttons">
+                    <button class="btn btn-primary" id="volver-btn">Volver al Inicio</button>
+                </div>
+            </div>
+
+            <div class="kpi-container">
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Causas</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="#" class="kpi-link" id="causas-link">Acceder a Causas</a>
+                    <button class="btn-datos" id="causas-datos">Acceder a los Datos</button>
+                </div>
+
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Pase y Asignación</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="#" class="kpi-link" id="pase-link">Acceder a Pases</a>
+                    <button class="btn-datos" id="pase-datos">Acceder a los Datos</button>
+                </div>
+
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Atención al Público</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="#" class="kpi-link" id="atencion-link">Acceder a Atención</a>
+                    <button class="btn-datos" id="atencion-datos">Acceder a los Datos</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos DOM
+        const paginaInicio = document.getElementById('pagina-inicio');
+        const paginaApp = document.getElementById('pagina-app');
+        const btnIngresar = document.getElementById('btn-ingresar');
+        const volverBtn = document.getElementById('volver-btn');
+        const causasLink = document.getElementById('causas-link');
+        const paseLink = document.getElementById('pase-link');
+        const atencionLink = document.getElementById('atencion-link');
+        const causasDatos = document.getElementById('causas-datos');
+        const paseDatos = document.getElementById('pase-datos');
+        const atencionDatos = document.getElementById('atencion-datos');
+
+        // Función para mostrar la aplicación
+        function mostrarAplicacion() {
+            paginaInicio.style.display = 'none';
+            paginaApp.style.display = 'block';
+            
+            // Aplicar animación a las tarjetas
+            const cards = document.querySelectorAll('.kpi-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+            });
+        }
+
+        // Función para volver al inicio
+        function volverAlInicio() {
+            paginaApp.style.display = 'none';
+            paginaInicio.style.display = 'flex';
+        }
+
+        // Event Listeners
+        btnIngresar.addEventListener('click', mostrarAplicacion);
+        volverBtn.addEventListener('click', volverAlInicio);
+        
+        // Enlaces de ejemplo (puedes cambiarlos por URLs reales)
+        causasLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('En un futuro, este enlace llevará al módulo de Causas');
+        });
+        
+        paseLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('En un futuro, este enlace llevará al módulo de Pase y Asignación');
+        });
+        
+        atencionLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('En un futuro, este enlace llevará al módulo de Atención al Público');
+        });
+        
+        // Event Listeners para los nuevos botones de datos
+        causasDatos.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('Accediendo a los datos de Causas para descargar registros');
+        });
+        
+        paseDatos.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('Accediendo a los datos de Pase y Asignación para descargar registros');
+        });
+        
+        atencionDatos.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('Accediendo a los datos de Atención al Público para descargar registros');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Causas-Reserva Digital</title>
+    <style>
+        :root {
+            --primary-color: #4285F4;
+            --danger-color: #EA4335;
+            --export-color: #34A853;
+            --background-light: #F8F9FA;
+            --text-dark: #3C4043;
+            --border-light: #E0E0E0;
+            --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+        }
+        h1, h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 10px;
+        }
+        .config-section, .app-section {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 11px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        button:hover {
+            background-color: #357AE8;
+            transform: translateY(-1px);
+        }
+        button:disabled {
+            background-color: #AAB0B7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .delete-btn {
+            background-color: var(--danger-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .delete-btn:hover {
+            background-color: #D93025;
+        }
+        .export-btn {
+            background-color: var(--export-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .export-btn:hover {
+            background-color: #2E8549;
+        }
+        #app-section {
+            display: none;
+        }
+        #status {
+            margin-top: 15px;
+            font-style: italic;
+            color: #555;
+            font-size: 14px;
+        }
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0;
+            background-color: #fff;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-light);
+            text-align: left;
+            word-wrap: break-word;
+            font-size: 14px;
+            vertical-align: top;
+        }
+        th {
+            background-color: #F1F3F4;
+            font-weight: 600;
+            color: var(--text-dark);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover {
+            background-color: #F8F9FA;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .batch-actions {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        /* Modal de confirmación de eliminación */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .delete-modal {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        
+        .modal-overlay.active .delete-modal {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            background-color: var(--danger-color);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .modal-body {
+            padding: 25px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .modal-body p {
+            margin: 0 0 15px;
+            line-height: 1.5;
+        }
+        
+        .modal-details {
+            background-color: #FFF5F5;
+            border: 1px solid #FED7D7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .modal-details strong {
+            color: var(--danger-color);
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .modal-cancel {
+            background-color: #F1F3F4;
+            color: var(--text-dark);
+        }
+        
+        .modal-cancel:hover {
+            background-color: #E8EAED;
+        }
+        
+        .modal-confirm {
+            background-color: var(--danger-color);
+        }
+        
+        .modal-confirm:hover {
+            background-color: #D93025;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            body {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            input[type="text"] {
+                width: 100%;
+            }
+            th, td {
+                padding: 8px;
+            }
+            .modal-footer {
+                flex-direction: column;
+            }
+            .modal-footer button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Causas-Reserva Digital</h1>
+        <p>Esta aplicacion permite descargar los registros de Causas del Sistema Digital de la Defensoria Civil y Comercial 6. Uso Autorizado. Para descarga usar: causas.</p>
+
+        <div id="config-section">
+            <h2>1. Conexión</h2>
+            <p>Introduce el nombre exacto de la colección que quieres administrar.</p>
+            <input type="text" id="collectionName" placeholder="Ej: usuarios, productos, etc.">
+            <button id="connectBtn">Cargar Colección</button>
+        </div>
+
+        <div id="app-section">
+            <h2 id="collectionTitle"></h2>
+            <input type="text" id="filterInput" placeholder="🔍 Filtrar por cualquier campo...">
+            <p id="recordCount"></p>
+            <div class="batch-actions">
+                <button id="deleteSelectedBtn" class="delete-btn" disabled>🗑️ Eliminar Seleccionados</button>
+                <button id="exportSelectedBtn" class="export-btn" disabled>➡️ Exportar Seleccionados (JSON)</button>
+            </div>
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllCheckbox"></th>
+                            <th>ID del Documento</th>
+                            <th>Última Modificación</th>
+                            <th>Datos (JSON)</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="status">Esperando conexión...</div>
+    </div>
+
+    <!-- Modal de confirmación de eliminación -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="delete-modal">
+            <div class="modal-header">
+                <span style="font-size: 2rem;">⚠️</span>
+                <h3>Confirmar Eliminación</h3>
+            </div>
+            <div class="modal-body">
+                <p>Esta acción <strong>NO SE PUEDE DESHACER</strong>. Los documentos eliminados se perderán permanentemente.</p>
+                <div class="modal-details" id="modalDetails">
+                    <!-- Los detalles de la eliminación se insertarán aquí -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-cancel" id="modalCancel">Cancelar</button>
+                <button class="modal-confirm" id="modalConfirm">Eliminar Permanentemente</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        // -------------------------------------------------------------------
+        // CONFIGURACIÓN DE FIREBASE
+        // -------------------------------------------------------------------
+        const firebaseConfig = {
+           apiKey: "AIzaSyBt6X0u0BpiNPcV2SNPrN-spCmjl2AhZaA",
+           authDomain: "causas-defensoria.firebaseapp.com",
+           projectId: "causas-defensoria",
+           storageBucket: "causas-defensoria.appspot.com",
+           messagingSenderId: "186064671470",
+           appId: "1:186064671470:web:b58bae5eadbe6e469f19ff"
+        };
+        // -------------------------------------------------------------------
+
+        let db;
+        let currentCollectionName = '';
+        let documentsCache = [];
+        let pendingDeleteAction = null; // Para almacenar la acción de eliminación pendiente
+
+        // Elementos del DOM
+        const connectBtn = document.getElementById('connectBtn');
+        const collectionNameInput = document.getElementById('collectionName');
+        const statusDiv = document.getElementById('status');
+        const appSection = document.getElementById('app-section');
+        const configSection = document.getElementById('config-section');
+        const dataTableBody = document.querySelector("#dataTable tbody");
+        const filterInput = document.getElementById('filterInput');
+        const collectionTitle = document.getElementById('collectionTitle');
+        const recordCount = document.getElementById('recordCount');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        const exportSelectedBtn = document.getElementById('exportSelectedBtn');
+        
+        // Elementos del modal
+        const deleteModal = document.getElementById('deleteModal');
+        const modalDetails = document.getElementById('modalDetails');
+        const modalCancel = document.getElementById('modalCancel');
+        const modalConfirm = document.getElementById('modalConfirm');
+
+        // Mostrar modal de confirmación
+        const showDeleteModal = (detailsHtml, confirmCallback) => {
+            modalDetails.innerHTML = detailsHtml;
+            pendingDeleteAction = confirmCallback;
+            deleteModal.classList.add('active');
+        };
+
+        // Ocultar modal
+        const hideDeleteModal = () => {
+            deleteModal.classList.remove('active');
+            pendingDeleteAction = null;
+        };
+
+        // Inicializar Firebase y conectar
+        const initializeAndConnect = () => {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                currentCollectionName = collectionNameInput.value.trim();
+
+                if (!currentCollectionName) {
+                    alert('Por favor, ingresa el nombre de una colección.');
+                    return;
+                }
+
+                statusDiv.textContent = `Cargando datos de la colección "${currentCollectionName}"...`;
+                fetchAndDisplayData();
+            } catch (error) {
+                statusDiv.textContent = `Error de conexión: ${error.message}`;
+                console.error("Error al inicializar Firebase:", error);
+            }
+        };
+
+        // Obtener y mostrar datos
+        const fetchAndDisplayData = async () => {
+            if (!db || !currentCollectionName) return;
+            
+            const collectionRef = collection(db, currentCollectionName);
+            dataTableBody.innerHTML = '';
+            
+            try {
+                const querySnapshot = await getDocs(collectionRef);
+                documentsCache = [];
+                querySnapshot.forEach((doc) => {
+                    documentsCache.push({ 
+                        id: doc.id, 
+                        data: doc.data(), 
+                        timestamp: doc.data().updatedAt || doc.data().createdAt || null 
+                    });
+                });
+
+                if (documentsCache.length === 0) {
+                   statusDiv.textContent = `La colección "${currentCollectionName}" está vacía o no existe.`;
+                   appSection.style.display = 'block';
+                   configSection.style.display = 'none';
+                   collectionTitle.textContent = `Colección: ${currentCollectionName}`;
+                } else {
+                    displayDocuments(documentsCache);
+                    configSection.style.display = 'none';
+                    appSection.style.display = 'block';
+                    collectionTitle.textContent = `Colección: ${currentCollectionName}`;
+                    statusDiv.textContent = 'Datos cargados correctamente.';
+                }
+                updateBatchButtonState();
+
+            } catch (error) {
+                statusDiv.textContent = `Error al obtener los datos: ${error.message}`;
+                console.error("Error fetching documents: ", error);
+            }
+        };
+
+        // Formatear fecha
+        const formatDate = (timestamp) => {
+            if (!timestamp) return 'N/A';
+            const date = timestamp instanceof Timestamp ? timestamp.toDate() : new Date(timestamp);
+            
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+                timeZone: 'America/Argentina/Buenos_Aires'
+            };
+            
+            const formattedDate = new Intl.DateTimeFormat('es-AR', options).format(date);
+            return formattedDate.replace(',', '');
+        };
+
+        // Mostrar documentos en la tabla
+        const displayDocuments = (docs) => {
+            dataTableBody.innerHTML = '';
+            recordCount.textContent = `${docs.length} registro(s) encontrado(s).`;
+            docs.forEach(docData => {
+                const row = document.createElement('tr');
+                const jsonDataString = JSON.stringify(docData.data, null, 2);
+                const formattedDate = formatDate(docData.timestamp);
+                
+                row.innerHTML = `
+                    <td><input type="checkbox" class="doc-checkbox" data-id="${docData.id}"></td>
+                    <td>${docData.id}</td>
+                    <td>${formattedDate}</td>
+                    <td><pre>${jsonDataString}</pre></td>
+                    <td><button class="delete-btn" data-id="${docData.id}">🗑️ Eliminar</button></td>
+                `;
+                dataTableBody.appendChild(row);
+            });
+            selectAllCheckbox.checked = false;
+        };
+
+        // Actualizar estado de los botones de lote
+        const updateBatchButtonState = () => {
+            const checkedCheckboxes = document.querySelectorAll('.doc-checkbox:checked');
+            const isDisabled = checkedCheckboxes.length === 0;
+            deleteSelectedBtn.disabled = isDisabled;
+            exportSelectedBtn.disabled = isDisabled;
+            
+            const allCheckboxes = document.querySelectorAll('.doc-checkbox');
+            const allChecked = allCheckboxes.length > 0 && checkedCheckboxes.length === allCheckboxes.length;
+            selectAllCheckbox.checked = allChecked;
+        };
+
+        // Seleccionar/deseleccionar todos
+        const toggleSelectAll = () => {
+            const checkboxes = document.querySelectorAll('.doc-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            updateBatchButtonState();
+        };
+
+        // Eliminar documentos seleccionados
+        const deleteSelected = async () => {
+            const checkedCheckboxes = document.querySelectorAll('.doc-checkbox:checked');
+            const docIdsToDelete = Array.from(checkedCheckboxes).map(cb => cb.getAttribute('data-id'));
+
+            if (docIdsToDelete.length === 0) return;
+
+            // Mostrar modal de confirmación
+            const detailsHtml = `
+                <p><strong>Colección:</strong> ${currentCollectionName}</p>
+                <p><strong>Documentos a eliminar:</strong> ${docIdsToDelete.length}</p>
+                <p><strong>IDs:</strong> ${docIdsToDelete.join(', ')}</p>
+            `;
+            
+            showDeleteModal(detailsHtml, async () => {
+                statusDiv.textContent = `Eliminando ${docIdsToDelete.length} documento(s)...`;
+                const promises = docIdsToDelete.map(id => deleteDoc(doc(db, currentCollectionName, id)));
+                try {
+                    await Promise.all(promises);
+                    statusDiv.textContent = `${docIdsToDelete.length} documento(s) eliminado(s) con éxito.`;
+                    fetchAndDisplayData();
+                } catch (error) {
+                    statusDiv.textContent = `Error al eliminar los documentos: ${error.message}`;
+                    console.error("Error deleting documents: ", error);
+                }
+            });
+        };
+        
+        // Exportar documentos seleccionados
+        const exportSelected = () => {
+            const checkedCheckboxes = document.querySelectorAll('.doc-checkbox:checked');
+            const selectedDocs = documentsCache.filter(doc => 
+                Array.from(checkedCheckboxes).some(cb => cb.getAttribute('data-id') === doc.id)
+            );
+            
+            const exportData = selectedDocs.map(doc => ({ id: doc.id, data: doc.data }));
+            const jsonData = JSON.stringify(exportData, null, 2);
+            
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            const date = new Date().toISOString().slice(0, 10);
+            a.download = `${currentCollectionName}_${date}.json`;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            statusDiv.textContent = `${exportData.length} documento(s) exportado(s) a ${a.download}.`;
+        };
+
+        // Eliminar documento individual
+        const deleteDocument = async (docId) => {
+            // Mostrar modal de confirmación
+            const detailsHtml = `
+                <p><strong>Colección:</strong> ${currentCollectionName}</p>
+                <p><strong>Documento a eliminar:</strong> ${docId}</p>
+            `;
+            
+            showDeleteModal(detailsHtml, async () => {
+                statusDiv.textContent = `Eliminando documento ${docId}...`;
+                try {
+                    await deleteDoc(doc(db, currentCollectionName, docId));
+                    statusDiv.textContent = `Documento ${docId} eliminado con éxito.`;
+                    fetchAndDisplayData();
+                } catch (error) {
+                    statusDiv.textContent = `Error al eliminar el documento: ${error.message}`;
+                    console.error("Error deleting document: ", error);
+                }
+            });
+        };
+
+        // Filtrar tabla
+        const filterTable = () => {
+            const filterText = filterInput.value.toLowerCase();
+            const filteredDocs = documentsCache.filter(docData => {
+                const docString = `${docData.id.toLowerCase()} ${JSON.stringify(docData.data).toLowerCase()} ${docData.timestamp ? formatDate(docData.timestamp).toLowerCase() : ''}`;
+                return docString.includes(filterText);
+            });
+            displayDocuments(filteredDocs);
+            updateBatchButtonState();
+        };
+
+        // Asignar eventos
+        connectBtn.addEventListener('click', initializeAndConnect);
+        collectionNameInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                initializeAndConnect();
+            }
+        });
+        filterInput.addEventListener('keyup', filterTable);
+        selectAllCheckbox.addEventListener('change', toggleSelectAll);
+        deleteSelectedBtn.addEventListener('click', deleteSelected);
+        exportSelectedBtn.addEventListener('click', exportSelected);
+        
+        // Eventos del modal
+        modalCancel.addEventListener('click', hideDeleteModal);
+        modalConfirm.addEventListener('click', () => {
+            if (pendingDeleteAction) {
+                pendingDeleteAction();
+                hideDeleteModal();
+            }
+        });
+        
+        // Cerrar modal al hacer clic fuera de él
+        deleteModal.addEventListener('click', (event) => {
+            if (event.target === deleteModal) {
+                hideDeleteModal();
+            }
+        });
+
+        // Delegación de eventos para los botones de eliminar y las casillas de verificación
+        dataTableBody.addEventListener('click', (event) => {
+            if (event.target.classList.contains('delete-btn')) {
+                const docId = event.target.getAttribute('data-id');
+                deleteDocument(docId);
+            } else if (event.target.classList.contains('doc-checkbox')) {
+                updateBatchButtonState();
+            }
+        });
+    </script>
+</body>
+</html>

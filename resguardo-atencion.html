@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Atencion Publico - Reserva Digital</title>
+  <style>
+    :root {
+      --primary-blue: #007bff;
+      --primary-light-blue: #e7f4ff;
+      --primary-dark-blue: #0056b3;
+      --secondary-gray: #f8f9fa;
+      --secondary-light-gray: #e9ecef;
+      --secondary-dark-gray: #6c757d;
+      --status-success: #28a745;
+      --status-warning: #ffc107;
+      --status-danger: #dc3545;
+      --status-info: #17a2b8;
+      --text-primary: #212529;
+      --text-secondary: #6c757d;
+      --text-link: #007bff;
+      --text-light: #ffffff;
+      --background-default: #ffffff;
+      --background-card: #ffffff;
+      --background-header: #ffffff;
+      --background-table-header: #f8f9fa;
+      --border-default: #dee2e6;
+      --font-family: 'Arial', 'Helvetica', sans-serif;
+      --display-size: 24px;
+      --h1-size: 20px;
+      --h2-size: 18px;
+      --body-large-size: 16px;
+      --body-regular-size: 14px;
+      --caption-size: 12px;
+      --font-weight-regular: 400;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      --spacing-unit: 8px;
+      --spacing-xs: 4px;
+      --spacing-s: 8px;
+      --spacing-m: 16px;
+      --spacing-l: 24px;
+      --spacing-xl: 32px;
+      --spacing-gutter: 20px;
+      --border-radius-small: 2px;
+      --border-radius-default: 4px;
+      --border-radius-pill: 20px;
+      --shadow-none: none;
+      --shadow-subtle: 0 1px 3px rgba(0,0,0,0.1);
+      --radius: 12px;
+      --shadow: 0 4px 15px rgba(0,0,0,.08);
+      
+      /* Mapeo de variables para mantener funcionalidad */
+      --bg: var(--primary-light-blue);
+      --card: var(--background-card);
+      --accent: var(--primary-blue);
+      --accent-dark: var(--primary-dark-blue);
+      --text: var(--text-primary);
+      --muted: var(--text-secondary);
+    }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    html { height: 100%; }
+    body {
+      min-height: 100%;
+      font-family: var(--font-family);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: clamp(12px, 2vw, 24px);
+    }
+    h1,h2 { font-weight:600; color: var(--text); }
+    .container { width: min(1200px, 100%); margin-inline: auto; display: flex; flex-direction: column; gap: clamp(12px, 2vw, 20px); }
+    .header { background: var(--card); padding: clamp(16px, 2vw, 24px); border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; }
+    .header h1 { font-size: clamp(18px, 2.8vw, 26px); margin-bottom: 6px; }
+    .header p { color: var(--muted); font-size: clamp(12px, 1.8vw, 14px); }
+    .status-bar { background: var(--card); padding: 12px clamp(12px,2vw,20px); border-radius: var(--radius); box-shadow: var(--shadow); display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .status-indicator { width: 10px; height: 10px; border-radius: 50%; }
+    .status-open { background: var(--status-success); }
+    .status-closed { background: var(--status-danger); }
+    .main { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(12px,2vw,20px); }
+    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: clamp(14px, 2vw, 20px); }
+    .card h2 { font-size: clamp(16px, 2.2vw, 18px); margin-bottom: 12px; border-bottom: 1px solid var(--border-default); padding-bottom: 6px; display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px; }
+    .form-group { margin-bottom: 12px; }
+    label { font-size: 14px; font-weight: 600; margin-bottom: 6px; display:block; color: var(--text); }
+    input,select,textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border-default); border-radius: 8px; background: #fff; font-size: 14px; color: var(--text);
+    }
+    .btn { display:inline-block; border-radius:8px; padding:8px 12px; font-size:13px; font-weight:700; cursor:pointer; }
+    .btn-primary { background: linear-gradient(to bottom, var(--accent), var(--accent-dark)); color: #fff; border: none; }
+    .btn-secondary { background: var(--secondary-light-gray); border:1px solid var(--border-default); color: var(--text); }
+    .btn-danger { background: var(--status-danger); color:#fff; border:none; }
+    .stats { display:grid; grid-template-columns: repeat(4,1fr); gap:12px; }
+    .stat-box { background: var(--secondary-gray); border-radius: var(--radius); padding:16px; text-align:center; }
+    .stat-number { font-size: clamp(18px, 3vw, 22px); font-weight:700; color: var(--accent-dark); }
+    .stat-label { font-size:12px; color: var(--text); }
+    .chart-container { max-width:320px; height:260px; margin:16px auto 0; }
+    .records-table { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .table-header { background: var(--background-table-header); padding: 12px clamp(12px,2vw,18px); font-weight: 700; border-bottom:1px solid var(--border-default); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; color: var(--text); }
+    .filters { display:flex; flex-direction: column; gap: 12px; width:100%; }
+    .filter-row { display: flex; gap: 8px; flex-wrap: wrap; width: 100%; align-items: center; }
+    .filter-row > * { flex: 1; min-width: 120px; }
+    .date-range { display: flex; gap: 8px; flex-wrap: wrap; }
+    .date-range > * { flex: 1; min-width: 140px; }
+    .table-content { max-height: min(60vh, 560px); overflow-y:auto; }
+    .record { display:grid; grid-template-columns: 110px 80px 110px 1.2fr 1fr 90px; padding: 10px 12px; font-size:14px; border-bottom:1px solid var(--border-default); gap: 8px; align-items:center; }
+    .record-type { font-size:12px; padding:2px 6px; border-radius:6px; text-align:center; font-weight:700; }
+    .type-presencial { background:#eaf9ea; color:#2d9950; }
+    .type-telefonica { background:#fff8e6; color:#b36a00; }
+    .type-whatsapp { background:#f3e8ff; color:#7f3bb5; }
+    .type-zimbra { background:#ffe6e6; color:#cc0000; }
+    .record-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content: center; }
+    .record-actions .btn { 
+      width: 32px; 
+      height: 32px; 
+      padding: 0; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      font-size: 14px;
+    }
+    /* Estilos para Paginación */
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pagination-controls select, .pagination-controls button {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+    /* Modal */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); justify-content:center; align-items:center; z-index:1000; padding: 16px; }
+    .modal-content { background:#fff; padding:20px; border-radius:var(--radius); max-width:600px; width:100%; max-height:80vh; overflow:auto; color: var(--text); }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .modal-header h3 { margin:0; color: var(--text); }
+    .close-btn { background:none; border:none; font-size:20px; cursor:pointer; color: var(--text); }
+    
+    /* Estilos para impresión */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .records-table, .records-table * {
+        visibility: visible;
+      }
+      .records-table {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none;
+        border-radius: 0;
+      }
+      .table-header, .record-actions {
+        display: none !important;
+      }
+      .record {
+        grid-template-columns: 110px 80px 110px 1.2fr 1fr !important;
+      }
+      .stats-print, .stats-print * {
+        visibility: visible;
+      }
+      .stats-print {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+      }
+      .stats-print h2 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .stats-print .stats {
+        margin-bottom: 20px;
+      }
+      .stats-print .chart-container {
+        max-width: 100%;
+        height: 300px;
+      }
+    }
+    
+    /* Compactar en pantallas medianas */
+    @media (max-width: 1000px) {
+      .main { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .record { grid-template-columns: 90px 70px 100px 1fr; }
+      .record .record-actions { grid-column: 1 / -1; }
+      .filter-row { width: 100%; }
+      .date-range { width: 100%; }
+    }
+    /* Diseño tipo tarjetas en móviles */
+    @media (max-width: 768px) {
+      .table-content { max-height: unset; }
+      .stats { grid-template-columns: 1fr; }
+      .record { grid-template-columns: 1fr 1fr; grid-template-areas:
+        "fecha hora"
+        "tipo  tipo"
+        "persona persona"
+        "usuario usuario"
+        "acciones acciones";
+        row-gap: 6px;
+      }
+      .record > div:nth-child(1) { grid-area: fecha; }
+      .record > div:nth-child(2) { grid-area: hora; text-align:right; }
+      .record > div:nth-child(3) { grid-area: tipo; }
+      .record > div:nth-child(4) { grid-area: persona; }
+      .record > div:nth-child(5) { grid-area: usuario; }
+      .record > div:nth-child(6) { grid-area: acciones; }
+      .filter-row { flex-direction: column; }
+      .filter-row > * { min-width: 100%; }
+      .date-range { flex-direction: column; }
+      .pagination-controls { 
+        justify-content: center; 
+        width: 100%; 
+        margin-top: 8px;
+      }
+      .chart-container { width: 100%; height: 220px; }
+    }
+    @media (max-width: 480px) {
+      .pagination-controls {
+        flex-direction: column;
+        width: 100%;
+      }
+      .pagination-controls select, .pagination-controls button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Atención al Público - Reserva Digital</h1>
+      <p>Defensoría Civil y Comercial 6 · Poder Judicial de Misiones</p>
+      <p style="margin-top:6px;font-weight:700;">Desde esta tabla únicamente se muestra los registros guardados en la computadora, no pueden modificarse ni editarse. Corresponde a los registros dentro del Sistema Operador de la Defensoría Civil y Comercial 6. Tiene por finalidad el resguardo de datos importantes.</p>
+    </div>
+
+    <div class="status-bar">
+      <span id="statusIndicator" class="status-indicator"></span>
+      <span id="statusText"></span>
+      <span id="currentTime"></span>
+    </div>
+
+    <div class="main">
+      <div class="card">
+        <h2>Cargar Archivo JSON</h2>
+        <form id="uploadForm">
+          <div class="form-group">
+            <label for="fileInput">Seleccionar archivo JSON</label>
+            <input type="file" id="fileInput" accept=".json" />
+          </div>
+          <div class="form-group" style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+              📁 Subir archivo JSON
+            </button>
+            <button id="clearBtn" type="button" class="btn btn-danger" style="display:none;">
+              🗑️ Limpiar datos
+            </button>
+          </div>
+          <div id="fileName" style="font-size: 0.9rem; color: var(--muted); font-style: italic; margin-top: 4px;"></div>
+        </form>
+      </div>
+
+      <div class="card" id="statsCard">
+        <h2>
+          Estadísticas
+          <div style="display: flex; gap: 8px;">
+            <button id="printAllBtn" class="btn btn-secondary" disabled>
+              🖨️ Imprimir todo
+            </button>
+            <button id="printFilteredBtn" class="btn btn-secondary" disabled>
+              🖨️ Imprimir filtrado
+            </button>
+          </div>
+        </h2>
+        <div class="stats">
+          <div class="stat-box"><div id="totalAttentions" class="stat-number">0</div><div class="stat-label">Total</div></div>
+          <div class="stat-box"><div id="presentialCount" class="stat-number">0</div><div class="stat-label">Presenciales</div></div>
+          <div class="stat-box"><div id="phoneCount" class="stat-number">0</div><div class="stat-label">Telefónicas</div></div>
+          <div class="stat-box"><div id="whatsappCount" class="stat-number">0</div><div class="stat-label">WhatsApp</div></div>
+          <div class="stat-box"><div id="zimbraCount" class="stat-number">0</div><div class="stat-label">Zimbra</div></div>
+        </div>
+        <div class="chart-container">
+          <canvas id="statsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="records-table">
+      <div class="table-header">
+        <span>Registro de Atenciones</span>
+        <div class="filters">
+          <!-- Primera fila: Filtros de búsqueda -->
+          <div class="filter-row">
+            <input type="text" id="searchInput" placeholder="Buscar en registros..." />
+            <select id="monthFilter">
+              <option value="">Todos los meses</option>
+            </select>
+            <select id="assignedFilter">
+              <option value="">Todos los asignados</option>
+            </select>
+            <select id="typeFilter">
+              <option value="">Todos los tipos</option>
+            </select>
+          </div>
+          
+          <!-- Segunda fila: Paginación -->
+          <div class="filter-row">
+            <div id="paginationControls" class="pagination-controls"></div>
+          </div>
+        </div>
+      </div>
+      <div id="recordsContainer" class="table-content">
+        <div style="padding:30px;text-align:center;color:var(--muted)">
+          Sube un archivo JSON para ver los registros.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="recordModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Detalle del Registro</h3>
+        <button class="close-btn" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Variables globales
+    let allRecords = null;
+    let currentFileName = '';
+    let currentPage = 1;
+    const recordsPerPage = 10;
+    let statsChart;
+
+    // Elementos del DOM
+    const fileInput = document.getElementById('fileInput');
+    const fileNameEl = document.getElementById('fileName');
+    const clearBtn = document.getElementById('clearBtn');
+    const searchInput = document.getElementById('searchInput');
+    const monthFilter = document.getElementById('monthFilter');
+    const assignedFilter = document.getElementById('assignedFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const recordsContainer = document.getElementById('recordsContainer');
+    const printAllBtn = document.getElementById('printAllBtn');
+    const printFilteredBtn = document.getElementById('printFilteredBtn');
+    const paginationControls = document.getElementById('paginationControls');
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+      init();
+    });
+
+    function init() {
+      updateClock();
+      setInterval(updateClock, 60000);
+      initChart();
+      bindEvents();
+    }
+
+    function bindEvents() {
+      fileInput.addEventListener('change', handleFileUpload);
+      clearBtn.addEventListener('click', resetApp);
+      searchInput.addEventListener('input', () => { currentPage = 1; filterAndRender(); });
+      monthFilter.addEventListener('change', () => { currentPage = 1; filterAndRender(); });
+      assignedFilter.addEventListener('change', () => { currentPage = 1; filterAndRender(); });
+      typeFilter.addEventListener('change', () => { currentPage = 1; filterAndRender(); });
+      printAllBtn.addEventListener('click', printAllRecords);
+      printFilteredBtn.addEventListener('click', printFilteredRecords);
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const options = { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      document.getElementById('currentTime').textContent = now.toLocaleDateString('es-ES', options);
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('statsChart');
+      statsChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Presenciales', 'Telefónicas', 'WhatsApp', 'Zimbra'],
+          datasets: [{
+            data: [0, 0, 0, 0],
+            backgroundColor: ['#34c759', '#ff9500', '#af52de', '#ff3b30']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { 
+              position: 'bottom',
+              labels: {
+                font: {
+                  size: 11
+                }
+              }
+            } 
+          }
+        }
+      });
+    }
+
+    function updateChart(stats) {
+      statsChart.data.datasets[0].data = [
+        stats.presencial || 0, 
+        stats.telefonica || 0, 
+        stats.whatsapp || 0, 
+        stats.zimbra || 0
+      ];
+      statsChart.update();
+    }
+
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      currentFileName = file.name;
+      fileNameEl.textContent = `Archivo cargado: ${currentFileName}`;
+      clearBtn.style.display = 'inline-block';
+      printAllBtn.disabled = false;
+      printFilteredBtn.disabled = false;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const json = JSON.parse(event.target.result);
+          if (!json.records || !Array.isArray(json.records)) {
+            alert('El archivo JSON debe contener una propiedad "records" con un array.');
+            resetApp();
+            return;
+          }
+          allRecords = json.records;
+          buildFilters();
+          filterAndRender();
+        } catch (err) {
+          console.error(err);
+          alert('Error al parsear el JSON. Verifica que sea válido.');
+          resetApp();
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetApp() {
+      allRecords = null;
+      currentFileName = '';
+      currentPage = 1;
+      fileInput.value = '';
+      fileNameEl.textContent = '';
+      clearBtn.style.display = 'none';
+      printAllBtn.disabled = true;
+      printFilteredBtn.disabled = true;
+      searchInput.value = '';
+      
+      monthFilter.innerHTML = '<option value="">Todos los meses</option>';
+      assignedFilter.innerHTML = '<option value="">Todos los asignados</option>';
+      typeFilter.innerHTML = '<option value="">Todos los tipos</option>';
+      
+      recordsContainer.innerHTML = '<div style="padding:30px;text-align:center;color:var(--muted)">Sube un archivo JSON para ver los registros.</div>';
+      paginationControls.innerHTML = '';
+      
+      // Resetear estadísticas
+      document.getElementById('totalAttentions').textContent = '0';
+      document.getElementById('presentialCount').textContent = '0';
+      document.getElementById('phoneCount').textContent = '0';
+      document.getElementById('whatsappCount').textContent = '0';
+      document.getElementById('zimbraCount').textContent = '0';
+      updateChart({});
+    }
+
+    function formatDate(timestamp) {
+      if (!timestamp) return '—';
+      const date = new Date(timestamp);
+      return date.toLocaleDateString('es-ES');
+    }
+
+    function formatTime(timestamp) {
+      if (!timestamp) return '—';
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString('es-ES', {hour12: false, hour: '2-digit', minute: '2-digit'});
+    }
+
+    function getMonthYear(timestamp) {
+      if (!timestamp) return null;
+      const d = new Date(timestamp);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function getMonthName(monthKey) {
+      const [year, month] = monthKey.split('-').map(Number);
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    }
+
+    function buildFilters() {
+      if (!allRecords) return;
+      
+      // Build month filter
+      const months = new Set();
+      // Build assigned filter
+      const assignedSet = new Set();
+      // Build type filter
+      const typeSet = new Set();
+      
+      allRecords.forEach(r => {
+        const d = r.data || {};
+        
+        // Month filter
+        const monthKey = getMonthYear(r.timestamp);
+        if (monthKey) months.add(monthKey);
+        
+        // Assigned filter
+        if (d.assignedUser) assignedSet.add(d.assignedUser);
+        
+        // Type filter
+        if (d.type) typeSet.add(d.type);
+      });
+      
+      // Months
+      const sortedMonths = Array.from(months).sort((a, b) => {
+        const [y1, m1] = a.split('-').map(Number);
+        const [y2, m2] = b.split('-').map(Number);
+        return y2 - y1 || m2 - m1;
+      });
+      monthFilter.innerHTML = '<option value="">Todos los meses</option>';
+      sortedMonths.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = getMonthName(m).replace(/^\w/, c => c.toUpperCase());
+        monthFilter.appendChild(opt);
+      });
+      
+      // Assigned users
+      const sortedAssigned = Array.from(assignedSet).sort();
+      assignedFilter.innerHTML = '<option value="">Todos los asignados</option>';
+      sortedAssigned.forEach(user => {
+        const opt = document.createElement('option');
+        opt.value = user;
+        opt.textContent = user;
+        assignedFilter.appendChild(opt);
+      });
+      
+      // Types
+      const sortedTypes = Array.from(typeSet).sort();
+      typeFilter.innerHTML = '<option value="">Todos los tipos</option>';
+      sortedTypes.forEach(type => {
+        const opt = document.createElement('option');
+        opt.value = type;
+        opt.textContent = type;
+        typeFilter.appendChild(opt);
+      });
+    }
+
+    function getFilteredRecords() {
+      if (!allRecords) return [];
+      
+      const query = searchInput.value.toLowerCase().trim();
+      const selectedMonth = monthFilter.value;
+      const selectedAssigned = assignedFilter.value;
+      const selectedType = typeFilter.value;
+      
+      return allRecords.filter(record => {
+        const d = record.data || {};
+        const matchesSearch = !query || [
+          (record.id || ''),
+          (d.time || ''),
+          (d.type || ''),
+          (d.personName || ''),
+          (d.assignedUser || ''),
+          (d.description || ''),
+          formatDate(record.timestamp)
+        ].join(' ').toLowerCase().includes(query);
+        
+        const matchesMonth = !selectedMonth || getMonthYear(record.timestamp) === selectedMonth;
+        const matchesAssigned = !selectedAssigned || d.assignedUser === selectedAssigned;
+        const matchesType = !selectedType || d.type === selectedType;
+        
+        return matchesSearch && matchesMonth && matchesAssigned && matchesType;
+      });
+    }
+
+    function filterAndRender() {
+      const filtered = getFilteredRecords();
+      const total = filtered.length;
+      
+      // Update statistics
+      updateStatistics(filtered);
+      
+      const totalPages = Math.max(1, Math.ceil(total / recordsPerPage));
+      if (currentPage > totalPages) currentPage = totalPages || 1;
+      
+      const startIndex = (currentPage - 1) * recordsPerPage;
+      const pageRecords = filtered.slice(startIndex, startIndex + recordsPerPage);
+      
+      renderRecords(pageRecords, total);
+      renderPagination(totalPages);
+    }
+
+    function updateStatistics(records) {
+      const stats = {
+        total: records.length,
+        presencial: 0,
+        telefonica: 0,
+        whatsapp: 0,
+        zimbra: 0
+      };
+      
+      records.forEach(record => {
+        const d = record.data || {};
+        const type = d.type || '';
+        
+        if (type.includes('presencial')) stats.presencial++;
+        else if (type.includes('telefonica')) stats.telefonica++;
+        else if (type.includes('whatsapp')) stats.whatsapp++;
+        else if (type.includes('zimbra')) stats.zimbra++;
+      });
+      
+      document.getElementById('totalAttentions').textContent = stats.total;
+      document.getElementById('presentialCount').textContent = stats.presencial;
+      document.getElementById('phoneCount').textContent = stats.telefonica;
+      document.getElementById('whatsappCount').textContent = stats.whatsapp;
+      document.getElementById('zimbraCount').textContent = stats.zimbra;
+      
+      updateChart(stats);
+    }
+
+    function renderRecords(records, total) {
+      if (total === 0) {
+        recordsContainer.innerHTML = '<div style="padding:30px;text-align:center;color:var(--muted)">No hay registros que coincidan con la búsqueda.</div>';
+        return;
+      }
+      
+      recordsContainer.innerHTML = records.map((record, index) => {
+        const d = record.data || {};
+        const fechaStr = formatDate(record.timestamp);
+        const horaStr = d.time || formatTime(record.timestamp);
+        const type = d.type || '';
+        
+        let typeClass = '';
+        if (type.includes('presencial')) typeClass = 'type-presencial';
+        else if (type.includes('telefonica')) typeClass = 'type-telefonica';
+        else if (type.includes('whatsapp')) typeClass = 'type-whatsapp';
+        else if (type.includes('zimbra')) typeClass = 'type-zimbra';
+        
+        return `
+          <div class="record" data-index="${index}">
+            <div>${fechaStr}</div>
+            <div>${horaStr}</div>
+            <div class="record-type ${typeClass}">${type || '-'}</div>
+            <div><strong>${d.personName || ''}</strong></div>
+            <div>${d.assignedUser || ''}</div>
+            <div class="record-actions">
+              <button class="btn btn-secondary" onclick='viewRecord(${JSON.stringify(record)})' title="Ver detalles">👁️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderPagination(totalPages) {
+      paginationControls.innerHTML = '';
+      if (totalPages <= 1) return;
+      
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'btn btn-secondary';
+      prevBtn.textContent = '« Anterior';
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = () => { 
+        if (currentPage > 1) { 
+          currentPage--; 
+          filterAndRender(); 
+        } 
+      };
+      paginationControls.appendChild(prevBtn);
+      
+      const select = document.createElement('select');
+      select.onchange = (e) => { 
+        currentPage = parseInt(e.target.value); 
+        filterAndRender(); 
+      };
+      
+      for (let i = 1; i <= totalPages; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = `Página ${i}`;
+        if (i === currentPage) option.selected = true;
+        select.appendChild(option);
+      }
+      paginationControls.appendChild(select);
+      
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'btn btn-secondary';
+      nextBtn.textContent = 'Siguiente »';
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.onclick = () => { 
+        if (currentPage < totalPages) { 
+          currentPage++; 
+          filterAndRender(); 
+        } 
+      };
+      paginationControls.appendChild(nextBtn);
+    }
+
+    function viewRecord(record) {
+      const d = record.data || {};
+      const fechaObj = record.timestamp ? new Date(record.timestamp) : null;
+      const fechaStr = formatDate(record.timestamp);
+      const horaStr = d.time || formatTime(record.timestamp);
+      const timestampFull = record.timestamp ? new Date(record.timestamp).toLocaleString('es-ES') : '—';
+      
+      const fields = {
+        'ID interno': record.id || '—',
+        'Fecha': fechaStr,
+        'Hora': horaStr,
+        'Tipo de atención': d.type || '—',
+        'Nombre de la persona': d.personName || '—',
+        'Usuario asignado': d.assignedUser || '—',
+        'Descripción completa': d.description || '—',
+        'Timestamp (completo)': timestampFull
+      };
+      
+      let modalHTML = '';
+      Object.entries(fields).forEach(([label, value]) => {
+        modalHTML += `
+          <div style="margin-bottom: 12px;">
+            <div style="font-weight: 600; color: var(--muted);">${label}:</div>
+            <div>${value === '' || value === '—' ? '<span style="color: var(--muted); font-style: italic;">Vacío</span>' : value}</div>
+          </div>
+        `;
+      });
+      
+      document.getElementById('modalBody').innerHTML = modalHTML;
+      document.getElementById('recordModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('recordModal').style.display = 'none';
+    }
+
+    function printAllRecords() {
+      if (!allRecords || allRecords.length === 0) {
+        alert('No hay registros para imprimir');
+        return;
+      }
+      
+      printRecords(allRecords, "Listado completo de registros");
+    }
+    
+    function printFilteredRecords() {
+      const filtered = getFilteredRecords();
+      if (filtered.length === 0) {
+        alert('No hay registros filtrados para imprimir');
+        return;
+      }
+      
+      printRecords(filtered, "Listado filtrado de registros");
+    }
+    
+    function printRecords(records, title) {
+      // Create a printable container
+      const printContainer = document.createElement('div');
+      printContainer.className = 'print-container';
+      
+      // Add header
+      printContainer.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: var(--accent);">${title}</h1>
+          <div style="font-size: 1.1rem; margin: 10px 0;">
+            Archivo: ${currentFileName || 'N/A'} | 
+            Fecha de impresión: ${new Date().toLocaleString('es-ES')}
+          </div>
+          <div style="background-color: #fff; border: 1px solid var(--border-default); margin-top: 10px; padding: 10px; border-radius: 8px;">
+            Desde esta tabla únicamente se muestra los registros guardados en la computadora, no pueden modificarse ni editarse. Corresponde a los registros dentro del Sistema Operador de la Defensoría Civil y Comercial 6. Tiene por finalidad el resguardo de datos importantes.
+          </div>
+        </div>
+      `;
+      
+      // Create table
+      const table = document.createElement('table');
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+      table.style.marginTop = '20px';
+      
+      // Table header
+      const thead = document.createElement('thead');
+      thead.innerHTML = `
+        <tr>
+          <th style="border: 1px solid #000; padding: 8px; background-color: #f2f2f2;">Nº</th>
+          <th style="border: 1px solid #000; padding: 8px; background-color: #f2f2f2;">Fecha</th>
+          <th style="border: 1px solid #000; padding: 8px; background-color: #f2f2f2;">Hora</th>
+          <th style="border: 1px solid #000; padding: 8px; background-color: #f2f2f2;">Tipo</th>
+          <th style="border: 1px solid #000; padding: 8px; background-color: #f2f2f2;">Nombre</th>
+          <th style="border: 1px solid #000; padding: 8px; background-color: #f2f2f2;">Asignado</th>
+        </tr>
+      `;
+      table.appendChild(thead);
+      
+      // Table body
+      const tbody = document.createElement('tbody');
+      records.forEach((record, index) => {
+        const d = record.data || {};
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="border: 1px solid #000; padding: 8px;">${index + 1}</td>
+          <td style="border: 1px solid #000; padding: 8px;">${formatDate(record.timestamp)}</td>
+          <td style="border: 1px solid #000; padding: 8px;">${d.time || ''}</td>
+          <td style="border: 1px solid #000; padding: 8px;">${d.type || ''}</td>
+          <td style="border: 1px solid #000; padding: 8px;">${d.personName || ''}</td>
+          <td style="border: 1px solid #000; padding: 8px;">${d.assignedUser || ''}</td>
+        `;
+        tbody.appendChild(row);
+      });
+      table.appendChild(tbody);
+      
+      printContainer.appendChild(table);
+      document.body.appendChild(printContainer);
+      
+      // Trigger print
+      window.print();
+      
+      // Remove print container after printing
+      setTimeout(() => {
+        document.body.removeChild(printContainer);
+      }, 1000);
+    }
+  </script>
+</body>
+</html>

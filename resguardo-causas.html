@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Causas Judiciales</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --gray: #95a5a6;
+            --primary-blue: #007bff;
+            --primary-light-blue: #e7f4ff;
+            --primary-dark-blue: #0056b3;
+            --secondary-gray: #f8f9fa;
+            --secondary-light-gray: #e9ecef;
+            --secondary-dark-gray: #6c757d;
+            --status-success: #28a745;
+            --status-warning: #ffc107;
+            --status-info: #17a2b8;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --text-light: #ffffff;
+            --background-default: #ffffff;
+            --background-card: #ffffff;
+            --background-header: #ffffff;
+            --background-table-header: #f8f9fa;
+            --border-default: #dee2e6;
+            --font-family: 'Arial', 'Helvetica', sans-serif;
+            --spacing-s: 8px;
+            --spacing-m: 16px;
+            --spacing-l: 24px;
+            --spacing-xl: 32px;
+            --border-radius-default: 4px;
+            --shadow-subtle: 0 1px 3px rgba(0,0,0,0.1);
+            --color-audiencias: #007bff;
+            --color-vencimientos: #dc3545;
+            --color-gesell: #28a745;
+            --color-recursos: #6f42c1;
+            --color-diligencias: #fd7e14;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-family);
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 400;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .upload-section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+            border: 2px dashed #ddd;
+        }
+        
+        .upload-btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .upload-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .file-name {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        /* ===== NUEVO: KPIs con estilo del calendario ===== */
+        .kpi-section {
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .kpi-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-m);
+        }
+        
+        .kpi-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            padding-bottom: var(--spacing-s);
+        }
+        
+        .kpi-card {
+            background-color: var(--background-card);
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border-default);
+            text-align: center;
+            box-shadow: var(--shadow-subtle);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .kpi-card.total {
+            background-color: var(--primary-blue);
+            color: var(--text-light);
+        }
+        
+        .kpi-card.en-tramite {
+            border-left: 4px solid var(--primary-blue);
+        }
+        
+        .kpi-card.finalizado {
+            border-left: 4px solid var(--status-success);
+        }
+        
+        .kpi-card.archivado {
+            border-left: 4px solid var(--secondary-dark-gray);
+        }
+        
+        .kpi-number {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .kpi-card.total .kpi-number {
+            color: var(--text-light);
+        }
+        
+        .kpi-label {
+            font-size: 12px;
+            font-weight: 400;
+            text-transform: uppercase;
+        }
+        
+        .kpi-card.total .kpi-label {
+            color: var(--text-light);
+        }
+        
+        /* Filtros */
+        .filters-section {
+            background-color: var(--background-card);
+            padding: var(--spacing-m);
+            border-radius: var(--border-radius-default);
+            border: 1px solid var(--border-default);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .filters-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-m);
+        }
+        
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-m);
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .filter-label {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: var(--spacing-s);
+            font-weight: 600;
+        }
+        
+        .input, .dropdown {
+            border: 1px solid var(--border-default);
+            border-radius: var(--border-radius-default);
+            padding: var(--spacing-s);
+            background-color: var(--background-default);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        
+        .input:focus, .dropdown:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+        
+        /* Botones de acción */
+        .action-buttons {
+            display: flex;
+            gap: var(--spacing-s);
+            margin-top: var(--spacing-m);
+            flex-wrap: wrap;
+        }
+        
+        .button {
+            background-color: var(--primary-blue);
+            color: var(--text-light);
+            border: none;
+            border-radius: var(--border-radius-default);
+            padding: var(--spacing-s) var(--spacing-m);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-s);
+        }
+        
+        .button:hover {
+            opacity: 0.9;
+        }
+        
+        .button-success {
+            background-color: #1e7e34;
+        }
+        
+        .button-secondary {
+            background-color: var(--secondary-dark-gray);
+        }
+        
+        .button-danger {
+            background-color: var(--danger);
+        }
+        
+        /* Tabla de datos */
+        .table-section {
+            background-color: var(--background-card);
+            border-radius: var(--border-radius-default);
+            border: 1px solid var(--border-default);
+            overflow: hidden;
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .table-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: var(--spacing-m);
+            background-color: var(--background-table-header);
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+        
+        .data-table th {
+            background-color: var(--background-table-header);
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-default);
+            padding: var(--spacing-m);
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        
+        .data-table th:hover {
+            background-color: var(--secondary-light-gray);
+        }
+        
+        .data-table td {
+            border-bottom: 1px solid var(--border-default);
+            padding: var(--spacing-m);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .data-table tr:hover td {
+            background-color: var(--secondary-gray);
+        }
+        
+        /* Estilos para prioridad */
+        .prioridad-pill {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #fff;
+            text-transform: uppercase;
+        }
+        
+        .prioridad-baja { background-color: var(--success); }
+        .prioridad-media { background-color: var(--warning); }
+        .prioridad-alta { background-color: var(--danger); }
+        .prioridad-ninguna { background-color: var(--gray); }
+        
+        /* Paginación */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-m);
+            margin-top: var(--spacing-m);
+            background: var(--background-card);
+            border-radius: var(--border-radius-default);
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .pagination-container .page-info {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        
+        .pagination-container .nav-buttons {
+            display: flex;
+            gap: var(--spacing-s);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-en-tramite {
+            background-color: #e1f5fe;
+            color: #0277bd;
+        }
+        
+        .status-finalizado {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status-archivado {
+            background-color: #f5f5f5;
+            color: #616161;
+        }
+        
+        .priority-alta {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        .priority-media {
+            color: var(--warning);
+        }
+        
+        .priority-baja {
+            color: var(--success);
+        }
+        
+        .priority-ninguna {
+            color: var(--gray);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray);
+        }
+        
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: var(--danger);
+            background-color: #ffebee;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray);
+        }
+        
+        /* MODALES - Estilos mejorados */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.6);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+        
+        .modal .content {
+            background: #fff;
+            border-radius: 16px;
+            max-width: 980px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            animation: fadeIn .25s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: var(--primary-blue);
+            color: #fff;
+            padding: 12px 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 16px 16px 0 0;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .modal-body {
+            padding: 16px 16px 0;
+            overflow-y: auto;
+        }
+        
+        .controls-form {
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            padding: 12px 16px;
+            border-top: 1px solid #eee;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+            z-index: 5;
+        }
+        
+        /* Estilos para prioridad en texto */
+        .prioridad-texto {
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        
+        .prioridad-texto.alta { 
+            background-color: rgba(220, 53, 69, 0.1); 
+            color: var(--danger); 
+            border: 2px solid var(--danger);
+        }
+        
+        .prioridad-texto.media { 
+            background-color: rgba(255, 193, 7, 0.1); 
+            color: var(--warning); 
+            border: 2px solid var(--warning);
+        }
+        
+        .prioridad-texto.baja { 
+            background-color: rgba(40, 167, 69, 0.1); 
+            color: var(--success); 
+            border: 2px solid var(--success);
+        }
+        
+        .prioridad-texto.ninguna { 
+            background-color: rgba(108, 117, 125, 0.1); 
+            color: var(--gray); 
+            border: 2px solid var(--gray);
+        }
+        
+        /* NUEVO: Estilos para eventos en la tabla */
+        .eventos-lista {
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+        }
+        
+        .evento-tabla {
+            padding: 4px 6px;
+            margin-bottom: 3px;
+            border-left: 3px solid;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .evento-tabla.audiencia { border-left-color: var(--color-audiencias); }
+        .evento-tabla.gesell { border-left-color: var(--color-gesell); }
+        .evento-tabla.vencimiento { border-left-color: var(--color-vencimientos); }
+        .evento-tabla.recurso { border-left-color: var(--color-recursos); }
+        .evento-tabla.diligencia { border-left-color: var(--color-diligencias); }
+        
+        /* ALERTA FLOTANTE */
+        .floating-alert {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--danger);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            max-width: 400px;
+            text-align: center;
+            font-size: 1rem;
+        }
+        
+        .floating-alert.success {
+            background-color: var(--success);
+        }
+        
+        .floating-alert.show {
+            opacity: 1;
+            visibility: visible;
+            top: 20px;
+        }
+        
+        /* NUEVO: Estilos para impresión */
+        @media print {
+            .button, .actions, .action-buttons, .controls-form,
+            #btnPrintTodos, #btnPrintFiltrado, #btnPrintRegistro, #btnCerrarVer,
+            .fa-solid, .fas, .far, .fa, .fa-eye, .fa-pen, .fa-trash, .fa-plus,
+            .fa-save, .fa-print, .fa-xmark, .fa-check, .fa-arrow-left, .fa-arrow-right,
+            .fa-exclamation-triangle, .fa-timeline, .fa-file-pen,
+            .floating-alert, .prioridad-destacada,
+            .header, .filters-section, .sidebar, .pagination-container,
+            .upload-section {
+                display: none !important;
+            }
+            
+            body, .container, .main-layout, .main {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            
+            .table-section, .kpi-section, .modal .content {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+                page-break-inside: avoid;
+            }
+            
+            .data-table {
+                min-width: 100% !important;
+            }
+            
+            .kpi-cards {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 10px !important;
+            }
+            
+            .prioridad-pill {
+                color: #000 !important;
+                background-color: transparent !important;
+                border: 1px solid #000 !important;
+            }
+            
+            .actions {
+                display: none !important;
+            }
+            
+            /* Estilos para prioridad en texto durante impresión */
+            .prioridad-texto {
+                color: #000 !important;
+                background-color: transparent !important;
+                border: 1px solid #000 !important;
+                font-weight: bold !important;
+            }
+            
+            /* Estilos para impresión del detalle */
+            #verContenido p {
+                margin: 8px 0 !important;
+                font-size: 14px !important;
+                line-height: 1.4 !important;
+            }
+            
+            #verContenido strong {
+                color: #000 !important;
+                font-weight: bold !important;
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                max-width: 100%;
+                padding: var(--spacing-s);
+            }
+            
+            .kpi-cards {
+                gap: var(--spacing-s);
+            }
+            
+            .kpi-card {
+                min-width: 160px;
+                padding: var(--spacing-s) var(--spacing-m);
+            }
+            
+            .filter-row {
+                gap: var(--spacing-s);
+            }
+            
+            .filter-group {
+                min-width: 140px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            /* KPIs responsivos */
+            .kpi-cards {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                justify-content: space-between;
+            }
+            
+            .kpi-card {
+                flex: 1;
+                min-width: 80px;
+                padding: 10px 12px;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+            }
+            
+            .filter-group {
+                min-width: auto;
+            }
+            
+            .pagination-container {
+                flex-direction: column;
+                gap: var(--spacing-m);
+                text-align: center;
+            }
+            
+            .table-title {
+                padding: var(--spacing-s);
+            }
+            
+            .data-table th, 
+            .data-table td {
+                padding: var(--spacing-s);
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .controls-form {
+                flex-direction: column;
+            }
+            
+            .data-table {
+                min-width: 600px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .container {
+                padding: var(--spacing-s);
+                width: 100%;
+            }
+            
+            /* KPIs en una columna en pantallas pequeñas */
+            .kpi-cards {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .kpi-card {
+                flex: 1 1 100%; 
+                min-width: 0;
+                padding: 10px 8px;
+            }
+            
+            .kpi-number {
+                font-size: 1.2rem;
+            }
+            
+            .filters-section,
+            .table-section {
+                padding: var(--spacing-s);
+            }
+            
+            .filters-title,
+            .table-title {
+                font-size: 1rem;
+            }
+            
+            .modal .content {
+                max-width: 100%;
+                max-height: 100vh;
+                border-radius: 0;
+                margin: 0;
+            }
+            
+            .modal-header,
+            .modal-body,
+            .controls-form {
+                padding: var(--spacing-s);
+            }
+            
+            .filter-group {
+                width: 100%;
+            }
+            
+            .button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .table-wrap {
+                margin: 0 -8px;
+                padding: 0 8px;
+            }
+            
+            .data-table {
+                min-width: 100%;
+            }
+            
+            .prioridad-pill {
+                font-size: 0.7rem;
+                padding: 3px 6px;
+            }
+            
+            .actions {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .actions .button {
+                width: 100%;
+                font-size: 0.85rem;
+            }
+            
+            .floating-alert {
+                max-width: 90%;
+                font-size: 0.9rem;
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-alert" id="floating-alert"></div>
+    
+    <header>
+        <h1>Visualizador de Causas Judiciales</h1>
+        <div class="subtitle">Carga y visualiza datos de expedientes judiciales desde archivos JSON</div>
+    </header>
+    
+    <div class="container">
+        <div class="upload-section" id="uploadSection">
+            <h2>Cargar archivo JSON</h2>
+            <p>Selecciona un archivo JSON con datos de causas judiciales para visualizarlos</p>
+            <input type="file" id="fileInput" accept=".json" style="display: none;">
+            <button class="upload-btn" id="uploadBtn">
+                <i class="fas fa-upload"></i>
+                Seleccionar archivo JSON
+            </button>
+            <div class="file-name" id="fileName">No se ha seleccionado ningún archivo</div>
+        </div>
+        
+        <div id="dataSection" style="display: none;">
+            <section class="kpi-section">
+                <h2 class="kpi-title">Resumen de Expedientes</h2>
+                <div class="kpi-cards" id="kpiCards">
+                    <div class="loading">Cargando datos...</div>
+                </div>
+            </section>
+            
+            <section class="filters-section">
+                <h2 class="filters-title">Filtros de Búsqueda</h2>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label class="filter-label" for="buscador">Búsqueda</label>
+                        <input type="text" id="buscador" class="input" placeholder="🔍 Buscar en cualquier campo...">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroEstado">Estado</label>
+                        <select id="filtroEstado" class="dropdown">
+                            <option value="">Estado (todos)</option>
+                            <option>En trámite</option><option>Finalizado</option><option>Archivado</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroPrioridad">Prioridad</label>
+                        <select id="filtroPrioridad" class="dropdown">
+                            <option value="">Prioridad (todas)</option>
+                            <option value="Ninguna">Ninguna</option>
+                            <option value="Baja">Baja</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroJuzgado">Juzgado</label>
+                        <select id="filtroJuzgado" class="dropdown">
+                            <option value="">Juzgado (todos)</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroTipoProceso">Tipo de Proceso</label>
+                        <select id="filtroTipoProceso" class="dropdown">
+                            <option value="">Tipo de Proceso (todos)</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroEventos">Filtrar por Evento</label>
+                        <select id="filtroEventos" class="dropdown">
+                            <option value="">Todos los eventos</option>
+                            <option value="audiencias">Audiencias</option>
+                            <option value="gesell">Cámara Gesell</option>
+                            <option value="vencimientos">Vencimientos</option>
+                            <option value="recursos">Recursos</option>
+                            <option value="diligencias">Diligencias</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="btnPrintTodos" class="button button-success">
+                        <i class="fas fa-print"></i> Imprimir Todos
+                    </button>
+                    <button id="btnPrintFiltrado" class="button button-success">
+                        <i class="fas fa-print"></i> Imprimir Filtrado
+                    </button>
+                </div>
+            </section>
+            
+            <section class="table-section">
+                <h2 class="table-title">Expedientes Judiciales</h2>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th data-sort="numCausa">N°</th>
+                                <th data-sort="caratula">Carátula</th>
+                                <th data-sort="tipoProceso">Tipo</th>
+                                <th data-sort="juzgado">Juzgado</th>
+                                <th data-sort="usuarioAsignado">Usuario</th>
+                                <th data-sort="estado">Estado</th>
+                                <th data-sort="prioridad">Prioridad</th>
+                                <th data-sort="fechaRegistro">Registro</th>
+                                <th>Eventos</th>
+                                <th class="no-print">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="10">Cargando expedientes...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <div class="pagination-container" id="paginacion-container"></div>
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles completos -->
+    <div class="modal" id="modalVer">
+        <div class="content">
+            <div class="modal-header">
+                <i class="fa-solid fa-eye"></i>
+                <h2 style="margin:0;">Detalle del Expediente</h2>
+            </div>
+            <div class="modal-body">
+                <div id="verContenido"></div>
+            </div>
+            <div class="controls-form" style="justify-content:flex-end;">
+                <button id="btnCerrarVer" class="button button-secondary"><i class="fa fa-xmark"></i>Cerrar</button>
+                <button id="btnPrintRegistro" class="button button-success"><i class="fa fa-print"></i>Imprimir Registro</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let causasData = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let filteredData = [];
+        let sortColumn = 'numCausa';
+        let sortDirection = 'asc';
+        let datosFiltrados = [];
+        let paginaActual = 1;
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Botón de carga de archivo
+            document.getElementById('uploadBtn').addEventListener('click', function() {
+                document.getElementById('fileInput').click();
+            });
+            
+            // Input de archivo
+            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+            
+            // Filtros y búsqueda
+            document.getElementById('buscador').addEventListener('input', handleFilterChange);
+            document.getElementById('filtroEstado').addEventListener('change', handleFilterChange);
+            document.getElementById('filtroPrioridad').addEventListener('change', handleFilterChange);
+            document.getElementById('filtroJuzgado').addEventListener('change', handleFilterChange);
+            document.getElementById('filtroTipoProceso').addEventListener('change', handleFilterChange);
+            document.getElementById('filtroEventos').addEventListener('change', handleFilterChange);
+            
+            // Ordenar al hacer clic en los encabezados
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const column = th.getAttribute('data-sort');
+                    if (sortColumn === column) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortColumn = column;
+                        sortDirection = 'asc';
+                    }
+                    renderTable();
+                });
+            });
+            
+            // Modal
+            document.getElementById('btnCerrarVer').addEventListener('click', closeModal);
+            document.getElementById('modalVer').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+            
+            // Botones de impresión
+            document.getElementById('btnPrintTodos').addEventListener('click', printTodos);
+            document.getElementById('btnPrintFiltrado').addEventListener('click', printFiltrado);
+            document.getElementById('btnPrintRegistro').addEventListener('click', printRegistro);
+        }
+
+        // Manejar la carga de archivos
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Mostrar nombre del archivo
+            document.getElementById('fileName').textContent = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    processData(data);
+                } catch (error) {
+                    showError('Error al procesar el archivo JSON. Asegúrate de que el formato es correcto.');
+                    console.error('Error parsing JSON:', error);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Procesar datos cargados
+        function processData(data) {
+            // Verificar si los datos tienen la estructura esperada
+            if (!Array.isArray(data)) {
+                showError('El archivo JSON debe contener un array de causas judiciales.');
+                return;
+            }
+            
+            // Validar que cada elemento tenga la estructura básica esperada
+            const validData = data.filter(item => 
+                item && item.data && (item.data.numCausa || item.data.caratula)
+            );
+            
+            if (validData.length === 0) {
+                showError('No se encontraron datos válidos en el archivo JSON.');
+                return;
+            }
+            
+            causasData = validData;
+            initFilters();
+            renderStats();
+            handleFilterChange();
+            
+            // Mostrar sección de datos
+            document.getElementById('dataSection').style.display = 'block';
+            document.getElementById('uploadSection').style.display = 'none';
+        }
+
+        // Inicializar filtros
+        function initFilters() {
+            // Obtener valores únicos para los filtros
+            const juzgados = [...new Set(causasData.map(item => item.data.juzgado))].filter(Boolean);
+            const tiposProceso = [...new Set(causasData.map(item => item.data.tipoProceso))].filter(Boolean);
+            
+            const juzgadoFilter = document.getElementById('filtroJuzgado');
+            juzgadoFilter.innerHTML = '<option value="">Juzgado (todos)</option>';
+            juzgados.forEach(juzgado => {
+                const option = document.createElement('option');
+                option.value = juzgado;
+                option.textContent = juzgado;
+                juzgadoFilter.appendChild(option);
+            });
+            
+            const tipoProcesoFilter = document.getElementById('filtroTipoProceso');
+            tipoProcesoFilter.innerHTML = '<option value="">Tipo de Proceso (todos)</option>';
+            tiposProceso.forEach(tipo => {
+                const option = document.createElement('option');
+                option.value = tipo;
+                option.textContent = tipo;
+                tipoProcesoFilter.appendChild(option);
+            });
+        }
+
+        // Renderizar estadísticas
+        function renderStats() {
+            const kpiCardsContainer = document.getElementById('kpiCards');
+            const totalCausas = causasData.length;
+            const enTramite = causasData.filter(item => item.data.estado === 'En trámite').length;
+            const finalizadas = causasData.filter(item => item.data.estado === 'Finalizado').length;
+            const archivadas = causasData.filter(item => item.data.estado === 'Archivado').length;
+            
+            // KPIs predefinidos con etiquetas formateadas
+            const kpisConfig = [
+                { key: 'total', label: 'Total de Causas', class: 'total', value: totalCausas },
+                { key: 'enTramite', label: 'En Trámite', class: 'en-tramite', value: enTramite },
+                { key: 'finalizado', label: 'Finalizado', class: 'finalizado', value: finalizadas },
+                { key: 'archivado', label: 'Archivado', class: 'archivado', value: archivadas }
+            ];
+            
+            let kpisHTML = '';
+            
+            // Generar tarjetas de KPIs basadas en los datos
+            kpisConfig.forEach(kpi => {
+                kpisHTML += `
+                    <div class="kpi-card ${kpi.class}">
+                        <div class="kpi-number">${kpi.value}</div>
+                        <div class="kpi-label">${kpi.label}</div>
+                    </div>
+                `;
+            });
+            
+            kpiCardsContainer.innerHTML = kpisHTML;
+        }
+
+        // Filtrar datos - CORREGIDO: Filtro por eventos funcionando correctamente
+        function filtrarDatos() {
+            const q = (document.getElementById('buscador').value || "").toLowerCase();
+            const est = (document.getElementById('filtroEstado').value || "").toLowerCase();
+            const prio = (document.getElementById('filtroPrioridad').value || "").toLowerCase();
+            const juzgado = (document.getElementById('filtroJuzgado').value || "").toLowerCase();
+            const tipoProc = (document.getElementById('filtroTipoProceso').value || "").toLowerCase();
+            const evento = (document.getElementById('filtroEventos').value || "").toLowerCase();
+
+            return causasData.filter(item => {
+                const data = item.data;
+                
+                // Búsqueda en TODOS los campos del objeto
+                let matchesSearch = !q;
+                if (q) {
+                    matchesSearch = false;
+                    // Buscar en todos los campos del objeto data
+                    for (const [key, value] of Object.entries(data)) {
+                        if (value !== null && value !== undefined) {
+                            const stringValue = String(value).toLowerCase();
+                            if (stringValue.includes(q)) {
+                                matchesSearch = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                const matchesEstado = !est || (data.estado && data.estado.toLowerCase() === est);
+                const matchesPrioridad = !prio || (data.prioridad && data.prioridad.toLowerCase() === prio);
+                const matchesJuzgado = !juzgado || (data.juzgado && data.juzgado.toLowerCase() === juzgado);
+                const matchesTipoProceso = !tipoProc || (data.tipoProceso && data.tipoProceso.toLowerCase() === tipoProc);
+                
+                // Filtro por eventos - CORREGIDO
+                let matchesEvento = !evento;
+                if (evento) {
+                    const eventos = obtenerTodosEventos(data);
+                    matchesEvento = eventos.some(e => e.clase === evento);
+                }
+                
+                return matchesSearch && matchesEstado && matchesPrioridad && matchesJuzgado && matchesTipoProceso && matchesEvento;
+            });
+        }
+
+        // Manejar cambio de filtros
+        function handleFilterChange() {
+            datosFiltrados = filtrarDatos();
+            paginaActual = 1;
+            renderTable();
+            renderStats();
+        }
+
+        // Ordenar datos
+        function sortData(data) {
+            return data.sort((a, b) => {
+                const aValue = a.data[sortColumn] || '';
+                const bValue = b.data[sortColumn] || '';
+                
+                if (sortDirection === 'asc') {
+                    return aValue.localeCompare(bValue);
+                } else {
+                    return bValue.localeCompare(aValue);
+                }
+            });
+        }
+
+        // Renderizar la tabla
+        function renderTable() {
+            const sortedData = sortData([...datosFiltrados]);
+            
+            const startIndex = (paginaActual - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = sortedData.slice(startIndex, endIndex);
+            
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            if (pageData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="10" class="no-data">No se encontraron resultados</td></tr>';
+            } else {
+                pageData.forEach(item => {
+                    const data = item.data;
+                    const row = document.createElement('tr');
+                    
+                    // Obtener eventos para esta causa
+                    const eventos = obtenerTodosEventos(data);
+                    let eventosHTML = "—";
+                    if (eventos.length > 0) {
+                        eventosHTML = `<div class="eventos-lista">`;
+                        eventos.forEach(evento => {
+                            let eventoTexto = `${evento.tipo}: ${formatearFecha(evento.fecha, true)}`;
+                            if (evento.tipo === "Diligencia" && evento.detalle) {
+                                eventoTexto += ` - ${evento.detalle}`;
+                            }
+                            eventosHTML += `<div class="evento-tabla ${evento.clase}">${eventoTexto}</div>`;
+                        });
+                        eventosHTML += `</div>`;
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${data.numCausa || ''}</td>
+                        <td>${data.caratula || ''}</td>
+                        <td>${data.tipoProceso || ''}</td>
+                        <td>${data.juzgado || ''}</td>
+                        <td>${data.usuarioAsignado || ''}</td>
+                        <td><span class="status-badge status-${getEstadoClass(data.estado)}">${data.estado || ''}</span></td>
+                        <td><span class="prioridad-pill ${prioridadClase(data.prioridad)}">${data.prioridad || 'Ninguna'}</span></td>
+                        <td>${formatearFecha(data.fechaRegistro, false)}</td>
+                        <td>${eventosHTML}</td>
+                        <td class="actions">
+                            <button class="button ver-detalles" data-id="${item.id}" title="Ver"><i class="fa fa-eye"></i></button>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                // Añadir event listeners a los botones de detalles
+                document.querySelectorAll('.ver-detalles').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        showDetails(id);
+                    });
+                });
+            }
+            
+            renderPagination(sortedData.length);
+            updateSortIndicators();
+        }
+
+        // Obtener todos los eventos de una causa - CORREGIDO: Clases de eventos actualizadas
+        function obtenerTodosEventos(data) {
+            const eventos = [];
+            
+            // Audiencias
+            if (Array.isArray(data.audiencias)) {
+                data.audiencias.forEach(aud => {
+                    const fecha = toDate(aud);
+                    if (fecha) {
+                        eventos.push({ 
+                            tipo: "Audiencia", 
+                            fecha: fecha,
+                            clase: "audiencias"
+                        });
+                    }
+                });
+            }
+            
+            // Cámara Gesell
+            if (data.audienciaGesell) {
+                const fecha = toDate(data.audienciaGesell);
+                if (fecha) {
+                    eventos.push({ 
+                        tipo: "Gesell", 
+                        fecha: fecha,
+                        clase: "gesell"
+                    });
+                }
+            }
+            
+            // Vencimiento
+            if (data.vencimiento) {
+                const fecha = toDate(data.vencimiento);
+                if (fecha) {
+                    eventos.push({ 
+                        tipo: "Vencimiento", 
+                        fecha: fecha,
+                        clase: "vencimientos"
+                    });
+                }
+            }
+            
+            // Vencimiento de Recursos
+            if (data.vencimientoRecursos) {
+                const fecha = toDate(data.vencimientoRecursos);
+                if (fecha) {
+                    eventos.push({ 
+                        tipo: "Recurso", 
+                        fecha: fecha,
+                        clase: "recursos"
+                    });
+                }
+            }
+            
+            // Diligencias
+            if (Array.isArray(data.diligencias)) {
+                data.diligencias.forEach(dilig => {
+                    const fecha = toDate(dilig.fecha);
+                    if (fecha) {
+                        eventos.push({ 
+                            tipo: "Diligencia", 
+                            fecha: fecha,
+                            detalle: dilig.detalle || '',
+                            clase: "diligencias"
+                        });
+                    }
+                });
+            }
+            
+            // Ordenar eventos por fecha (más reciente primero)
+            eventos.sort((a, b) => b.fecha - a.fecha);
+            return eventos;
+        }
+
+        // Función utilitaria para convertir a fecha
+        function toDate(v) {
+            if (!v) return null;
+            if (v.seconds) {
+                return new Date(v.seconds * 1000);
+            }
+            if (typeof v === 'string') {
+                return new Date(v);
+            }
+            return v;
+        }
+
+        // Formatear fecha
+        function formatearFecha(d, conHora = false) {
+            const fecha = toDate(d);
+            if (!fecha || isNaN(fecha)) return "";
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const año = fecha.getFullYear();
+            if (!conHora) {
+                return `${dia}/${mes}/${año}`;
+            }
+            const horas = String(fecha.getHours()).padStart(2, '0');
+            const minutos = String(fecha.getMinutes()).padStart(2, '0');
+            return `${dia}/${mes}/${año} ${horas}:${minutos}`;
+        }
+
+        // Obtener clase CSS para el estado
+        function getEstadoClass(estado) {
+            if (!estado) return '';
+            
+            switch(estado.toLowerCase()) {
+                case 'en trámite': return 'en-tramite';
+                case 'finalizado': return 'finalizado';
+                case 'archivado': return 'archivado';
+                default: return '';
+            }
+        }
+
+        // Obtener clase CSS para la prioridad
+        function prioridadClase(prioridad) {
+            if (!prioridad) return "prioridad-ninguna";
+            
+            switch(prioridad.toLowerCase()) {
+                case 'alta': return 'prioridad-alta';
+                case 'media': return 'prioridad-media';
+                case 'baja': return 'prioridad-baja';
+                default: return 'prioridad-ninguna';
+            }
+        }
+
+        // Obtener clase CSS para la prioridad en texto
+        function prioridadClaseTexto(prioridad) {
+            if (!prioridad) return "ninguna";
+            
+            switch(prioridad.toLowerCase()) {
+                case 'alta': return 'alta';
+                case 'media': return 'media';
+                case 'baja': return 'baja';
+                default: return 'ninguna';
+            }
+        }
+
+        // Actualizar indicadores de ordenamiento
+        function updateSortIndicators() {
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                
+                if (th.getAttribute('data-sort') === sortColumn) {
+                    th.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+        }
+
+        // Renderizar paginación
+        function renderPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const pagination = document.getElementById('paginacion-container');
+            pagination.innerHTML = '';
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = `<div class="page-info">Mostrando ${totalItems} resultados</div>`;
+                return;
+            }
+            
+            // Botón anterior
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Anterior';
+            prevButton.className = 'button';
+            prevButton.disabled = paginaActual === 1;
+            prevButton.addEventListener('click', () => {
+                if (paginaActual > 1) {
+                    paginaActual--;
+                    renderTable();
+                }
+            });
+            pagination.appendChild(prevButton);
+            
+            // Números de página
+            const startPage = Math.max(1, paginaActual - 2);
+            const endPage = Math.min(totalPages, paginaActual + 2);
+            
+            // Primera página si no está en el rango
+            if (startPage > 1) {
+                const firstButton = document.createElement('button');
+                firstButton.textContent = '1';
+                firstButton.className = 'button';
+                firstButton.addEventListener('click', () => {
+                    paginaActual = 1;
+                    renderTable();
+                });
+                pagination.appendChild(firstButton);
+                
+                if (startPage > 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.style.padding = '0.5rem';
+                    pagination.appendChild(ellipsis);
+                }
+            }
+            
+            // Páginas en el rango
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.className = 'button';
+                if (i === paginaActual) {
+                    pageButton.classList.add('active');
+                }
+                pageButton.addEventListener('click', () => {
+                    paginaActual = i;
+                    renderTable();
+                });
+                pagination.appendChild(pageButton);
+            }
+            
+            // Última página si no está en el rango
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.style.padding = '0.5rem';
+                    pagination.appendChild(ellipsis);
+                }
+                
+                const lastButton = document.createElement('button');
+                lastButton.textContent = totalPages;
+                lastButton.className = 'button';
+                lastButton.addEventListener('click', () => {
+                    paginaActual = totalPages;
+                    renderTable();
+                });
+                pagination.appendChild(lastButton);
+            }
+            
+            // Botón siguiente
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Siguiente';
+            nextButton.className = 'button';
+            nextButton.disabled = paginaActual === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (paginaActual < totalPages) {
+                    paginaActual++;
+                    renderTable();
+                }
+            });
+            pagination.appendChild(nextButton);
+            
+            // Información de página
+            const pageInfo = document.createElement('div');
+            pageInfo.className = 'page-info';
+            const startItem = (paginaActual - 1) * itemsPerPage + 1;
+            const endItem = Math.min(paginaActual * itemsPerPage, totalItems);
+            pageInfo.textContent = `Página ${paginaActual} de ${totalPages} | Mostrando ${startItem}-${endItem} de ${totalItems} registros`;
+            pagination.appendChild(pageInfo);
+        }
+
+        // Mostrar detalles de una causa
+        function showDetails(id) {
+            const causa = causasData.find(item => item.id === id);
+            if (!causa) return;
+            
+            const data = causa.data;
+            document.getElementById('modalVer').style.display = 'flex';
+            
+            const verContenido = document.getElementById('verContenido');
+            let contenidoHTML = "";
+            
+            // Mostrar prioridad en texto con colores según el nivel
+            const prioridadClaseTextoVal = prioridadClaseTexto(data.prioridad);
+            const prioridadTexto = `<div class="prioridad-texto ${prioridadClaseTextoVal}"><strong>Prioridad: ${data.prioridad || "Ninguna"}</strong></div>`;
+            contenidoHTML += prioridadTexto;
+            
+            const etiquetas = {
+                numCausa: "N° Expediente", 
+                caratula: "Carátula", 
+                tipoProceso: "Tipo de Proceso", 
+                juzgado: "Juzgado",
+                fechaInicio: "Fecha de Inicio", 
+                fechaPase: "Fecha de Pase", 
+                intervencion: "Intervención",
+                datosNnya: "Datos de NNyA", 
+                vencimiento: "Vencimiento", 
+                usuarioAsignado: "Usuario Asignado",
+                estado: "Estado", 
+                recursos: "Recursos Interpuestos",
+                recursosContestacion: "Contestación de Recursos", 
+                estadoRecursos: "Estado de Recursos",
+                vencimientoRecursos: "Vencimiento de Recursos", 
+                audienciaGesell: "Audiencia Gesell",
+                nnyaGesell: "NNyA en Gesell", 
+                observaciones: "Observaciones", 
+                fechaRegistro: "Fecha de Registro"
+            };
+            
+            const ordenClaves = [
+                "numCausa", "caratula", "tipoProceso", "juzgado", "estado", "usuarioAsignado",
+                "fechaRegistro", "fechaInicio", "fechaPase", "intervencion", "datosNnya", "vencimiento",
+                "audiencias", "diligencias", "recursos", "recursosContestacion", "estadoRecursos", "vencimientoRecursos",
+                "audienciaGesell", "nnyaGesell", "observaciones"
+            ];
+            
+            ordenClaves.forEach(k => {
+                const v = data[k];
+                if (v !== null && v !== undefined && v !== "" && k !== "prioridad") {
+                    const etiqueta = etiquetas[k] || k;
+                    if (k === "audiencias" && Array.isArray(v) && v.length > 0) {
+                        contenidoHTML += `<p><strong>Audiencias:</strong></p>`;
+                        v.forEach(aud => {
+                            contenidoHTML += `<p style="margin-left: 20px;">${formatearFecha(aud, true)}</p>`;
+                        });
+                    } else if (k === "diligencias" && Array.isArray(v) && v.length > 0) {
+                        contenidoHTML += `<p><strong>Diligencias:</strong></p>`;
+                        v.forEach(dilig => {
+                            const fecha = formatearFecha(dilig.fecha, true);
+                            const detalle = dilig.detalle ? ` - ${dilig.detalle}` : '';
+                            contenidoHTML += `<p style="margin-left: 20px;">${fecha}${detalle}</p>`;
+                        });
+                    } else if (['fechaInicio', 'fechaRegistro'].includes(k)) {
+                        contenidoHTML += `<p><strong>${etiqueta}:</strong> ${formatearFecha(v, false)}</p>`;
+                    } else if (v.seconds) {
+                        contenidoHTML += `<p><strong>${etiqueta}:</strong> ${formatearFecha(v, true)}</p>`;
+                    } else if (k !== "audiencias" && k !== "diligencias") {
+                        contenidoHTML += `<p><strong>${etiqueta}:</strong> ${v}</p>`;
+                    }
+                }
+            });
+            
+            verContenido.innerHTML = contenidoHTML;
+        }
+
+        // Cerrar modal
+        function closeModal() {
+            document.getElementById('modalVer').style.display = 'none';
+        }
+
+        // Mostrar error
+        function showError(message) {
+            const floatingAlert = document.getElementById('floating-alert');
+            floatingAlert.textContent = message;
+            floatingAlert.classList.remove('success');
+            floatingAlert.classList.add('danger');
+            floatingAlert.classList.add('show');
+            
+            setTimeout(() => {
+                floatingAlert.classList.remove('show');
+            }, 5000);
+        }
+
+        // Funciones de impresión
+        function printTodos() {
+            const html = generarTablaImpresion(causasData, "Listado Completo de Expedientes Judiciales");
+            printSection(html);
+        }
+
+        function printFiltrado() {
+            const html = generarTablaImpresion(datosFiltrados, "Listado Filtrado de Expedientes Judiciales");
+            printSection(html);
+        }
+
+        function printRegistro() {
+            const contenido = `
+                <div style="padding: 20px; font-family: Arial, sans-serif;">
+                    <h2 style="text-align: center; margin-bottom: 20px; color: #007bff;">Detalle del Expediente</h2>
+                    <div style="margin-bottom: 20px;">
+                        ${document.getElementById('verContenido').innerHTML}
+                    </div>
+                </div>
+            `;
+            printSection(contenido);
+        }
+
+        function printSection(html) {
+            const w = window.open("", "_blank", "width=900,height=700");
+            w.document.write(`
+                <html>
+                    <head>
+                        <title>Imprimir</title>
+                        <style>
+                            @media print {
+                                .button, .actions, .action-buttons, .controls-form,
+                                #btnPrintTodos, #btnPrintFiltrado, #btnPrintRegistro, #btnCerrarVer,
+                                .fa-solid, .fas, .far, .fa, .fa-eye, .fa-pen, .fa-trash, .fa-plus,
+                                .fa-save, .fa-print, .fa-xmark, .fa-check, .fa-arrow-left, .fa-arrow-right,
+                                .fa-exclamation-triangle, .fa-timeline, .fa-file-pen,
+                                .floating-alert, .prioridad-destacada,
+                                .header, .filters-section, .sidebar, .pagination-container,
+                                .upload-section {
+                                    display: none !important;
+                                }
+                                
+                                body, .container, .main-layout, .main {
+                                    margin: 0 !important;
+                                    padding: 0 !important;
+                                    width: 100% !important;
+                                    max-width: 100% !important;
+                                }
+                                
+                                .table-section, .kpi-section, .modal .content {
+                                    box-shadow: none !important;
+                                    border: 1px solid #ddd !important;
+                                    page-break-inside: avoid;
+                                }
+                                
+                                .data-table {
+                                    min-width: 100% !important;
+                                }
+                                
+                                .kpi-cards {
+                                    display: grid !important;
+                                    grid-template-columns: repeat(3, 1fr) !important;
+                                    gap: 10px !important;
+                                }
+                                
+                                .prioridad-pill {
+                                    color: #000 !important;
+                                    background-color: transparent !important;
+                                    border: 1px solid #000 !important;
+                                }
+                                
+                                .actions {
+                                    display: none !important;
+                                }
+                                
+                                /* Estilos para prioridad en texto durante impresión */
+                                .prioridad-texto {
+                                    color: #000 !important;
+                                    background-color: transparent !important;
+                                    border: 1px solid #000 !important;
+                                    font-weight: bold !important;
+                                }
+                                
+                                /* Estilos para impresión del detalle */
+                                #verContenido p {
+                                    margin: 8px 0 !important;
+                                    font-size: 14px !important;
+                                    line-height: 1.4 !important;
+                                }
+                                
+                                #verContenido strong {
+                                    color: #000 !important;
+                                    font-weight: bold !important;
+                                }
+                            }
+                        </style>
+                    </head>
+                    <body>${html}</body>
+                </html>
+            `);
+            w.document.close();
+            w.focus();
+            w.print();
+        }
+
+        function generarTablaImpresion(data, titulo) {
+            let tableHTML = `
+                <h2>${titulo}</h2>
+                <table border="1" style="width:100%; border-collapse:collapse; margin-top:20px;">
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Carátula</th>
+                            <th>Tipo</th>
+                            <th>Juzgado</th>
+                            <th>Usuario</th>
+                            <th>Estado</th>
+                            <th>Prioridad</th>
+                            <th>Registro</th>
+                            <th>Eventos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.forEach(d => {
+                const data = d.data;
+                const todosEventos = obtenerTodosEventos(data);
+                let eventosTexto = "—";
+                if (todosEventos.length > 0) {
+                    eventosTexto = todosEventos.map(evento => {
+                        let texto = `${evento.tipo}: ${formatearFecha(evento.fecha, true)}`;
+                        if (evento.tipo === "Diligencia" && evento.detalle) {
+                            texto += ` - ${evento.detalle}`;
+                        }
+                        return texto;
+                    }).join('; ');
+                }
+                
+                tableHTML += `
+                    <tr>
+                        <td>${data.numCausa||""}</td>
+                        <td>${data.caratula||""}</td>
+                        <td>${data.tipoProceso||""}</td>
+                        <td>${data.juzgado||""}</td>
+                        <td>${data.usuarioAsignado||""}</td>
+                        <td>${data.estado||""}</td>
+                        <td>${data.prioridad||"Ninguna"}</td>
+                        <td>${formatearFecha(data.fechaRegistro, false)}</td>
+                        <td>${eventosTexto}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            
+            return tableHTML;
+        }
+    </script>
+</body>
+</html>

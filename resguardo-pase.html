@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pases Diarios de Causas - Reserva Digital</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { padding-top: 70px; background-color: #f8f9fa; }
+    .card { transition: transform 0.3s; position: relative; border: none; border-radius: 8px; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    .card-actions { position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s; }
+    .card:hover .card-actions { opacity: 1; }
+    .expediente-card { cursor: pointer; }
+    .table-responsive { font-size: 0.9rem; }
+    .pagination { justify-content: center; margin-top: 20px; }
+    .filter-card { background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .stats-card { height: 100%; }
+    .stats-header { background-color: #0d6efd; color: white; border-top-left-radius: 8px; border-top-right-radius: 8px; }
+    .alert-danger { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+    .delete-confirmation { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.2); z-index: 1050; width: 350px; }
+    .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040; }
+    @media (max-width: 992px) {
+        .section-title { font-size: 1.5rem; }
+        .btn-group-responsive { flex-direction: column; gap: 10px; }
+        .btn-group-responsive .btn { width: 100%; }
+        .stats-section { margin-top: 20px; }
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    .filter-active {
+        background-color: #e3f2fd !important;
+        border-left: 4px solid #0d6efd !important;
+    }
+    .clickable-calendar { 
+        cursor: pointer; 
+    }
+    .upload-section {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    .info-text {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">Pases Diarios de Causas - Reserva Digital</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0">Registros de Pases y Asignaciones</h2>
+            <div class="btn-group-responsive d-flex gap-2">
+                <button class="btn btn-primary" id="btnUploadJson">
+                    <i class="fas fa-upload me-1"></i> Cargar JSON
+                </button>
+                <button class="btn btn-info" id="btnPrintAll">
+                    <i class="fas fa-print me-1"></i> Imprimir Todo
+                </button>
+                <button class="btn btn-danger" id="btnClearData" style="display:none;">
+                    <i class="fas fa-trash me-1"></i> Limpiar Datos
+                </button>
+            </div>
+        </div>
+
+        <div class="info-text">
+            Desde esta tabla únicamente se muestra los registros guardados en la computadora, no pueden modificarse ni editarse.
+            Corresponde a los registros dentro del Sistema Operador de la Defensoría Civil y Comercial 6.
+            Tiene por finalidad el resguardo de datos importantes.
+        </div>
+
+        <input type="file" id="fileInput" accept=".json" style="display: none;" />
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card p-3 mb-4 filter-card">
+                    <div class="row g-3">
+                        <div class="col-md-4 col-sm-6">
+                            <label class="form-label">Buscar en registros</label>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Expediente, usuario...">
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">Filtrar por Mes</label>
+                            <select id="monthFilter" class="form-select">
+                                <option value="">Todos los meses</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">Filtrar por Usuario</label>
+                            <select id="userFilter" class="form-select">
+                                <option value="">Todos los Usuarios</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <label class="form-label">Filtrar por Proceso</label>
+                            <select id="procesoFilter" class="form-select">
+                                <option value="">Todos</option>
+                                <option>DEUT</option>
+                                <option>CEJUME</option>
+                                <option>civil</option>
+                                <option>familia</option>
+                                <option>penal</option>
+                                <option>laboral</option>
+                                <option>violencia familiar</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 col-sm-12">
+                            <label class="form-label">Rango de Fecha de Pase</label>
+                            <div class="d-flex align-items-center">
+                                <div class="input-group me-1">
+                                    <span class="input-group-text clickable-calendar" data-target="dateFilterStart"><i class="fas fa-calendar-alt"></i></span>
+                                    <input type="date" id="dateFilterStart" class="form-control" placeholder="Desde">
+                                </div>
+                                <span class="input-group-text p-2 mx-1">a</span>
+                                <div class="input-group ms-1">
+                                    <span class="input-group-text clickable-calendar" data-target="dateFilterEnd"><i class="fas fa-calendar-alt"></i></span>
+                                    <input type="date" id="dateFilterEnd" class="form-control" placeholder="Hasta">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 col-sm-8">
+                            <label class="form-label d-block">Filtros Especiales</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="causaNuevaFilter">
+                                    <label class="form-check-label" for="causaNuevaFilter">Causa Nueva</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="causaAnteriorFilter">
+                                    <label class="form-check-label" for="causaAnteriorFilter">Causa Anterior</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="devolucionFilter">
+                                    <label class="form-check-label" for="devolucionFilter">Con Devolución</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="remisionFilter">
+                                    <label class="form-check-label" for="remisionFilter">Con Remisión</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="archivoFilter">
+                                    <label class="form-check-label" for="archivoFilter">Archivo</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-2 col-sm-4 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" id="btnSearch"><i class="fas fa-search"></i> Buscar</button>
+                        </div>
+                    </div>
+                    <div class="mt-3" id="activeFiltersContainer" style="display: none;">
+                        <small class="text-muted">Filtros activos:</small>
+                        <div id="activeFilters" class="d-flex flex-wrap gap-2 mt-1"></div>
+                    </div>
+                </div>
+
+                <div id="expedientesContainer">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2">Cargando expedientes...</p>
+                    </div>
+                </div>
+
+                <nav aria-label="Page navigation">
+                    <ul class="pagination" id="paginationContainer"></ul>
+                </nav>
+            </div>
+
+            <div class="col-lg-4 stats-section">
+                <div class="card stats-card">
+                    <div class="stats-header p-3">
+                        <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Estadísticas por Usuario</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="userStatsChart"></canvas>
+                        </div>
+                        <div id="statsDetails" class="mt-3">
+                            <p class="text-center text-muted">Cargando estadísticas...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">Sistema</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" id="toastMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles -->
+    <div class="modal fade" id="viewExpedienteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewExpedienteTitle">Detalles del Registro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewExpedienteBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-info" id="printExpedienteBtn">
+                        <i class="fas fa-print me-1"></i> Imprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allRecords = null;
+        let currentFileName = '';
+        let currentPage = 1;
+        const itemsPerPage = 20;
+        let filteredRecords = [];
+        let userStatsChart = null;
+
+        // Elementos del DOM
+        const fileInput = document.getElementById('fileInput');
+        const btnUploadJson = document.getElementById('btnUploadJson');
+        const btnClearData = document.getElementById('btnClearData');
+        const btnPrintAll = document.getElementById('btnPrintAll');
+        const expedientesContainer = document.getElementById('expedientesContainer');
+        const paginationContainer = document.getElementById('paginationContainer');
+        const searchInput = document.getElementById('searchInput');
+        const monthFilter = document.getElementById('monthFilter');
+        const userFilter = document.getElementById('userFilter');
+        const procesoFilter = document.getElementById('procesoFilter');
+        const dateFilterStart = document.getElementById('dateFilterStart');
+        const dateFilterEnd = document.getElementById('dateFilterEnd');
+        const btnSearch = document.getElementById('btnSearch');
+        const causaNuevaFilter = document.getElementById('causaNuevaFilter');
+        const causaAnteriorFilter = document.getElementById('causaAnteriorFilter');
+        const devolucionFilter = document.getElementById('devolucionFilter');
+        const remisionFilter = document.getElementById('remisionFilter');
+        const archivoFilter = document.getElementById('archivoFilter');
+        const activeFiltersContainer = document.getElementById('activeFiltersContainer');
+        const activeFilters = document.getElementById('activeFilters');
+        const printExpedienteBtn = document.getElementById('printExpedienteBtn');
+        const viewExpedienteModal = document.getElementById('viewExpedienteModal');
+
+        // Función para mostrar toast de notificación
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('liveToast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            
+            const header = toast.querySelector('.toast-header');
+            header.classList.remove('bg-danger', 'bg-success', 'text-white'); // Limpiar clases previas
+
+            if (type === 'error') {
+                header.classList.add('bg-danger', 'text-white');
+            } else if (type === 'success') {
+                header.classList.add('bg-success', 'text-white');
+            }
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+
+        // Función para formatear fecha
+        function formatDateFromISO(isoStr, includeTime = false) {
+            if (!isoStr) return 'N/A';
+            
+            try {
+                const date = new Date(isoStr);
+                if (isNaN(date)) return 'N/A';
+                
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                
+                if (includeTime) {
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    return `${day}/${month}/${year} ${hours}:${minutes} hs`;
+                }
+                
+                return `${day}/${month}/${year}`;
+            } catch {
+                return 'N/A';
+            }
+        }
+
+        // Función para obtener mes y año de una fecha ISO
+        function getMonthYearFromISO(isoStr) {
+            if (!isoStr) return null;
+            const [datePart] = isoStr.split('T');
+            const [year, month] = datePart.split('-');
+            return `${year}-${month}`;
+        }
+
+        // Función para obtener el nombre del mes
+        function getMonthName(monthKey) {
+            const [year, month] = monthKey.split('-').map(Number);
+            const date = new Date(year, month - 1);
+            return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        }
+
+        // Evento para cargar archivo JSON
+        btnUploadJson.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            currentFileName = file.name;
+            btnClearData.style.display = 'inline-block';
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const json = JSON.parse(event.target.result);
+                    if (!Array.isArray(json)) {
+                        showToast('El archivo JSON debe ser un array de registros.', 'error');
+                        resetApp();
+                        return;
+                    }
+                    allRecords = json;
+                    buildFilters();
+                    applyFilters();
+                    showToast('Archivo cargado exitosamente.', 'success');
+                } catch (err) {
+                    console.error(err);
+                    showToast('Error al parsear el JSON. Verifica que sea válido.', 'error');
+                    resetApp();
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Evento para limpiar datos
+        btnClearData.addEventListener('click', resetApp);
+
+        // Función para resetear la aplicación
+        function resetApp() {
+            allRecords = null;
+            currentFileName = '';
+            currentPage = 1;
+            fileInput.value = '';
+            btnClearData.style.display = 'none';
+            searchInput.value = '';
+            monthFilter.innerHTML = '<option value="">Todos los meses</option>';
+            userFilter.innerHTML = '<option value="">Todos los usuarios</option>';
+            procesoFilter.value = '';
+            dateFilterStart.value = '';
+            dateFilterEnd.value = '';
+            causaNuevaFilter.checked = false;
+            causaAnteriorFilter.checked = false;
+            devolucionFilter.checked = false;
+            remisionFilter.checked = false;
+            archivoFilter.checked = false;
+            activeFiltersContainer.style.display = 'none';
+            
+            expedientesContainer.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Carga un archivo JSON para ver los registros.</p>
+                </div>
+            `;
+            
+            paginationContainer.innerHTML = '';
+            renderUserStats();
+        }
+
+        // Función para construir filtros
+        function buildFilters() {
+            if (!allRecords) return;
+
+            const months = new Set();
+            const users = new Set();
+
+            allRecords.forEach(r => {
+                const d = r.data || {};
+                const key = getMonthYearFromISO(d.fechaPase);
+                if (key) months.add(key);
+                if (d.usuarioAsignado) users.add(d.usuarioAsignado);
+            });
+
+            // Llenar filtro de meses (orden descendente)
+            const sortedMonths = Array.from(months).sort((a, b) => {
+                const [y1, m1] = a.split('-').map(Number);
+                const [y2, m2] = b.split('-').map(Number);
+                return y2 - y1 || m2 - m1;
+            });
+            
+            monthFilter.innerHTML = '<option value="">Todos los meses</option>';
+            sortedMonths.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = getMonthName(m).replace(/^\w/, c => c.toUpperCase());
+                monthFilter.appendChild(opt);
+            });
+
+            // Llenar filtro de usuarios
+            userFilter.innerHTML = '<option value="">Todos los usuarios</option>';
+            Array.from(users).sort().forEach(user => {
+                const opt = document.createElement('option');
+                opt.value = user;
+                opt.textContent = user;
+                userFilter.appendChild(opt);
+            });
+        }
+
+        // Función para aplicar filtros
+        function applyFilters() {
+            if (!allRecords) {
+                filteredRecords = [];
+                renderExpedientes();
+                renderPagination();
+                renderUserStats();
+                return;
+            }
+
+            const searchString = searchInput.value.toLowerCase();
+            const selectedMonth = monthFilter.value;
+            const selectedUser = userFilter.value;
+            const selectedProceso = procesoFilter.value;
+            const startDate = dateFilterStart.value;
+            const endDate = dateFilterEnd.value;
+            const showCausaNueva = causaNuevaFilter.checked;
+            const showCausaAnterior = causaAnteriorFilter.checked;
+            const showDevolucion = devolucionFilter.checked;
+            const showRemision = remisionFilter.checked;
+            const showArchivo = archivoFilter.checked;
+
+            // Guardar filtros actuales
+            currentFilters = {
+                search: searchString || null,
+                month: selectedMonth || null,
+                user: selectedUser || null,
+                proceso: selectedProceso || null,
+                fechaInicio: startDate || null,
+                fechaFin: endDate || null,
+                causaNueva: showCausaNueva,
+                causaAnterior: showCausaAnterior,
+                devolucion: showDevolucion,
+                remision: showRemision,
+                archivo: showArchivo
+            };
+            
+            // Mostrar filtros activos
+            showActiveFilters();
+            
+            filteredRecords = allRecords.filter(record => {
+                const d = record.data || {};
+                
+                // Búsqueda en todos los campos
+                const matchesSearch = !searchString || 
+                    Object.values(d).some(value => {
+                        if (value && typeof value === 'string') {
+                            return value.toLowerCase().includes(searchString);
+                        }
+                        return false;
+                    });
+
+                // Filtro por mes
+                const matchesMonth = !selectedMonth || getMonthYearFromISO(d.fechaPase) === selectedMonth;
+
+                // Filtro por usuario
+                const matchesUser = !selectedUser || d.usuarioAsignado === selectedUser;
+
+                // Filtro por proceso
+                const matchesProceso = !selectedProceso || d.tipoProceso === selectedProceso;
+
+                // Filtro por fecha
+                let matchesDate = true;
+                if (startDate || endDate) {
+                    const fullDateTime = d.fechaPase;
+                    if (!fullDateTime) {
+                        matchesDate = false;
+                    } else {
+                        // Extraer solo la parte YYYY-MM-DD para la comparación del rango
+                        const datePart = fullDateTime.split('T')[0]; 
+                        
+                        if (startDate && datePart < startDate) {
+                            matchesDate = false;
+                        }
+                        if (endDate && datePart > endDate) {
+                            matchesDate = false;
+                        }
+                    }
+                }
+
+                // Filtros por tipo de causa
+                const matchesEstadoCausa = (!showCausaNueva && !showCausaAnterior) ||
+                                          (showCausaNueva && d.estadoCausa === 'nueva') ||
+                                          (showCausaAnterior && d.estadoCausa === 'anterior');
+
+                // Filtros por motivos especiales
+                const matchesSpecialReason = (!showDevolucion || (showDevolucion && d.devolucionMotivo)) &&
+                                             (!showRemision || (showRemision && d.remisionMotivo));
+
+                // Filtro por archivo
+                const matchesArchivo = !showArchivo || (showArchivo && d.archivo === true);
+
+                return matchesSearch && matchesMonth && matchesUser && matchesProceso && matchesDate && matchesEstadoCausa && matchesSpecialReason && matchesArchivo;
+            }).sort((a, b) => {
+                const dateA = new Date(a.data.fechaPase || 0);
+                const dateB = new Date(b.data.fechaPase || 0);
+                return dateB - dateA; // más reciente primero
+            });
+            
+            currentPage = 1;
+            renderExpedientes();
+            renderPagination();
+            renderUserStats();
+        }
+
+        // Función para mostrar filtros activos
+        function showActiveFilters() {
+            activeFilters.innerHTML = '';
+            let hasFilters = false;
+            
+            if (currentFilters.search) {
+                hasFilters = true;
+                activeFilters.innerHTML += `<span class="badge bg-primary">Búsqueda: "${currentFilters.search}"</span>`;
+            }
+            
+            if (currentFilters.month) {
+                hasFilters = true;
+                activeFilters.innerHTML += `<span class="badge bg-info text-dark">Mes: "${getMonthName(currentFilters.month)}"</span>`;
+            }
+            
+            if (currentFilters.user) {
+                hasFilters = true;
+                activeFilters.innerHTML += `<span class="badge bg-warning text-dark">Usuario: "${currentFilters.user}"</span>`;
+            }
+
+            if (currentFilters.proceso) {
+                hasFilters = true;
+                activeFilters.innerHTML += `<span class="badge bg-secondary">Proceso: "${currentFilters.proceso}"</span>`;
+            }
+            
+            if (currentFilters.fechaInicio || currentFilters.fechaFin) {
+                hasFilters = true;
+                let fechaText = 'Fechas: ';
+                if (currentFilters.fechaInicio) fechaText += `Desde ${formatDateFromISO(currentFilters.fechaInicio)} `;
+                if (currentFilters.fechaFin) fechaText += `Hasta ${formatDateFromISO(currentFilters.fechaFin)}`;
+                activeFilters.innerHTML += `<span class="badge bg-success">${fechaText}</span>`;
+            }
+            
+            if (currentFilters.causaNueva) {
+                hasFilters = true;
+                activeFilters.innerHTML += `<span class="badge bg-danger">Causa Nueva</span>`;
+            }
+            if (currentFilters.causaAnterior) {
+                hasFilters = true;
+                activeFilters.innerHTML += `<span class="badge bg-danger">Causa Anterior</span>`;
+            }
+
+            if (currentFilters.devolucion) {
+                hasFilters = true;
+                activeFilters.innerHTML += `<span class="badge bg-warning text-dark">Con Devolución</span>`;
+            }
+
+            if (currentFilters.remision) {
+                hasFilters = true;
+                activeFilters.innerHTML += `<span class="badge bg-info text-dark">Con Remisión</span>`;
+            }
+
+            if (currentFilters.archivo) {
+                hasFilters = true;
+                activeFilters.innerHTML += `<span class="badge bg-dark">Archivo</span>`;
+            }
+            
+            activeFiltersContainer.style.display = hasFilters ? 'block' : 'none';
+        }
+
+        // Función para renderizar expedientes
+        function renderExpedientes() {
+            expedientesContainer.innerHTML = '';
+            
+            if (filteredRecords.length === 0) {
+                expedientesContainer.innerHTML = '<p class="text-center text-muted mt-5">No hay registros que coincidan con los criterios de búsqueda.</p>';
+                return;
+            }
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredRecords.length);
+            const currentRecords = filteredRecords.slice(startIndex, endIndex);
+            
+            // Crear tabla
+            let tableHtml = `
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Usuario</th>
+                                <th>Causa</th>
+                                <th>Proceso</th>
+                                <th>Obs.</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            currentRecords.forEach((record, index) => {
+                const d = record.data || {};
+                const globalIndex = startIndex + index;
+                
+                tableHtml += `
+                    <tr class="expediente-row" data-id="${globalIndex}">
+                        <td class="fw-bold">${globalIndex + 1}</td>
+                        <td>${formatDateFromISO(d.fechaPase)}</td>
+                        <td>${d.tipoProceso || ''}</td>
+                        <td>${d.usuarioAsignado || ''}</td>
+                        <td>${d.numCausa || ''}</td>
+                        <td>${d.detalleProceso || ''}</td>
+                        <td class="text-truncate" style="max-width: 150px;">${d.observacionesPase || ''}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary view-btn" data-id="${globalIndex}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-muted mt-2">
+                    Mostrando ${startIndex + 1} - ${endIndex} de ${filteredRecords.length} registros
+                </div>
+            `;
+            
+            expedientesContainer.innerHTML = tableHtml;
+            
+            // Agregar event listeners a los botones
+            expedientesContainer.querySelectorAll('.view-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    viewExpediente(e.currentTarget.dataset.id);
+                });
+            });
+            
+            expedientesContainer.querySelectorAll('.expediente-row').forEach(row => {
+                row.addEventListener('click', (e) => {
+                    if (!e.target.closest('button')) {
+                        viewExpediente(e.currentTarget.dataset.id);
+                    }
+                });
+            });
+        }
+
+        // Función para renderizar paginación
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+            
+            if (totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+            
+            let paginationHtml = '';
+            
+            // Botón anterior
+            paginationHtml += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">Anterior</a>
+                </li>
+            `;
+            
+            // Páginas
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHtml += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            }
+            
+            // Botón siguiente
+            paginationHtml += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">Siguiente</a>
+                </li>
+            `;
+            
+            paginationContainer.innerHTML = paginationHtml;
+            
+            // Agregar event listeners a los enlaces de paginación
+            paginationContainer.querySelectorAll('.page-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = parseInt(e.target.dataset.page);
+                    if (!isNaN(page)) {
+                        currentPage = page;
+                        renderExpedientes();
+                        renderPagination();
+                        window.scrollTo(0, 0);
+                    }
+                });
+            });
+        }
+
+        // Función para generar estadísticas por usuario
+        function renderUserStats() {
+            const statsByUser = {};
+            
+            filteredRecords.forEach(record => {
+                const user = record.data?.usuarioAsignado || 'Sin Usuario';
+                if (!statsByUser[user]) {
+                    statsByUser[user] = 0;
+                }
+                statsByUser[user]++;
+            });
+            
+            // Ordenar usuarios por cantidad de registros (descendente)
+            const sortedUsers = Object.keys(statsByUser).sort((a, b) => statsByUser[b] - statsByUser[a]);
+            
+            // Preparar datos para el gráfico
+            const userLabels = sortedUsers;
+            const userData = sortedUsers.map(user => statsByUser[user]);
+            
+            // Crear o actualizar el gráfico
+            const ctx = document.getElementById('userStatsChart').getContext('2d');
+            
+            if (userStatsChart) {
+                userStatsChart.destroy();
+            }
+            
+            if (sortedUsers.length === 0) {
+                document.getElementById('statsDetails').innerHTML = '<p class="text-center text-muted">No hay datos para mostrar</p>';
+                return;
+            }
+            
+            userStatsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: userLabels,
+                    datasets: [{
+                        label: 'Registros por Usuario',
+                        data: userData,
+                        backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Cantidad de Registros'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Registros: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Actualizar detalles de estadísticas
+            const statsDetails = document.getElementById('statsDetails');
+            let detailsHtml = `
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-bold">Usuario</span>
+                    <span class="fw-bold">Cantidad</span>
+                </div>
+            `;
+            
+            sortedUsers.forEach(user => {
+                detailsHtml += `
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>${user}</span>
+                        <span class="badge bg-primary rounded-pill">${statsByUser[user]}</span>
+                    </div>
+                `;
+            });
+            
+            detailsHtml += `
+                <div class="d-flex justify-content-between mt-2 fw-bold">
+                    <span>Total</span>
+                    <span class="badge bg-success rounded-pill">${filteredRecords.length}</span>
+                </div>
+            `;
+            
+            statsDetails.innerHTML = detailsHtml;
+        }
+
+        // Función para ver el registro en un modal informativo
+        function viewExpediente(index) {
+            if (!filteredRecords[index]) return;
+            
+            const record = filteredRecords[index];
+            const d = record.data || {};
+            const viewBody = document.getElementById('viewExpedienteBody');
+            
+            const estadoCausaDisplay = d.estadoCausa === 'nueva' ? 'Causa Nueva' : (d.estadoCausa === 'anterior' ? 'Causa Anterior' : 'N/A');
+            const detalleEstadoCausaDisplay = d.detalleEstadoCausa || 'N/A';
+            
+            viewBody.innerHTML = `
+                <div id="printContent">
+                    <p><strong>ID:</strong> ${record.id || 'N/A'}</p>
+                    <p><strong>Número de Causa:</strong> ${d.numCausa || 'N/A'}</p>
+                    <p><strong>Tipo de Proceso:</strong> ${d.tipoProceso || 'N/A'}</p>
+                    <p><strong>Detalle Proceso:</strong> ${d.detalleProceso || 'N/A'}</p>
+                    <p><strong>Estado de la Causa:</strong> ${estadoCausaDisplay} (${detalleEstadoCausaDisplay})</p>
+                    <hr>
+                    <p><strong>Usuario Asignado:</strong> ${d.usuarioAsignado || 'N/A'}</p>
+                    <p><strong>Fecha y Hora de Pase:</strong> ${formatDateFromISO(d.fechaPase, true)}</p>
+                    <p><strong>Observaciones del Pase/asignación:</strong> ${d.observacionesPase || 'N/A'}</p>
+                    <p><strong>Otros Expedientes por Cuerda:</strong> ${d.otrosExpedientesCuerda || 'N/A'}</p>
+                    <p><strong>Otros Expedientes Acumulados:</strong> ${d.otrosExpedientesAcumulados || 'N/A'}</p>
+                    <hr>
+                    <h6>Motivos Especiales</h6>
+                    <p><strong>Devolución a Mesa de Entradas:</strong> ${d.devolucionMotivo || 'N/A'}</p>
+                    <p><strong>Remisión a otra Defensoría:</strong> ${d.remisionMotivo || 'N/A'}</p>
+                    <p><strong>Archivo:</strong> ${d.archivo ? 'Sí' : 'No'}</p>
+                </div>
+            `;
+            
+            const modal = new bootstrap.Modal(viewExpedienteModal);
+            modal.show();
+            
+            printExpedienteBtn.onclick = () => imprimirExpediente(record);
+        }
+        
+        // Función para imprimir el contenido del modal
+        function imprimirExpediente(record) {
+            const d = record.data || {};
+            const estadoCausaDisplay = d.estadoCausa === 'nueva' ? 'Causa Nueva' : (d.estadoCausa === 'anterior' ? 'Causa Anterior' : 'N/A');
+            const detalleEstadoCausaDisplay = d.detalleEstadoCausa || 'N/A';
+            
+            const printContent = `
+                <h2>Detalles del Registro</h2>
+                <p><strong>ID:</strong> ${record.id || 'N/A'}</p>
+                <p><strong>Número de Causa:</strong> ${d.numCausa || 'N/A'}</p>
+                <p><strong>Tipo de Proceso:</strong> ${d.tipoProceso || 'N/A'}</p>
+                <p><strong>Detalle Proceso:</strong> ${d.detalleProceso || 'N/A'}</p>
+                <p><strong>Estado de la Causa:</strong> ${estadoCausaDisplay} (${detalleEstadoCausaDisplay})</p>
+                <p><strong>Usuario Asignado:</strong> ${d.usuarioAsignado || 'N/A'}</p>
+                <p><strong>Fecha y Hora de Pase:</strong> ${formatDateFromISO(d.fechaPase, true)}</p>
+                <p><strong>Observaciones del Pase/asignación:</strong> ${d.observacionesPase || 'N/A'}</p>
+                <p><strong>Otros Expedientes por Cuerda:</strong> ${d.otrosExpedientesCuerda || 'N/A'}</p>
+                <p><strong>Otros Expedientes Acumulados:</strong> ${d.otrosExpedientesAcumulados || 'N/A'}</p>
+                <hr>
+                <h6>Motivos Especiales</h6>
+                <p><strong>Devolución a Mesa de Entradas:</strong> ${d.devolucionMotivo || 'N/A'}</p>
+                <p><strong>Remisión a otra Defensoría:</strong> ${d.remisionMotivo || 'N/A'}</p>
+                <p><strong>Archivo:</strong> ${d.archivo ? 'Sí' : 'No'}</p>
+            `;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Imprimir Registro</title>');
+            printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">');
+            printWindow.document.write('<style>body { padding: 20px; }</style></head><body>');
+            printWindow.document.write(printContent);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        }
+        
+        // Función para imprimir todos los registros filtrados
+        function imprimirTodosExpedientes() {
+            if (filteredRecords.length === 0) {
+                showToast('No hay registros para imprimir.', 'error');
+                return;
+            }
+            
+            let printContent = `
+                <h2 class="text-center mb-4">Listado de Registros - Pases Diarios de Causas</h2>
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Usuario</th>
+                            <th>Causa</th>
+                            <th>Proceso</th>
+                            <th>Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            filteredRecords.forEach((record, index) => {
+                const d = record.data || {};
+                printContent += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${formatDateFromISO(d.fechaPase)}</td>
+                        <td>${d.tipoProceso || ''}</td>
+                        <td>${d.usuarioAsignado || ''}</td>
+                        <td>${d.numCausa || ''}</td>
+                        <td>${d.detalleProceso || ''}</td>
+                        <td>${d.observacionesPase || ''}</td>
+                    </tr>
+                `;
+            });
+            
+            printContent += `
+                    </tbody>
+                </table>
+                <div class="mt-3 text-muted">
+                    Total de registros: ${filteredRecords.length}
+                </div>
+            `;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Listado de Registros</title>');
+            printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">');
+            printWindow.document.write('<style>body { padding: 20px; }</style></head><body>');
+            printWindow.document.write(printContent);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        }
+
+        // Event listeners para filtros
+        btnSearch.addEventListener('click', applyFilters);
+
+        searchInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                applyFilters();
+            }
+        });
+
+        monthFilter.addEventListener('change', applyFilters);
+        userFilter.addEventListener('change', applyFilters);
+        procesoFilter.addEventListener('change', applyFilters); 
+        dateFilterStart.addEventListener('change', applyFilters);
+        dateFilterEnd.addEventListener('change', applyFilters);
+        causaNuevaFilter.addEventListener('change', applyFilters);
+        causaAnteriorFilter.addEventListener('change', applyFilters);
+        devolucionFilter.addEventListener('change', applyFilters);
+        remisionFilter.addEventListener('change', applyFilters);
+        archivoFilter.addEventListener('change', applyFilters);
+        
+        // Asignar evento al botón de imprimir todos
+        btnPrintAll.addEventListener('click', imprimirTodosExpedientes);
+
+        // Event listener para hacer clic en el icono del calendario
+        document.addEventListener('click', (e) => {
+            const clickableCalendar = e.target.closest('.clickable-calendar');
+            if (clickableCalendar) {
+                e.preventDefault();
+                const targetId = clickableCalendar.dataset.target;
+                const input = document.getElementById(targetId);
+                
+                if (input) {
+                    input.click(); 
+                }
+            }
+        });
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', () => {
+            resetApp();
+            
+            // Establecer fecha actual en el filtro de fin si está vacío
+            if (!dateFilterEnd.value) {
+                const today = new Date();
+                dateFilterEnd.value = today.toISOString().split('T')[0];
+            }
+        });
+    </script>
+</body>
+</html>

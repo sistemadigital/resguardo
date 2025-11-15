@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atención al Púlbico-Resguardo Digital</title>
+    <style>
+        :root {
+            --primary-color: #4285F4;
+            --danger-color: #EA4335;
+            --export-color: #34A853;
+            --background-light: #F8F9FA;
+            --text-dark: #3C4043;
+            --border-light: #E0E0E0;
+            --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+        }
+        h1, h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 10px;
+        }
+        .config-section, .app-section {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 11px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        button:hover {
+            background-color: #357AE8;
+            transform: translateY(-1px);
+        }
+        button:disabled {
+            background-color: #AAB0B7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .delete-btn {
+            background-color: var(--danger-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .delete-btn:hover {
+            background-color: #D93025;
+        }
+        .export-btn {
+            background-color: var(--export-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .export-btn:hover {
+            background-color: #2E8549;
+        }
+        #app-section {
+            display: none;
+        }
+        #status {
+            margin-top: 15px;
+            font-style: italic;
+            color: #555;
+            font-size: 14px;
+        }
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0;
+            background-color: #fff;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-light);
+            text-align: left;
+            word-wrap: break-word;
+            font-size: 14px;
+            vertical-align: top;
+        }
+        th {
+            background-color: #F1F3F4;
+            font-weight: 600;
+            color: var(--text-dark);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover {
+            background-color: #F8F9FA;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .batch-actions {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        /* Modal de confirmación de eliminación */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .delete-modal {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        
+        .modal-overlay.active .delete-modal {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            background-color: var(--danger-color);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .modal-body {
+            padding: 25px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .modal-body p {
+            margin: 0 0 15px;
+            line-height: 1.5;
+        }
+        
+        .modal-details {
+            background-color: #FFF5F5;
+            border: 1px solid #FED7D7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .modal-details strong {
+            color: var(--danger-color);
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .modal-cancel {
+            background-color: #F1F3F4;
+            color: var(--text-dark);
+        }
+        
+        .modal-cancel:hover {
+            background-color: #E8EAED;
+        }
+        
+        .modal-confirm {
+            background-color: var(--danger-color);
+        }
+        
+        .modal-confirm:hover {
+            background-color: #D93025;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            body {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            input[type="text"] {
+                width: 100%;
+            }
+            th, td {
+                padding: 8px;
+            }
+            .modal-footer {
+                flex-direction: column;
+            }
+            .modal-footer button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Atención al Púlbico-Resguardo Digital</h1>
+        <p>Esta aplicacion permite descargar todos los registros de atención al público del Sistema Operador de la Defensoria Civil y Comercial 6. Uso autorizado. Usar: "atencion" para iniciar la descarga.</p>
+
+        <div id="config-section">
+            <h2>1. Conexión</h2>
+            <p>Introduce la ruta de la base de datos que quieres administrar (deja vacío para la raíz).</p>
+            <input type="text" id="databasePath" placeholder="Ej: usuarios, productos, etc.">
+            <button id="connectBtn">Cargar Datos</button>
+        </div>
+
+        <div id="app-section">
+            <h2 id="databaseTitle"></h2>
+            <input type="text" id="filterInput" placeholder="🔍 Filtrar por cualquier campo...">
+            <p id="recordCount"></p>
+            <div class="batch-actions">
+                <button id="exportSelectedBtn" class="export-btn" disabled>➡️ Exportar Seleccionados (JSON)</button>
+            </div>
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllCheckbox"></th>
+                            <th>ID del Registro</th>
+                            <th>Última Modificación</th>
+                            <th>Datos (JSON)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="status">Esperando conexión...</div>
+    </div>
+
+    <script type="module">
+        // Importaciones del SDK de Firebase para Realtime Database
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getDatabase, 
+            ref, 
+            get, 
+            onValue,
+            query,
+            orderByChild,
+            startAt,
+            endAt
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // -------------------------------------------------------------------
+        // CONFIGURACIÓN DE FIREBASE
+        // -------------------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyDgxLS98sk6GkLrjMu3BVS2cmZ9exdh4dY",
+            authDomain: "atencion-publico-def6.firebaseapp.com",
+            databaseURL: "https://atencion-publico-def6-default-rtdb.firebaseio.com",
+            projectId: "atencion-publico-def6",
+            storageBucket: "atencion-publico-def6.firebasestorage.app",
+            messagingSenderId: "1052433106688",
+            appId: "1:1052433106688:web:8ac3e144bcf377ac4b55e5"
+        };
+        // -------------------------------------------------------------------
+
+        let db;
+        let currentDatabasePath = '';
+        let recordsCache = [];
+        let currentDataRef = null;
+
+        // Elementos del DOM
+        const connectBtn = document.getElementById('connectBtn');
+        const databasePathInput = document.getElementById('databasePath');
+        const statusDiv = document.getElementById('status');
+        const appSection = document.getElementById('app-section');
+        const configSection = document.getElementById('config-section');
+        const dataTableBody = document.querySelector("#dataTable tbody");
+        const filterInput = document.getElementById('filterInput');
+        const databaseTitle = document.getElementById('databaseTitle');
+        const recordCount = document.getElementById('recordCount');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const exportSelectedBtn = document.getElementById('exportSelectedBtn');
+
+        // Inicializar Firebase y conectar
+        const initializeAndConnect = () => {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getDatabase(app);
+                currentDatabasePath = databasePathInput.value.trim();
+
+                statusDiv.textContent = `Cargando datos desde "${currentDatabasePath || 'raíz'}"...`;
+                fetchAndDisplayData();
+            } catch (error) {
+                statusDiv.textContent = `Error de conexión: ${error.message}`;
+                console.error("Error al inicializar Firebase:", error);
+            }
+        };
+
+        // Obtener y mostrar datos
+        const fetchAndDisplayData = async () => {
+            if (!db) return;
+            
+            // Crear referencia a la ruta especificada o a la raíz
+            const databaseRef = currentDatabasePath ? ref(db, currentDatabasePath) : ref(db);
+            
+            dataTableBody.innerHTML = '';
+            
+            try {
+                // Usar onValue para escuchar cambios en tiempo real
+                if (currentDataRef) {
+                    // Desconectar listener anterior si existe
+                    // Nota: En una implementación más robusta, usaríamos off() para desconectar
+                }
+                
+                currentDataRef = databaseRef;
+                
+                onValue(databaseRef, (snapshot) => {
+                    recordsCache = [];
+                    const data = snapshot.val();
+                    
+                    if (!data) {
+                        statusDiv.textContent = `La ruta "${currentDatabasePath || 'raíz'}" está vacía o no existe.`;
+                        appSection.style.display = 'block';
+                        configSection.style.display = 'none';
+                        databaseTitle.textContent = `Ruta: ${currentDatabasePath || 'raíz'}`;
+                        recordCount.textContent = '0 registro(s) encontrado(s).';
+                        return;
+                    }
+                    
+                    // Procesar datos según si es un objeto o una colección
+                    if (typeof data === 'object' && data !== null) {
+                        Object.keys(data).forEach(key => {
+                            recordsCache.push({ 
+                                id: key, 
+                                data: data[key],
+                                timestamp: data[key].updatedAt || data[key].createdAt || data[key].timestamp || null
+                            });
+                        });
+                    } else {
+                        // Si es un valor simple, tratarlo como un único registro
+                        recordsCache.push({ 
+                            id: 'valor', 
+                            data: data,
+                            timestamp: null
+                        });
+                    }
+                    
+                    displayRecords(recordsCache);
+                    configSection.style.display = 'none';
+                    appSection.style.display = 'block';
+                    databaseTitle.textContent = `Ruta: ${currentDatabasePath || 'raíz'}`;
+                    statusDiv.textContent = 'Datos cargados correctamente. Escuchando cambios en tiempo real...';
+                    updateBatchButtonState();
+                }, (error) => {
+                    statusDiv.textContent = `Error al obtener los datos: ${error.message}`;
+                    console.error("Error fetching data: ", error);
+                });
+
+            } catch (error) {
+                statusDiv.textContent = `Error al obtener los datos: ${error.message}`;
+                console.error("Error fetching data: ", error);
+            }
+        };
+
+        // Formatear fecha
+        const formatDate = (timestamp) => {
+            if (!timestamp) return 'N/A';
+            
+            // Si el timestamp está en milisegundos
+            let date;
+            if (typeof timestamp === 'number') {
+                date = new Date(timestamp);
+            } 
+            // Si está en formato de Firebase (segundos y nanosegundos)
+            else if (timestamp.seconds !== undefined) {
+                date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
+            }
+            // Si ya es un objeto Date o string
+            else {
+                date = new Date(timestamp);
+            }
+            
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+                timeZone: 'America/Argentina/Buenos_Aires'
+            };
+            
+            const formattedDate = new Intl.DateTimeFormat('es-AR', options).format(date);
+            return formattedDate.replace(',', '');
+        };
+
+        // Mostrar registros en la tabla
+        const displayRecords = (records) => {
+            dataTableBody.innerHTML = '';
+            recordCount.textContent = `${records.length} registro(s) encontrado(s).`;
+            records.forEach(recordData => {
+                const row = document.createElement('tr');
+                const jsonDataString = JSON.stringify(recordData.data, null, 2);
+                const formattedDate = formatDate(recordData.timestamp);
+                
+                row.innerHTML = `
+                    <td><input type="checkbox" class="record-checkbox" data-id="${recordData.id}"></td>
+                    <td>${recordData.id}</td>
+                    <td>${formattedDate}</td>
+                    <td><pre>${jsonDataString}</pre></td>
+                `;
+                dataTableBody.appendChild(row);
+            });
+            selectAllCheckbox.checked = false;
+        };
+
+        // Actualizar estado de los botones de lote
+        const updateBatchButtonState = () => {
+            const checkedCheckboxes = document.querySelectorAll('.record-checkbox:checked');
+            const isDisabled = checkedCheckboxes.length === 0;
+            exportSelectedBtn.disabled = isDisabled;
+            
+            const allCheckboxes = document.querySelectorAll('.record-checkbox');
+            const allChecked = allCheckboxes.length > 0 && checkedCheckboxes.length === allCheckboxes.length;
+            selectAllCheckbox.checked = allChecked;
+        };
+
+        // Seleccionar/deseleccionar todos
+        const toggleSelectAll = () => {
+            const checkboxes = document.querySelectorAll('.record-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            updateBatchButtonState();
+        };
+
+        // Exportar registros seleccionados
+        const exportSelected = () => {
+            const checkedCheckboxes = document.querySelectorAll('.record-checkbox:checked');
+            const selectedRecords = recordsCache.filter(record => 
+                Array.from(checkedCheckboxes).some(cb => cb.getAttribute('data-id') === record.id)
+            );
+            
+            const exportData = {
+                path: currentDatabasePath || 'raíz',
+                exportedAt: new Date().toISOString(),
+                records: selectedRecords
+            };
+            
+            const jsonData = JSON.stringify(exportData, null, 2);
+            
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            const date = new Date().toISOString().slice(0, 10);
+            const pathName = currentDatabasePath ? currentDatabasePath.replace(/\//g, '_') : 'root';
+            a.download = `realtime_db_${pathName}_${date}.json`;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            statusDiv.textContent = `${selectedRecords.length} registro(s) exportado(s) a ${a.download}.`;
+        };
+
+        // Filtrar tabla
+        const filterTable = () => {
+            const filterText = filterInput.value.toLowerCase();
+            const filteredRecords = recordsCache.filter(recordData => {
+                const recordString = `${recordData.id.toLowerCase()} ${JSON.stringify(recordData.data).toLowerCase()} ${recordData.timestamp ? formatDate(recordData.timestamp).toLowerCase() : ''}`;
+                return recordString.includes(filterText);
+            });
+            displayRecords(filteredRecords);
+            updateBatchButtonState();
+        };
+
+        // Asignar eventos
+        connectBtn.addEventListener('click', initializeAndConnect);
+        databasePathInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                initializeAndConnect();
+            }
+        });
+        filterInput.addEventListener('keyup', filterTable);
+        selectAllCheckbox.addEventListener('change', toggleSelectAll);
+        exportSelectedBtn.addEventListener('click', exportSelected);
+
+        // Delegación de eventos para las casillas de verificación
+        dataTableBody.addEventListener('click', (event) => {
+            if (event.target.classList.contains('record-checkbox')) {
+                updateBatchButtonState();
+            }
+        });
+    </script>
+</body>
+</html>
