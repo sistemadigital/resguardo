@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Libro de Actas - Gestión JSON</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            --text-color: #334155;
+            --text-light: #64748b;
+            --light-gray: #f8fafc;
+            --border-color: #e2e8f0;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+        body { background-color: #f1f5f9; color: var(--text-color); line-height: 1.6; }
+        .container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white; padding: 1.5rem; border-radius: var(--radius); margin-bottom: 2rem;
+            box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .stats { display: flex; gap: 15px; }
+        .stat-item { display: flex; flex-direction: column; align-items: center; min-width: 80px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 8px; }
+        .stat-value { font-size: 1.2rem; font-weight: 700; }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.8; }
+
+        .controls-container {
+            display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;
+            background: var(--white); padding: 15px; border-radius: var(--radius); box-shadow: var(--shadow);
+        }
+
+        .search-container { flex: 1; display: flex; gap: 10px; }
+        .search-input { flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); }
+        
+        .btn {
+            padding: 10px 18px; border: none; border-radius: var(--radius-sm);
+            cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: var(--transition);
+        }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-success { background: var(--success-color); color: white; }
+        .btn-secondary { background: var(--secondary-color); color: white; }
+
+        /* Estilos de Tabla */
+        .table-container { background: white; border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background: #f8fafc; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; }
+        tr:hover { background-color: #f1f5f9; }
+
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-info { background: #e0f2fe; color: #0369a1; }
+
+        /* Modales */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: white; width: 90%; max-width: 900px; max-height: 90vh; 
+            border-radius: var(--radius); padding: 25px; overflow-y: auto; position: relative;
+        }
+        .close-btn { position: absolute; top: 15px; right: 15px; font-size: 1.5rem; cursor: pointer; border: none; background: none; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; }
+        .form-input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; }
+        textarea.form-input { min-height: 150px; grid-column: span 2; }
+
+        .action-btn { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; color: white; margin-right: 5px; }
+        .btn-edit { background: var(--warning-color); }
+        .btn-view { background: var(--info-color); }
+        .btn-delete { background: var(--danger-color); }
+
+        #fileInput { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>Libro de Actas <small style="font-size: 0.5em; opacity: 0.7;">MODO JSON</small></h1>
+                <p id="fileNameDisplay" style="font-size: 0.8rem; margin-top: 5px;">Ningún archivo cargado</p>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="statTotal">0</span>
+                    <span class="stat-label">Total</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="statYear">0</span>
+                    <span class="stat-label">Este Año</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="controls-container">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar por número, asunto o temática...">
+                <select id="yearFilter" class="form-input" style="width: auto;">
+                    <option value="todos">Todos los años</option>
+                </select>
+            </div>
+            
+            <input type="file" id="fileInput" accept=".json">
+            <button onclick="document.getElementById('fileInput').click()" class="btn btn-secondary">
+                <i class="fas fa-file-import"></i> Cargar JSON
+            </button>
+            
+            <button onclick="downloadJSON()" class="btn btn-success" id="downloadBtn" disabled>
+                <i class="fas fa-file-export"></i> Descargar JSON
+            </button>
+
+            <button onclick="openModal()" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nueva Acta
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>Fecha</th>
+                        <th>Asunto</th>
+                        <th>Temática</th>
+                        <th>Expediente</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #94a3b8;">
+                            <i class="fas fa-folder-open" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+                            Cargue un archivo JSON para visualizar las actas.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="recordModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <h2 id="modalTitle" style="margin-bottom: 20px;">Nueva Acta</h2>
+            <form id="actaForm">
+                <input type="hidden" id="editId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Número de Acta *</label>
+                        <input type="number" id="actaNumber" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha (DD/MM/AAAA) *</label>
+                        <input type="text" id="actaDate" class="form-input" placeholder="15/05/2024" required>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Asunto *</label>
+                        <input type="text" id="actaSubject" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Temática</label>
+                        <select id="actaTopic" class="form-input">
+                            <option value="Civil">Civil</option>
+                            <option value="Familia">Familia</option>
+                            <option value="Laboral">Laboral</option>
+                            <option value="Penal">Penal</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Expediente</label>
+                        <input type="text" id="actaExpediente" class="form-input">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Contenido del Acta</label>
+                        <textarea id="actaContent" class="form-input" placeholder="Escriba aquí el contenido..."></textarea>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Acta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let actasData = [];
+        let currentFileName = "actas_nuevas.json";
+
+        // --- Lógica de Carga de Archivo ---
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            currentFileName = file.name;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const json = JSON.parse(e.target.result);
+                    // Adaptar si el JSON viene de Firebase (donde a veces es un objeto o array)
+                    actasData = Array.isArray(json) ? json : Object.values(json);
+                    
+                    document.getElementById('fileNameDisplay').textContent = `Archivo: ${currentFileName}`;
+                    document.getElementById('downloadBtn').disabled = false;
+                    
+                    initApp();
+                } catch (err) {
+                    alert("Error al procesar el JSON. Asegúrese de que el formato sea válido.");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        function initApp() {
+            updateYearFilter();
+            renderTable(actasData);
+            updateStats(actasData);
+        }
+
+        // --- Renderizado ---
+        function renderTable(data) {
+            const body = document.getElementById('recordsBody');
+            body.innerHTML = '';
+
+            if (data.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" style="text-align:center;">No se encontraron registros.</td></tr>';
+                return;
+            }
+
+            // Ordenar por número descendente
+            data.sort((a, b) => b.number - a.number);
+
+            data.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.number || '-'}</strong></td>
+                    <td>${item.dictamenDate || '-'}</td>
+                    <td>${item.subject || '-'}</td>
+                    <td><span class="badge badge-info">${item.topic || 'S/T'}</span></td>
+                    <td>${item.expediente || '-'}</td>
+                    <td>
+                        <button class="action-btn btn-view" onclick="viewActa(${index})"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn btn-edit" onclick="editActa(${index})"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn btn-delete" onclick="deleteActa(${index})"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        // --- Estadísticas ---
+        function updateStats(data) {
+            document.getElementById('statTotal').textContent = data.length;
+            const thisYear = new Date().getFullYear().toString();
+            const yearCount = data.filter(a => a.dictamenDate && a.dictamenDate.includes(thisYear)).length;
+            document.getElementById('statYear').textContent = yearCount;
+        }
+
+        function updateYearFilter() {
+            const years = [...new Set(actasData.map(a => {
+                if(!a.dictamenDate) return null;
+                const parts = a.dictamenDate.split('/');
+                return parts[2];
+            }).filter(y => y))].sort().reverse();
+
+            const select = document.getElementById('yearFilter');
+            select.innerHTML = '<option value="todos">Todos los años</option>';
+            years.forEach(y => {
+                select.innerHTML += `<option value="${y}">${y}</option>`;
+            });
+        }
+
+        // --- Filtros ---
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('yearFilter').addEventListener('change', applyFilters);
+
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const year = document.getElementById('yearFilter').value;
+
+            const filtered = actasData.filter(item => {
+                const matchQuery = (item.subject || '').toLowerCase().includes(query) || 
+                                   (item.number || '').toString().includes(query) ||
+                                   (item.topic || '').toLowerCase().includes(query);
+                
+                const matchYear = (year === 'todos') || (item.dictamenDate && item.dictamenDate.includes(year));
+                
+                return matchQuery && matchYear;
+            });
+
+            renderTable(filtered);
+        }
+
+        // --- CRUD ---
+        const modal = document.getElementById('recordModal');
+        const form = document.getElementById('actaForm');
+
+        function openModal() {
+            form.reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('modalTitle').textContent = 'Nueva Acta';
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() { modal.style.display = 'none'; }
+
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editId').value;
+            
+            const newActa = {
+                number: parseInt(document.getElementById('actaNumber').value),
+                dictamenDate: document.getElementById('actaDate').value,
+                subject: document.getElementById('actaSubject').value,
+                topic: document.getElementById('actaTopic').value,
+                expediente: document.getElementById('actaExpediente').value,
+                content: document.getElementById('actaContent').value,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (editId === '') {
+                actasData.push(newActa);
+            } else {
+                actasData[editId] = {...actasData[editId], ...newActa};
+            }
+
+            closeModal();
+            initApp();
+            document.getElementById('downloadBtn').disabled = false;
+        };
+
+        function editActa(index) {
+            const item = actasData[index];
+            document.getElementById('editId').value = index;
+            document.getElementById('actaNumber').value = item.number;
+            document.getElementById('actaDate').value = item.dictamenDate;
+            document.getElementById('actaSubject').value = item.subject;
+            document.getElementById('actaTopic').value = item.topic;
+            document.getElementById('actaExpediente').value = item.expediente;
+            document.getElementById('actaContent').value = item.content || '';
+            
+            document.getElementById('modalTitle').textContent = 'Editar Acta #' + item.number;
+            modal.style.display = 'flex';
+        }
+
+        function deleteActa(index) {
+            if(confirm('¿Está seguro de eliminar este registro?')) {
+                actasData.splice(index, 1);
+                initApp();
+            }
+        }
+
+        function viewActa(index) {
+            const item = actasData[index];
+            alert(`CONTENIDO ACTA #${item.number}\n\n${item.content || 'Sin contenido'}`);
+        }
+
+        // --- Exportación ---
+        function downloadJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(actasData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "resguardo_actas_actualizado.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // Cerrar modal al clickear fuera
+        window.onclick = function(event) {
+            if (event.target == modal) closeModal();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exportador de Dictámenes a JSON</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 500px; }
+        .btn { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.3s; }
+        .btn:hover { background: #1d4ed8; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .status { margin-top: 1rem; color: #64748b; }
+        .error { color: #dc2626; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Exportador de Firebase</h2>
+    <p>Este script descargará todos los documentos de la colección <strong>"dictamenes"</strong> en formato JSON.</p>
+    
+    <button id="exportBtn" class="btn">Iniciar Exportación</button>
+    <div id="status" class="status">Listo para exportar</div>
+</div>
+
+<script>
+    // 1. REEMPLAZA ESTO CON TUS CONFIGURACIONES DEL ARCHIVO DICTAMEN ORIGINAL
+    const firebaseConfig = {
+        apiKey: "AIzaSyCA4PlV7FpUZsRSqJaFQrCRoKyShwpPQac",
+            authDomain: "librodictamen.firebaseapp.com",
+            projectId: "librodictamen",
+            storageBucket: "librodictamen.firebasestorage.app",
+            messagingSenderId: "5128868565",
+            appId: "1:5128868565:web:f13be4d1b408526ebd085c"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const exportBtn = document.getElementById('exportBtn');
+    const status = document.getElementById('status');
+
+    exportBtn.addEventListener('click', async () => {
+        try {
+            exportBtn.disabled = true;
+            status.textContent = "Conectando con Firestore...";
+
+            // Consultar la colección completa
+            const querySnapshot = await db.collection("dictamenes").get();
+            const data = [];
+
+            if (querySnapshot.empty) {
+                status.textContent = "No se encontraron documentos en la colección.";
+                exportBtn.disabled = false;
+                return;
+            }
+
+            status.textContent = `Procesando ${querySnapshot.size} documentos...`;
+
+            querySnapshot.forEach((doc) => {
+                const docData = doc.data();
+                
+                // Procesar Timestamps de Firebase para que el JSON sea legible
+                // Convertimos cada campo que sea un objeto de fecha a string ISO
+                for (let key in docData) {
+                    if (docData[key] && typeof docData[key].toDate === 'function') {
+                        docData[key] = docData[key].toDate().toISOString();
+                    }
+                }
+
+                data.push({
+                    id: doc.id,
+                    ...docData
+                });
+            });
+
+            // Crear el archivo JSON y disparar descarga
+            status.textContent = "Generando archivo...";
+            descargarJSON(data);
+            
+            status.textContent = "¡Exportación completada con éxito!";
+            exportBtn.disabled = false;
+
+        } catch (error) {
+            console.error(error);
+            status.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+            exportBtn.disabled = false;
+        }
+    });
+
+    function descargarJSON(objeto) {
+        const dataStr = JSON.stringify(objeto, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `backup_dictamenes_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+</body>
+</html>

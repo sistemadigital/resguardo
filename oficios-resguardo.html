@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Oficios - Modo JSON</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            --text-color: #334155;
+            --text-light: #64748b;
+            --light-gray: #f8fafc;
+            --border-color: #e2e8f0;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #f1f5f9; color: var(--text-color); padding: 20px; line-height: 1.6; }
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* Header & Stats */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white; padding: 1.5rem; border-radius: var(--radius); margin-bottom: 2rem;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow);
+        }
+        .stats { display: flex; gap: 15px; background: rgba(255, 255, 255, 0.15); padding: 10px 15px; border-radius: var(--radius-sm); backdrop-filter: blur(10px); }
+        .stat-item { display: flex; flex-direction: column; align-items: center; min-width: 80px; }
+        .stat-value { font-size: 1.2rem; font-weight: 700; }
+        .stat-label { font-size: 0.75rem; opacity: 0.9; }
+
+        /* Controls */
+        .controls-container {
+            display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;
+            background: var(--white); padding: 15px; border-radius: var(--radius); box-shadow: var(--shadow);
+        }
+        .search-container { flex: 1; display: flex; gap: 10px; }
+        .search-input { flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); }
+        
+        .btn {
+            padding: 10px 20px; border: none; border-radius: var(--radius-sm); cursor: pointer;
+            font-weight: 600; display: flex; align-items: center; gap: 8px; transition: var(--transition);
+        }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-success { background: var(--success-color); color: white; }
+        .btn-secondary { background: var(--secondary-color); color: white; }
+
+        /* Table */
+        .table-container { background: white; border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+        th { background: #f8fafc; color: var(--text-light); text-transform: uppercase; font-size: 0.75rem; }
+        tr:hover { background: #f1f5f9; }
+
+        /* Badges */
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-pending { background: #fef3c7; color: #d97706; }
+        .badge-success { background: #d1fae5; color: #059669; }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: white; padding: 25px; border-radius: var(--radius); width: 90%; max-width: 1000px;
+            max-height: 90vh; overflow-y: auto; position: relative;
+        }
+        .close-btn { position: absolute; top: 15px; right: 15px; font-size: 1.5rem; cursor: pointer; border: none; background: none; }
+
+        /* Form Layout */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        .form-input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); }
+        textarea.form-input { height: 200px; resize: vertical; }
+
+        #fileInput { display: none; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Oficios <small>(Modo JSON)</small></h1>
+            <p id="fileNameDisplay" style="font-size: 0.8rem; opacity: 0.8;">Ningún archivo cargado</p>
+        </div>
+        <div class="stats">
+            <div class="stat-item"><span class="stat-value" id="statTotal">0</span><span class="stat-label">Total</span></div>
+            <div class="stat-item"><span class="stat-value" id="statPending">0</span><span class="stat-label">Pendientes</span></div>
+            <div class="stat-item"><span class="stat-value" id="statText">0</span><span class="stat-label">Con Texto</span></div>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar en destinatario, temática o contenido...">
+            <select id="yearFilter" class="form-input" style="width: 120px;">
+                <option value="todos">Años</option>
+            </select>
+        </div>
+        
+        <input type="file" id="fileInput" accept=".json">
+        <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+            <i class="fas fa-upload"></i> Cargar JSON
+        </button>
+        <button class="btn btn-success" id="exportBtn" disabled>
+            <i class="fas fa-download"></i> Guardar/Exportar
+        </button>
+        <button class="btn btn-primary" id="newBtn">
+            <i class="fas fa-plus"></i> Nuevo Oficio
+        </button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Año</th>
+                    <th>Destinatario</th>
+                    <th>Remisión</th>
+                    <th>Estado</th>
+                    <th>Temática</th>
+                    <th>Expediente</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="8" style="text-align:center; padding: 40px;">Cargue un archivo JSON para comenzar</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="recordModal" class="modal">
+    <div class="modal-content">
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+        <h2 id="modalTitle" style="margin-bottom: 20px; color: var(--primary-color);">Detalles del Oficio</h2>
+        <form id="recordForm">
+            <input type="hidden" id="editId">
+            <div class="form-grid">
+                <div class="form-left">
+                    <div class="form-group">
+                        <label>Destinatario *</label>
+                        <input type="text" id="recipient" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Remisión (DD/MM/AAAA) *</label>
+                        <input type="text" id="remissionDate" class="form-input" placeholder="15/03/2024" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Respuesta (DD/MM/AAAA)</label>
+                        <input type="text" id="responseDate" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Temática *</label>
+                        <select id="topic" class="form-input" required>
+                            <option value="">Seleccione...</option>
+                            <option value="Civil">Civil</option>
+                            <option value="Familia">Familia</option>
+                            <option value="Laboral">Laboral</option>
+                            <option value="Penal">Penal</option>
+                            <option value="Violencia Familiar">Violencia Familiar</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Usuario Asignado</label>
+                        <input type="text" id="assignedUser" class="form-input">
+                    </div>
+                </div>
+                <div class="form-right">
+                    <div class="form-group">
+                        <label>Contenido del Oficio *</label>
+                        <textarea id="content" class="form-input" placeholder="Pegue o escriba el texto aquí..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Expediente</label>
+                        <input type="text" id="expediente" class="form-input">
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let allRecords = [];
+    let currentFileName = "";
+
+    // --- Lógica de Archivos ---
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        currentFileName = file.name;
+        document.getElementById('fileNameDisplay').textContent = `Archivo: ${currentFileName}`;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const json = JSON.parse(e.target.result);
+                // Si el JSON viene de Firebase exportado, suele ser un array o un objeto de docs
+                allRecords = Array.isArray(json) ? json : Object.values(json);
+                
+                // Normalizar campos básicos si es necesario (ej: convertir Timestamps de Firebase)
+                allRecords = allRecords.map(r => ({
+                    ...r,
+                    id: r.id || Math.random().toString(36).substr(2, 9),
+                    year: r.year || (r.remissionDate ? r.remissionDate.split('/').pop() : new Date().getFullYear().toString())
+                }));
+
+                document.getElementById('exportBtn').disabled = false;
+                updateApp();
+            } catch (err) {
+                alert("Error al procesar el JSON: " + err.message);
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allRecords, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "oficios_actualizado_" + new Date().toISOString().split('T')[0] + ".json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    });
+
+    // --- Funciones de UI ---
+    function updateApp() {
+        renderTable();
+        renderStats();
+        updateYearFilter();
+    }
+
+    function renderStats() {
+        document.getElementById('statTotal').textContent = allRecords.length;
+        document.getElementById('statPending').textContent = allRecords.filter(r => !r.responseDate).length;
+        document.getElementById('statText').textContent = allRecords.filter(r => r.content && r.content.length > 10).length;
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const yearVal = document.getElementById('yearFilter').value;
+
+        const filtered = allRecords.filter(r => {
+            const matchSearch = !searchTerm || 
+                (r.recipient?.toLowerCase().includes(searchTerm)) || 
+                (r.content?.toLowerCase().includes(searchTerm)) ||
+                (r.expediente?.toLowerCase().includes(searchTerm));
+            
+            const matchYear = yearVal === "todos" || r.year === yearVal;
+            return matchSearch && matchYear;
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px;">No se encontraron registros</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map((r, index) => `
+            <tr>
+                <td>${index + 1}</td>
+                <td><span class="badge" style="background:#e0f2fe; color:#0369a1">${r.year || '-'}</span></td>
+                <td><strong>${r.recipient || 'Sin nombre'}</strong></td>
+                <td>${r.remissionDate || '-'}</td>
+                <td>
+                    <span class="badge ${r.responseDate ? 'badge-success' : 'badge-pending'}">
+                        ${r.responseDate ? 'Completado' : 'Pendiente'}
+                    </span>
+                </td>
+                <td><span class="badge" style="background:#e0e7ff; color:#4338ca">${r.topic || 'S/D'}</span></td>
+                <td>${r.expediente || '-'}</td>
+                <td>
+                    <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.7rem;" onclick="editRecord('${r.id}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function updateYearFilter() {
+        const years = [...new Set(allRecords.map(r => r.year))].filter(Boolean).sort().reverse();
+        const select = document.getElementById('yearFilter');
+        select.innerHTML = '<option value="todos">Años</option>' + 
+            years.map(y => `<option value="${y}">${y}</option>`).join('');
+    }
+
+    // --- CRUD ---
+    const modal = document.getElementById('recordModal');
+    const form = document.getElementById('recordForm');
+
+    document.getElementById('newBtn').addEventListener('click', () => {
+        form.reset();
+        document.getElementById('editId').value = "";
+        document.getElementById('modalTitle').textContent = "Nuevo Oficio";
+        modal.style.display = 'flex';
+    });
+
+    function editRecord(id) {
+        const r = allRecords.find(rec => rec.id === id);
+        if (!r) return;
+        
+        document.getElementById('editId').value = r.id;
+        document.getElementById('recipient').value = r.recipient || "";
+        document.getElementById('remissionDate').value = r.remissionDate || "";
+        document.getElementById('responseDate').value = r.responseDate || "";
+        document.getElementById('topic').value = r.topic || "";
+        document.getElementById('assignedUser').value = r.assignedUser || "";
+        document.getElementById('content').value = r.content || "";
+        document.getElementById('expediente').value = r.expediente || "";
+        
+        document.getElementById('modalTitle').textContent = "Editar Oficio";
+        modal.style.display = 'flex';
+    }
+
+    form.onsubmit = (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const remissionDate = document.getElementById('remissionDate').value;
+        const year = remissionDate.split('/').pop();
+
+        const data = {
+            recipient: document.getElementById('recipient').value,
+            remissionDate: remissionDate,
+            responseDate: document.getElementById('responseDate').value,
+            topic: document.getElementById('topic').value,
+            assignedUser: document.getElementById('assignedUser').value,
+            content: document.getElementById('content').value,
+            expediente: document.getElementById('expediente').value,
+            year: year
+        };
+
+        if (id) {
+            // Update
+            const idx = allRecords.findIndex(r => r.id === id);
+            allRecords[idx] = { ...allRecords[idx], ...data };
+        } else {
+            // Create
+            data.id = Math.random().toString(36).substr(2, 9);
+            data.createdAt = new Date().toISOString();
+            allRecords.unshift(data);
+        }
+
+        closeModal();
+        updateApp();
+    };
+
+    function closeModal() { modal.style.display = 'none'; }
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    document.getElementById('yearFilter').addEventListener('change', renderTable);
+</script>
+
+</body>
+</html>
