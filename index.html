@@ -296,7 +296,7 @@
     <div id="pagina-inicio">
         <div class="contenedor-titulo">
             <h1 class="titulo-principal">Sistema de Resguardo Digital</h1>
-            <p class="subtitulo">Defensoría Civil y Comercial 6<br>MINISTERIO PÚBLICO</p>
+            <p class="subtitulo">Defensoría Civil y Comercial 6<br>MINISTERIO PÚBLICO DE MISIONES</p>
         </div>
         <div class="contenedor-login">
             <h2 class="login-titulo">Acceso al Sistema</h2>
@@ -328,6 +328,27 @@
                     <a href="https://sistemadigital.github.io/resguardo/extraer-pase" class="kpi-link" id="pase-link">Acceder a Pases</a>
                     <button class="btn-datos" id="pase-datos">Acceder a los Datos</button>
                 </div>
+                
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Libro de Dictamenes</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-dictamen" class="kpi-link" id="pase-link">Acceder a Pases</a>
+                    <button class="btn-datos" id="dictamenes-datos">Acceder a los Datos</button>
+                </div>
+                
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Libro de Oficios</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-oficios" class="kpi-link" id="pase-link">Acceder a Pases</a>
+                    <button class="btn-datos" id="oficios-datos">Acceder a los Datos</button>
+                </div>
+                
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Libro de Actas</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-actas" class="kpi-link" id="pase-link">Acceder a Pases</a>
+                    <button class="btn-datos" id="actas-datos">Acceder a los Datos</button>
+                </div>
 
                 <div class="kpi-card fade-in">
                     <h2 class="kpi-title">Atención al Público</h2>
@@ -350,6 +371,9 @@
         const atencionLink = document.getElementById('atencion-link');
         const causasDatos = document.getElementById('causas-datos');
         const paseDatos = document.getElementById('pase-datos');
+        const dictamenesDatos = document.getElementById('dictamenes-datos');
+        const oficiosDatos = document.getElementById('oficios-datos');
+        const actasDatos = document.getElementById('actas-datos');
         const atencionDatos = document.getElementById('atencion-datos');
 
         // Función para mostrar la aplicación
@@ -383,6 +407,21 @@
         paseDatos.addEventListener('click', (e) => {
             e.preventDefault();
             window.location.href = "https://sistemadigital.github.io/resguardo/resguardo-pase";
+        });
+        
+        dictamenesDatos.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = "https://sistemadigital.github.io/resguardo/dictamen-resguardo";
+        });
+        
+        oficiosDatos.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = "https://sistemadigital.github.io/resguardo/oficios-resguardo";
+        });
+        
+        actasDatos.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = "https://sistemadigital.github.io/resguardo/actas-resguardo";
         });
         
         atencionDatos.addEventListener('click', (e) => {
