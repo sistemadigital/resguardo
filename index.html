@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Resguardo Digital</title>
+    <title>Resguardo</title>
     <style>
         /* Estilos generales */
         * {
@@ -25,87 +25,68 @@
             padding: 20px;
         }
 
-        /* Página de inicio - Estilo similar al original */
+        /* Página de inicio REFACTORIZADA */
         #pagina-inicio {
             display: flex;
-            height: 100vh;
-            background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 50%, #28a745 100%);
-        }
-
-        .contenedor-titulo {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            text-align: center;
-            color: white;
+            height: 100vh;
+            width: 100%;
+            background: url('https://github.com/sistemadigital/iconos/blob/main/azulfondo.jpg?raw=true') no-repeat center center;
+            background-size: cover;
             padding: 20px;
         }
 
+        .contenedor-central {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
         .titulo-principal {
-            font-size: clamp(2rem, 4vw, 3rem);
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
             font-weight: 700;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            background: linear-gradient(135deg, #ffffff 0%, #e0f7fa 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+            color: #0f4c75;
             line-height: 1.2;
         }
 
         .subtitulo {
-            font-size: clamp(1rem, 2vw, 1.4rem);
-            font-weight: 300;
-            margin-bottom: 30px;
-            opacity: 0.95;
-            line-height: 1.4;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-            max-width: 500px;
-        }
-
-        .contenedor-login {
-            width: 400px;
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .login-titulo {
-            font-size: 1.8rem;
-            color: #0f4c75;
-            margin-bottom: 30px;
-            text-align: center;
-            font-weight: 600;
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            font-weight: 400;
+            margin-bottom: 40px;
+            color: #444;
+            line-height: 1.5;
         }
 
         .btn-ingresar {
             width: 100%;
-            padding: 15px;
+            max-width: 300px;
+            padding: 15px 30px;
             background-color: #1e7b34;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 1.1rem;
             cursor: pointer;
-            transition: background-color 0.3s;
-            margin-top: 10px;
+            transition: all 0.3s ease;
             font-weight: 600;
+            box-shadow: 0 4px 15px rgba(30, 123, 52, 0.3);
         }
 
         .btn-ingresar:hover {
             background-color: #28a745;
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
         }
 
-        /* Página de aplicación */
+        /* Página de aplicación - PERMANECE IGUAL */
         #pagina-app {
             display: none;
             min-height: 100vh;
@@ -241,29 +222,6 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            #pagina-inicio {
-                flex-direction: column;
-                height: auto;
-            }
-            
-            .contenedor-titulo {
-                padding: 40px 20px;
-            }
-
-            .contenedor-login {
-                width: 100%;
-                box-shadow: none;
-                padding: 30px;
-            }
-            
-            .titulo-principal {
-                font-size: 2rem;
-            }
-            
-            .subtitulo {
-                font-size: 1.1rem;
-            }
-            
             .app-header {
                 flex-direction: column;
                 gap: 15px;
@@ -292,19 +250,14 @@
     </style>
 </head>
 <body>
-    <!-- Página de inicio -->
     <div id="pagina-inicio">
-        <div class="contenedor-titulo">
-            <h1 class="titulo-principal">Sistema de Resguardo Digital</h1>
+        <div class="contenedor-central">
+            <h1 class="titulo-principal">Resguardo Digital</h1>
             <p class="subtitulo">Defensoría Civil y Comercial 6<br>MINISTERIO PÚBLICO DE MISIONES</p>
-        </div>
-        <div class="contenedor-login">
-            <h2 class="login-titulo">Acceso al Sistema</h2>
             <button class="btn-ingresar" id="btn-ingresar">Ingresar a la Aplicación</button>
         </div>
     </div>
 
-    <!-- Página de aplicación -->
     <div id="pagina-app">
         <div class="container">
             <div class="app-header">
