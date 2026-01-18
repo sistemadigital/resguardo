@@ -3,18 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizador de Causas Judiciales</title>
+    <title>Causas Judiciales - Sistema JSON</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
     <style>
         :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-            --light: #ecf0f1;
-            --dark: #34495e;
-            --success: #2ecc71;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --gray: #95a5a6;
             --primary-blue: #007bff;
             --primary-light-blue: #e7f4ff;
             --primary-dark-blue: #0056b3;
@@ -22,10 +14,12 @@
             --secondary-light-gray: #e9ecef;
             --secondary-dark-gray: #6c757d;
             --status-success: #28a745;
-            --status-warning: #ffc107;
+            --status-warning: #ff8c00;
+            --status-danger: #dc3545;
             --status-info: #17a2b8;
             --text-primary: #212529;
             --text-secondary: #6c757d;
+            --text-link: #007bff;
             --text-light: #ffffff;
             --background-default: #ffffff;
             --background-card: #ffffff;
@@ -33,166 +27,119 @@
             --background-table-header: #f8f9fa;
             --border-default: #dee2e6;
             --font-family: 'Arial', 'Helvetica', sans-serif;
+            --display-size: 24px;
+            --h1-size: 20px;
+            --h2-size: 18px;
+            --body-large-size: 16px;
+            --body-regular-size: 14px;
+            --caption-size: 12px;
+            --font-weight-regular: 400;
+            --font-weight-semibold: 600;
+            --font-weight-bold: 700;
+            --spacing-unit: 8px;
+            --spacing-xs: 4px;
             --spacing-s: 8px;
             --spacing-m: 16px;
             --spacing-l: 24px;
             --spacing-xl: 32px;
+            --spacing-gutter: 20px;
+            --border-radius-small: 2px;
             --border-radius-default: 4px;
+            --border-radius-pill: 20px;
+            --shadow-none: none;
             --shadow-subtle: 0 1px 3px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --shadow: 0 4px 15px rgba(0,0,0,.08);
             --color-audiencias: #007bff;
             --color-vencimientos: #dc3545;
             --color-gesell: #28a745;
             --color-recursos: #6f42c1;
             --color-diligencias: #fd7e14;
         }
-        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: var(--font-family);
         }
-        
         body {
-            background-color: #f5f7fa;
+            font-family: var(--font-family);
+            background-color: var(--background-default);
             color: var(--text-primary);
-            line-height: 1.6;
+            line-height: 1.5;
+            min-height: 100vh;
         }
-        
-        header {
-            background-color: var(--primary);
-            color: white;
-            padding: 1.5rem;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        .header {
+            background-color: var(--background-header);
+            border-bottom: 1px solid var(--border-default);
+            padding: var(--spacing-s) var(--spacing-m);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-subtle);
         }
-        
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 400;
-            margin-bottom: 0.5rem;
-        }
-        
-        .subtitle {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        
-        .upload-section {
-            background-color: white;
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            text-align: center;
-            border: 2px dashed #ddd;
-        }
-        
-        .upload-btn {
-            background-color: var(--secondary);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s;
-            display: inline-flex;
+        .header-content {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 0.5rem;
+            max-width: 1800px;
+            margin: 0 auto;
+            gap: var(--spacing-s);
+            flex-wrap: wrap;
         }
-        
-        .upload-btn:hover {
-            background-color: #2980b9;
+        .logo {
+            font-size: var(--h1-size);
+            font-weight: var(--font-weight-bold);
+            color: var(--primary-blue);
         }
-        
-        .file-name {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: var(--gray);
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: var(--spacing-m) var(--spacing-gutter);
         }
-        
-        /* ===== NUEVO: KPIs con estilo del calendario ===== */
-        .kpi-section {
-            margin-bottom: var(--spacing-xl);
-        }
-        
-        .kpi-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: var(--spacing-m);
-        }
-        
-        .kpi-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
-            padding-bottom: var(--spacing-s);
-        }
-        
-        .kpi-card {
+        .upload-section {
             background-color: var(--background-card);
-            padding: 12px 16px;
-            border-radius: 10px;
-            border: 1px solid var(--border-default);
+            padding: var(--spacing-l);
+            border-radius: var(--border-radius-default);
+            border: 2px dashed var(--border-default);
+            margin-bottom: var(--spacing-xl);
             text-align: center;
             box-shadow: var(--shadow-subtle);
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            transition: all 0.3s ease;
         }
-        
-        .kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        .upload-section:hover {
+            border-color: var(--primary-blue);
+            background-color: var(--primary-light-blue);
         }
-        
-        .kpi-card.total {
+        .upload-btn {
             background-color: var(--primary-blue);
             color: var(--text-light);
+            border: none;
+            border-radius: var(--border-radius-default);
+            padding: var(--spacing-m) var(--spacing-l);
+            font-size: var(--body-large-size);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-s);
+            margin: var(--spacing-s) 0;
         }
-        
-        .kpi-card.en-tramite {
-            border-left: 4px solid var(--primary-blue);
+        .upload-btn:hover {
+            background-color: var(--primary-dark-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        
-        .kpi-card.finalizado {
-            border-left: 4px solid var(--status-success);
+        .file-info {
+            margin-top: var(--spacing-s);
+            font-size: var(--body-regular-size);
+            color: var(--text-secondary);
         }
-        
-        .kpi-card.archivado {
-            border-left: 4px solid var(--secondary-dark-gray);
+        .file-info.success {
+            color: var(--status-success);
         }
-        
-        .kpi-number {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 4px;
+        .file-info.error {
+            color: var(--status-danger);
         }
-        
-        .kpi-card.total .kpi-number {
-            color: var(--text-light);
-        }
-        
-        .kpi-label {
-            font-size: 12px;
-            font-weight: 400;
-            text-transform: uppercase;
-        }
-        
-        .kpi-card.total .kpi-label {
-            color: var(--text-light);
-        }
-        
-        /* Filtros */
         .filters-section {
             background-color: var(--background-card);
             padding: var(--spacing-m);
@@ -201,86 +148,100 @@
             margin-bottom: var(--spacing-xl);
             box-shadow: var(--shadow-subtle);
         }
-        
         .filters-title {
-            font-size: 1.2rem;
-            font-weight: 600;
+            font-size: var(--h2-size);
+            font-weight: var(--font-weight-semibold);
             margin-bottom: var(--spacing-m);
         }
-        
         .filter-row {
             display: flex;
             flex-wrap: wrap;
             gap: var(--spacing-m);
         }
-        
         .filter-group {
             flex: 1;
             min-width: 150px;
         }
-        
         .filter-label {
             display: block;
-            font-size: 0.9rem;
-            margin-bottom: var(--spacing-s);
-            font-weight: 600;
+            font-size: var(--body-regular-size);
+            margin-bottom: var(--spacing-xs);
+            font-weight: var(--font-weight-semibold);
         }
-        
         .input, .dropdown {
             border: 1px solid var(--border-default);
             border-radius: var(--border-radius-default);
             padding: var(--spacing-s);
             background-color: var(--background-default);
             color: var(--text-primary);
-            font-size: 0.9rem;
+            font-size: var(--body-regular-size);
             width: 100%;
             transition: border-color 0.2s;
         }
-        
         .input:focus, .dropdown:focus {
             outline: none;
             border-color: var(--primary-blue);
         }
-        
-        /* Botones de acción */
         .action-buttons {
             display: flex;
             gap: var(--spacing-s);
             margin-top: var(--spacing-m);
             flex-wrap: wrap;
         }
-        
         .button {
             background-color: var(--primary-blue);
             color: var(--text-light);
             border: none;
             border-radius: var(--border-radius-default);
             padding: var(--spacing-s) var(--spacing-m);
-            font-size: 0.9rem;
+            font-size: var(--body-regular-size);
             cursor: pointer;
             transition: background-color 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: var(--spacing-s);
+            gap: var(--spacing-xs);
         }
-        
         .button:hover {
             opacity: 0.9;
         }
-        
         .button-success {
-            background-color: #1e7e34;
+            background-color: var(--status-success);
         }
-        
         .button-secondary {
             background-color: var(--secondary-dark-gray);
         }
-        
         .button-danger {
-            background-color: var(--danger);
+            background-color: var(--status-danger);
         }
-        
-        /* Tabla de datos */
+        .button-warning {
+            background-color: var(--status-warning);
+        }
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-m);
+            margin-bottom: var(--spacing-xl);
+        }
+        .stat-card {
+            background-color: var(--background-card);
+            border-radius: var(--border-radius-default);
+            padding: var(--spacing-m);
+            border: 1px solid var(--border-default);
+            text-align: center;
+            box-shadow: var(--shadow-subtle);
+        }
+        .stat-value {
+            font-size: var(--display-size);
+            font-weight: var(--font-weight-bold);
+            color: var(--primary-blue);
+            margin-bottom: var(--spacing-xs);
+        }
+        .stat-label {
+            font-size: var(--caption-size);
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         .table-section {
             background-color: var(--background-card);
             border-radius: var(--border-radius-default);
@@ -288,60 +249,46 @@
             overflow: hidden;
             box-shadow: var(--shadow-subtle);
         }
-        
         .table-title {
-            font-size: 1.2rem;
-            font-weight: 600;
+            font-size: var(--h2-size);
+            font-weight: var(--font-weight-semibold);
             padding: var(--spacing-m);
             background-color: var(--background-table-header);
             border-bottom: 1px solid var(--border-default);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        
         .table-wrap {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
-        
         .data-table {
             width: 100%;
             border-collapse: collapse;
             min-width: 1000px;
         }
-        
         .data-table th {
             background-color: var(--background-table-header);
-            font-weight: 600;
+            font-weight: var(--font-weight-semibold);
             border-bottom: 2px solid var(--border-default);
             padding: var(--spacing-m);
             color: var(--text-primary);
-            font-size: 0.8rem;
+            font-size: var(--caption-size);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            user-select: none;
-            position: relative;
         }
-        
-        .data-table th:hover {
-            background-color: var(--secondary-light-gray);
-        }
-        
         .data-table td {
             border-bottom: 1px solid var(--border-default);
             padding: var(--spacing-m);
             color: var(--text-primary);
-            font-size: 0.9rem;
+            font-size: var(--body-regular-size);
         }
-        
         .data-table tr:last-child td {
             border-bottom: none;
         }
-        
         .data-table tr:hover td {
             background-color: var(--secondary-gray);
         }
-        
-        /* Estilos para prioridad */
         .prioridad-pill {
             display: inline-block;
             padding: 4px 8px;
@@ -351,14 +298,39 @@
             color: #fff;
             text-transform: uppercase;
         }
-        
-        .prioridad-baja { background-color: var(--success); }
-        .prioridad-media { background-color: var(--warning); }
-        .prioridad-alta { background-color: var(--danger); }
-        .prioridad-ninguna { background-color: var(--gray); }
-        
-        /* Paginación */
-        .pagination-container {
+        .prioridad-baja { background-color: var(--status-success); }
+        .prioridad-media { background-color: var(--status-warning); }
+        .prioridad-alta { background-color: var(--status-danger); }
+        .prioridad-ninguna { background-color: var(--secondary-dark-gray); }
+        .prioridad-texto {
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        .prioridad-texto.alta { 
+            background-color: rgba(220, 53, 69, 0.1); 
+            color: var(--status-danger); 
+            border: 2px solid var(--status-danger);
+        }
+        .prioridad-texto.media { 
+            background-color: rgba(255, 140, 0, 0.1);
+            color: var(--status-warning); 
+            border: 2px solid var(--status-warning);
+        }
+        .prioridad-texto.baja { 
+            background-color: rgba(40, 167, 69, 0.1); 
+            color: var(--status-success); 
+            border: 2px solid var(--status-success);
+        }
+        .prioridad-texto.ninguna { 
+            background-color: rgba(108, 117, 125, 0.1); 
+            color: var(--secondary-dark-gray); 
+            border: 2px solid var(--secondary-dark-gray);
+        }
+        #paginacion-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -368,81 +340,16 @@
             border-radius: var(--border-radius-default);
             box-shadow: var(--shadow-subtle);
         }
-        
-        .pagination-container .page-info {
-            font-size: 0.9rem;
+        #paginacion-container .page-info {
+            font-size: var(--body-regular-size);
             color: var(--text-secondary);
-            font-weight: 600;
+            font-weight: var(--font-weight-semibold);
         }
-        
-        .pagination-container .nav-buttons {
+        #paginacion-container .nav-buttons {
             display: flex;
             gap: var(--spacing-s);
         }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        
-        .status-en-tramite {
-            background-color: #e1f5fe;
-            color: #0277bd;
-        }
-        
-        .status-finalizado {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-        
-        .status-archivado {
-            background-color: #f5f5f5;
-            color: #616161;
-        }
-        
-        .priority-alta {
-            color: var(--danger);
-            font-weight: 600;
-        }
-        
-        .priority-media {
-            color: var(--warning);
-        }
-        
-        .priority-baja {
-            color: var(--success);
-        }
-        
-        .priority-ninguna {
-            color: var(--gray);
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: var(--gray);
-        }
-        
-        .error {
-            text-align: center;
-            padding: 2rem;
-            color: var(--danger);
-            background-color: #ffebee;
-            border-radius: 8px;
-            margin: 1rem 0;
-        }
-        
-        .no-data {
-            text-align: center;
-            padding: 2rem;
-            color: var(--gray);
-        }
-        
-        /* MODALES - Estilos mejorados */
-        .modal {
+        #modal, #modalVer, #alertModal, #modalEventosHoy {
             display: none;
             position: fixed;
             inset: 0;
@@ -452,8 +359,7 @@
             padding: 20px;
             z-index: 1000;
         }
-        
-        .modal .content {
+        #modal .content, #modalVer .content, #alertModal .content, #modalEventosHoy .content {
             background: #fff;
             border-radius: 16px;
             max-width: 980px;
@@ -464,12 +370,10 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.2);
             animation: fadeIn .25s ease;
         }
-        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
         .modal-header {
             position: sticky;
             top: 0;
@@ -485,12 +389,10 @@
             gap: 10px;
             justify-content: center;
         }
-        
         .modal-body {
             padding: 16px 16px 0;
             overflow-y: auto;
         }
-        
         .controls-form {
             position: sticky;
             bottom: 0;
@@ -503,48 +405,576 @@
             justify-content: flex-end;
             z-index: 5;
         }
-        
-        /* Estilos para prioridad en texto */
-        .prioridad-texto {
-            font-size: 1.2rem;
-            font-weight: bold;
-            padding: 8px 12px;
+        #formCausa .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        @media(max-width:900px) { 
+            #formCausa .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        #formCausa label {
+            font-weight: 600;
+            color: var(--primary-blue);
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            display: block;
+        }
+        #formCausa input, #formCausa textarea, #formCausa select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: #fafafa;
+            transition: .2s;
+        }
+        #formCausa input:focus, #formCausa textarea:focus, #formCausa select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            background: #fff;
+        }
+        .counter {
+            font-size: .8rem;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        #agregarNota {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f4f9;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        #agregarNota label {
+            font-weight: 600;
+            color: var(--primary-blue);
+            display: block;
+            margin-bottom: 8px;
+        }
+        #agregarNota textarea {
+            width: 100%;
+            padding: 10px;
             border-radius: 8px;
+            border: 1px solid #ccc;
+            resize: vertical;
+        }
+        #agregarNota button {
+            background: var(--primary-blue);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        #verContenido p {
+            margin: .35rem 0;
+            font-size: .92rem;
+        }
+        #verContenido strong {
+            color: var(--primary-blue);
+        }
+        .note {
+            border-left: 3px solid var(--primary-blue);
+            padding: 6px;
+            margin: 6px 0;
+            background: #f9fbff;
+            border-radius: 6px;
+        }
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        #alertModal .content {
+            max-width: 400px;
+            padding: 24px;
+            text-align: center;
+            gap: 16px;
+        }
+        #alertModal h3 {
+            margin: 0;
+            color: var(--primary-blue);
+            font-size: 1.5rem;
+        }
+        #alertModal p {
+            margin: 0;
+            color: var(--secondary-dark-gray);
+            font-size: 0.95rem;
+        }
+        #alertModal .actions-row {
+            display: flex;
+            justify-content: space-around;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        #alertModal .actions-row .btn {
+            flex-grow: 1;
+        }
+        .alert-danger { background: var(--status-danger); color: white; }
+        .alert-success { background: var(--status-success); color: white; }
+        .floating-alert {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--status-danger);
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: 10px;
+            box-shadow: 0 6px 15px rgba(220, 53, 69, 0.3);
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            max-width: 500px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: var(--font-weight-semibold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .floating-alert.success {
+            background-color: var(--status-success);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.3);
+        }
+        .floating-alert.show {
+            opacity: 1;
+            visibility: visible;
+            top: 30px;
+        }
+        .floating-alert i {
+            font-size: 1.3rem;
+        }
+        .audiencias-container {
+            margin-bottom: 10px;
+        }
+        .audiencia-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .audiencia-item input {
+            flex: 1;
+        }
+        .btn-eliminar-audiencia {
+            background: var(--status-danger);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .btn-audiencia {
+            background: var(--status-success);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .diligencias-container {
+            margin-bottom: 10px;
+        }
+        .diligencia-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .diligencia-item input[type="datetime-local"] {
+            flex: 1;
+        }
+        .diligencia-item input[type="text"] {
+            flex: 2;
+        }
+        .btn-eliminar-diligencia {
+            background: var(--status-danger);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .btn-diligencia {
+            background: var(--color-diligencias);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .tabs-container {
             margin-bottom: 15px;
-            display: inline-block;
         }
-        
-        .prioridad-texto.alta { 
-            background-color: rgba(220, 53, 69, 0.1); 
-            color: var(--danger); 
-            border: 2px solid var(--danger);
+        .tabs-nav {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
-        
-        .prioridad-texto.media { 
-            background-color: rgba(255, 193, 7, 0.1); 
-            color: var(--warning); 
-            border: 2px solid var(--warning);
+        .tab-button {
+            background: #f0f0f0;
+            border: none;
+            padding: 12px 18px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #777;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            white-space: nowrap;
         }
-        
-        .prioridad-texto.baja { 
-            background-color: rgba(40, 167, 69, 0.1); 
-            color: var(--success); 
-            border: 2px solid var(--success);
+        .tab-button.active {
+            background: var(--primary-blue);
+            color: #fff;
+            position: relative;
+            bottom: -2px;
+            border-bottom: 2px solid var(--primary-blue);
         }
-        
-        .prioridad-texto.ninguna { 
-            background-color: rgba(108, 117, 125, 0.1); 
-            color: var(--gray); 
-            border: 2px solid var(--gray);
+        .tab-content {
+            padding: 15px 0;
+            display: none;
         }
-        
-        /* NUEVO: Estilos para eventos en la tabla */
+        .tab-content.active {
+            display: block;
+        }
+        .tab-content .field:not(:last-child) {
+            margin-bottom: 10px;
+        }
+        .field.error input,
+        .field.error textarea,
+        .field.error select {
+            border-color: var(--status-danger);
+            background-color: #ffeef0;
+        }
+        .field .error-message {
+            color: var(--status-danger);
+            font-size: 0.8rem;
+            margin-top: 4px;
+            display: none;
+        }
+        .field.error .error-message {
+            display: block;
+        }
+        .field {
+            margin-bottom: 15px;
+        }
+        #verContenido .prioridad-destacada {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 12px;
+            color: #fff;
+        }
+        .prioridad-destacada h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .prioridad-destacada .fa-exclamation-triangle {
+            font-size: 1.5rem;
+        }
+        .prioridad-destacada.prioridad-baja { background-color: var(--status-success); }
+        .prioridad-destacada.prioridad-media { background-color: var(--status-warning); }
+        .prioridad-destacada.prioridad-alta { background-color: var(--status-danger); }
+        .prioridad-destacada.prioridad-ninguna { background-color: var(--secondary-dark-gray); }
+        .notes-history {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        .notes-history h4 {
+            margin: 0 0 10px;
+            color: var(--primary-blue);
+            font-size: 1rem;
+            border-bottom: 2px solid var(--primary-blue);
+            padding-bottom: 5px;
+        }
+        .note-item {
+            background: #f8f8f8;
+            border-left: 4px solid var(--primary-blue);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        .note-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--secondary-dark-gray);
+            margin-bottom: 5px;
+        }
+        .note-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .editor-toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .editor-toolbar button {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .editor-toolbar button:hover {
+            background: #e9ecef;
+        }
+        .editor-toolbar button.active {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+        .color-button {
+            font-weight: bold;
+            min-width: 50px;
+        }
+        .color-button.azul {
+            color: #007bff;
+            border-color: #007bff;
+        }
+        .color-button.rojo {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        .color-button.verde {
+            color: #28a745;
+            border-color: #28a745;
+        }
+        .color-button.normal {
+            color: #212529;
+            border-color: #6c757d;
+        }
+        #observaciones-editor {
+            min-height: 120px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            background: #fff;
+            line-height: 1.5;
+        }
+        #observaciones-editor:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+        input[type="time"]::-webkit-datetime-edit-ampm-field {
+            display: none;
+        }
+        input[type="time"]::-moz-datetime-edit-ampm-field {
+            display: none;
+        }
+        input[type="datetime-local"]::-webkit-datetime-edit-ampm-field {
+            display: none;
+        }
+        input[type="datetime-local"]::-moz-datetime-edit-ampm-field {
+            display: none;
+        }
+        .eventos-container {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .evento-card {
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: 15px;
+            background: var(--background-card);
+        }
+        .evento-card h4 {
+            margin-bottom: 10px;
+            color: var(--primary-blue);
+            border-bottom: 2px solid;
+            padding-bottom: 5px;
+        }
+        .evento-card-audiencias { border-color: var(--color-audiencias); }
+        .evento-card-vencimientos { border-color: var(--color-vencimientos); }
+        .evento-card-gesell { border-color: var(--color-gesell); }
+        .evento-card-recursos { border-color: var(--color-recursos); }
+        .evento-card-diligencias { border-color: var(--color-diligencias); }
+        .evento-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background: var(--secondary-gray);
+            border-radius: 4px;
+            border-left: 3px solid;
+        }
+        .evento-item-audiencias { border-left-color: var(--color-audiencias); }
+        .evento-item-vencimientos { border-left-color: var(--color-vencimientos); }
+        .evento-item-gesell { border-left-color: var(--color-gesell); }
+        .evento-item-recursos { border-left-color: var(--color-recursos); }
+        .evento-item-diligencias { border-left-color: var(--color-diligencias); }
+        .evento-fecha {
+            font-weight: bold;
+            color: var(--text-secondary);
+        }
+        .evento-desc {
+            font-size: 0.9rem;
+        }
+        @media print {
+            .button, .actions, .action-buttons, .controls-form,
+            #btnNuevo, #btnPrintListado, #btnPrintFechas, #btnPrintForm,
+            #btnPrintRegistro, #btnCerrarVer, #btnAgregarNota, #btnVerLineaTiempo,
+            #btnPrintTodos, #btnPrintFiltrado, #btnEventosHoy, #btnExportarJSON,
+            .fa-solid, .fas, .far, .fa, .fa-eye, .fa-pen, .fa-trash, .fa-plus,
+            .fa-save, .fa-print, .fa-xmark, .fa-check, .fa-arrow-left, .fa-arrow-right,
+            .fa-exclamation-triangle, .fa-timeline, .fa-file-pen, .fa-calendar-day,
+            .btn-eliminar-audiencia, .btn-audiencia, .floating-alert,
+            .prioridad-destacada, .tabs-nav, .tab-button, .editor-toolbar,
+            .upload-section, .upload-btn, .stats-section {
+                display: none !important;
+            }
+            .header, .filters-section, .sidebar, .pagination-container {
+                display: none !important;
+            }
+            body, .container, .main-layout, .main {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .table-section, .kpi-section, .modal .content, #modalVer .content {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+                page-break-inside: avoid;
+            }
+            .data-table {
+                min-width: 100% !important;
+            }
+            .prioridad-pill {
+                color: #000 !important;
+                background-color: transparent !important;
+                border: 1px solid #000 !important;
+            }
+            .tab-content {
+                display: block !important;
+            }
+            #formCausa .grid {
+                display: table !important;
+                width: 100% !important;
+            }
+            .field {
+                display: table-row !important;
+                margin-bottom: 0 !important;
+            }
+            .field label {
+                display: table-cell !important;
+                padding: 8px !important;
+                font-weight: bold !important;
+                width: 40% !important;
+                border-bottom: 1px solid #ddd !important;
+            }
+            .field input, .field textarea, .field select {
+                display: table-cell !important;
+                width: 100% !important;
+                padding: 8px !important;
+                border: none !important;
+                border-bottom: 1px solid #ddd !important;
+                background: transparent !important;
+            }
+            .field textarea {
+                height: auto !important;
+                min-height: 60px !important;
+            }
+            .prioridad-texto {
+                color: #000 !important;
+                background-color: transparent !important;
+                border: 1px solid #000 !important;
+                font-weight: bold !important;
+            }
+            #observaciones-editor {
+                border: none !important;
+                padding: 0 !important;
+                min-height: auto !important;
+                max-height: none !important;
+            }
+        }
+        /* Estilos para el modal de eventos de hoy */
+        #modalEventosHoy .content {
+            max-width: 500px;
+        }
+        .eventos-hoy-modal {
+            padding: 10px;
+        }
+        .evento-titulo {
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 2px solid;
+            font-size: 1rem;
+        }
+        .evento-audiencias { color: var(--color-audiencias); border-color: var(--color-audiencias); }
+        .evento-vencimientos { color: var(--color-vencimientos); border-color: var(--color-vencimientos); }
+        .evento-gesell { color: var(--color-gesell); border-color: var(--color-gesell); }
+        .evento-recursos { color: var(--color-recursos); border-color: var(--color-recursos); }
+        .evento-diligencias { color: var(--color-diligencias); border-color: var(--color-diligencias); }
+        .evento-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            margin-bottom: 6px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid;
+            transition: all 0.2s;
+        }
+        .evento-item-audiencias { border-left-color: var(--color-audiencias); }
+        .evento-item-vencimientos { border-left-color: var(--color-vencimientos); }
+        .evento-item-gesell { border-left-color: var(--color-gesell); }
+        .evento-item-recursos { border-left-color: var(--color-recursos); }
+        .evento-item-diligencias { border-left-color: var(--color-diligencias); }
+        .evento-item:hover {
+            background: #e9ecef;
+        }
+        .evento-numero {
+            font-weight: bold;
+            color: var(--primary-blue);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .evento-numero:hover {
+            color: var(--primary-dark-blue);
+        }
+        .evento-hora {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .evento-vacio {
+            font-style: italic;
+            color: var(--text-secondary);
+            padding: 6px 8px;
+        }
         .eventos-lista {
             max-height: 150px;
             overflow-y: auto;
             font-size: 0.8rem;
         }
-        
         .evento-tabla {
             padding: 4px 6px;
             margin-bottom: 3px;
@@ -552,321 +982,246 @@
             background: #f8f9fa;
             border-radius: 4px;
         }
-        
         .evento-tabla.audiencia { border-left-color: var(--color-audiencias); }
         .evento-tabla.gesell { border-left-color: var(--color-gesell); }
         .evento-tabla.vencimiento { border-left-color: var(--color-vencimientos); }
         .evento-tabla.recurso { border-left-color: var(--color-recursos); }
         .evento-tabla.diligencia { border-left-color: var(--color-diligencias); }
-        
-        /* ALERTA FLOTANTE */
-        .floating-alert {
-            position: fixed;
-            top: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: var(--danger);
-            color: #fff;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            max-width: 400px;
-            text-align: center;
-            font-size: 1rem;
-        }
-        
-        .floating-alert.success {
-            background-color: var(--success);
-        }
-        
-        .floating-alert.show {
-            opacity: 1;
-            visibility: visible;
-            top: 20px;
-        }
-        
-        /* NUEVO: Estilos para impresión */
-        @media print {
-            .button, .actions, .action-buttons, .controls-form,
-            #btnPrintTodos, #btnPrintFiltrado, #btnPrintRegistro, #btnCerrarVer,
-            .fa-solid, .fas, .far, .fa, .fa-eye, .fa-pen, .fa-trash, .fa-plus,
-            .fa-save, .fa-print, .fa-xmark, .fa-check, .fa-arrow-left, .fa-arrow-right,
-            .fa-exclamation-triangle, .fa-timeline, .fa-file-pen,
-            .floating-alert, .prioridad-destacada,
-            .header, .filters-section, .sidebar, .pagination-container,
-            .upload-section {
-                display: none !important;
-            }
-            
-            body, .container, .main-layout, .main {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-            }
-            
-            .table-section, .kpi-section, .modal .content {
-                box-shadow: none !important;
-                border: 1px solid #ddd !important;
-                page-break-inside: avoid;
-            }
-            
-            .data-table {
-                min-width: 100% !important;
-            }
-            
-            .kpi-cards {
-                display: grid !important;
-                grid-template-columns: repeat(3, 1fr) !important;
-                gap: 10px !important;
-            }
-            
-            .prioridad-pill {
-                color: #000 !important;
-                background-color: transparent !important;
-                border: 1px solid #000 !important;
-            }
-            
-            .actions {
-                display: none !important;
-            }
-            
-            /* Estilos para prioridad en texto durante impresión */
-            .prioridad-texto {
-                color: #000 !important;
-                background-color: transparent !important;
-                border: 1px solid #000 !important;
-                font-weight: bold !important;
-            }
-            
-            /* Estilos para impresión del detalle */
-            #verContenido p {
-                margin: 8px 0 !important;
-                font-size: 14px !important;
-                line-height: 1.4 !important;
-            }
-            
-            #verContenido strong {
-                color: #000 !important;
-                font-weight: bold !important;
-            }
-        }
-        
-        /* Responsive */
         @media (max-width: 1024px) {
             .container {
                 max-width: 100%;
                 padding: var(--spacing-s);
             }
-            
-            .kpi-cards {
-                gap: var(--spacing-s);
+            #modal .content, #modalVer .content, #modalEventosHoy .content {
+                max-width: 95%;
             }
-            
-            .kpi-card {
-                min-width: 160px;
-                padding: var(--spacing-s) var(--spacing-m);
-            }
-            
-            .filter-row {
-                gap: var(--spacing-s);
-            }
-            
-            .filter-group {
-                min-width: 140px;
+            .stats-section {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
-        
         @media (max-width: 768px) {
-            .header {
-                padding: 1rem;
+            .header-content {
+                flex-direction: column;
+                gap: var(--spacing-s);
+                text-align: center;
             }
-            
-            h1 {
-                font-size: 1.5rem;
-            }
-            
-            /* KPIs responsivos */
-            .kpi-cards {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-                justify-content: space-between;
-            }
-            
-            .kpi-card {
-                flex: 1;
-                min-width: 80px;
-                padding: 10px 12px;
-            }
-            
             .filter-row {
                 flex-direction: column;
             }
-            
             .filter-group {
                 min-width: auto;
             }
-            
-            .pagination-container {
+            #paginacion-container {
                 flex-direction: column;
                 gap: var(--spacing-m);
                 text-align: center;
             }
-            
             .table-title {
                 padding: var(--spacing-s);
+                flex-direction: column;
+                gap: var(--spacing-s);
             }
-            
             .data-table th, 
             .data-table td {
                 padding: var(--spacing-s);
             }
-            
             .action-buttons {
                 flex-direction: column;
             }
-            
             .controls-form {
                 flex-direction: column;
             }
-            
+            #formCausa .grid {
+                grid-template-columns: 1fr;
+            }
+            .tabs-nav {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .tab-button {
+                padding: 10px 14px;
+                font-size: 0.85rem;
+            }
             .data-table {
                 min-width: 600px;
             }
+            .actions {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 4px;
+            }
+            .editor-toolbar {
+                flex-wrap: wrap;
+            }
+            .stats-section {
+                grid-template-columns: 1fr;
+            }
+            .eventos-container {
+                grid-template-columns: 1fr;
+            }
         }
-        
         @media (max-width: 576px) {
             .container {
-                padding: var(--spacing-s);
+                padding: var(--spacing-xs);
                 width: 100%;
             }
-            
-            /* KPIs en una columna en pantallas pequeñas */
-            .kpi-cards {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-            
-            .kpi-card {
-                flex: 1 1 100%; 
-                min-width: 0;
-                padding: 10px 8px;
-            }
-            
-            .kpi-number {
-                font-size: 1.2rem;
-            }
-            
             .filters-section,
             .table-section {
                 padding: var(--spacing-s);
             }
-            
             .filters-title,
             .table-title {
-                font-size: 1rem;
+                font-size: var(--body-large-size);
             }
-            
-            .modal .content {
+            #modal .content, #modalVer .content, #modalEventosHoy .content {
                 max-width: 100%;
                 max-height: 100vh;
                 border-radius: 0;
                 margin: 0;
             }
-            
             .modal-header,
             .modal-body,
             .controls-form {
                 padding: var(--spacing-s);
             }
-            
             .filter-group {
                 width: 100%;
             }
-            
             .button {
                 width: 100%;
                 justify-content: center;
             }
-            
+            .tab-button {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
             .table-wrap {
                 margin: 0 -8px;
                 padding: 0 8px;
             }
-            
             .data-table {
                 min-width: 100%;
             }
-            
             .prioridad-pill {
                 font-size: 0.7rem;
                 padding: 3px 6px;
             }
-            
             .actions {
                 flex-direction: column;
                 gap: 4px;
             }
-            
             .actions .button {
                 width: 100%;
                 font-size: 0.85rem;
             }
-            
             .floating-alert {
                 max-width: 90%;
                 font-size: 0.9rem;
                 padding: 10px 15px;
             }
+            .editor-toolbar {
+                padding: 6px;
+            }
+            .editor-toolbar button {
+                padding: 4px 8px;
+                font-size: 0.8rem;
+            }
+        }
+        @media (max-width: 360px) {
+            .container {
+                padding: 4px;
+            }
+            .filters-section,
+            .table-section {
+                padding: 8px;
+            }
+            .tab-button {
+                padding: 6px 8px;
+                font-size: 0.75rem;
+            }
+            .data-table th, 
+            .data-table td {
+                padding: 6px;
+                font-size: 0.8rem;
+            }
+            .button {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="floating-alert" id="floating-alert"></div>
+    <div class="floating-alert" id="floating-alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="floating-alert-text"></span>
+    </div>
     
-    <header>
-        <h1>Visualizador de Causas Judiciales</h1>
-        <div class="subtitle">Carga y visualiza datos de expedientes judiciales desde archivos JSON</div>
-    </header>
-    
-    <div class="container">
-        <div class="upload-section" id="uploadSection">
-            <h2>Cargar archivo JSON</h2>
-            <p>Selecciona un archivo JSON con datos de causas judiciales para visualizarlos</p>
-            <input type="file" id="fileInput" accept=".json" style="display: none;">
-            <button class="upload-btn" id="uploadBtn">
-                <i class="fas fa-upload"></i>
-                Seleccionar archivo JSON
-            </button>
-            <div class="file-name" id="fileName">No se ha seleccionado ningún archivo</div>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">Sistema de Causas Judiciales - JSON</div>
+            <div class="action-buttons">
+                <button id="btnNuevo" class="button">
+                    <i class="fas fa-plus"></i> Nuevo Expediente
+                </button>
+                <button id="btnEventosHoy" class="button">
+                    <i class="fas fa-calendar-day"></i> Eventos Hoy
+                </button>
+                <button id="btnExportarJSON" class="button button-success">
+                    <i class="fas fa-download"></i> Exportar JSON
+                </button>
+            </div>
         </div>
+    </header>
+    <main class="container">
+        <section class="upload-section" id="uploadSection">
+            <h2>Cargar Archivo JSON de Causas</h2>
+            <p>Selecciona un archivo JSON para cargar los datos de expedientes judiciales</p>
+            <input type="file" id="fileInput" accept=".json" style="display: none;">
+            <button id="uploadBtn" class="upload-btn">
+                <i class="fas fa-upload"></i> Seleccionar Archivo JSON
+            </button>
+            <div class="file-info" id="fileInfo">No se ha seleccionado ningún archivo</div>
+        </section>
         
-        <div id="dataSection" style="display: none;">
-            <section class="kpi-section">
-                <h2 class="kpi-title">Resumen de Expedientes</h2>
-                <div class="kpi-cards" id="kpiCards">
-                    <div class="loading">Cargando datos...</div>
-                </div>
-            </section>
+        <section id="dataSection" style="display: none;">
+            <div class="stats-section" id="statsSection"></div>
             
             <section class="filters-section">
                 <h2 class="filters-title">Filtros de Búsqueda</h2>
                 <div class="filter-row">
                     <div class="filter-group">
                         <label class="filter-label" for="buscador">Búsqueda</label>
-                        <input type="text" id="buscador" class="input" placeholder="🔍 Buscar en cualquier campo...">
+                        <input type="text" id="buscador" class="input" placeholder="🔍 Buscar...">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroTipoProceso">Tipo de Proceso</label>
+                        <select id="filtroTipoProceso" class="dropdown">
+                            <option value="">Tipo de Proceso (todos)</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroIntervencion">Intervención</label>
+                        <select id="filtroIntervencion" class="dropdown">
+                            <option value="">Intervención (todas)</option>
+                            <option>Defensor Oficial</option><option>Ministerio Principal</option><option>Ministerio Complementario</option><option>Patrocinante Actor</option>
+                            <option>Patrocinante Demandado</option><option>Patrocinante Tercero</option><option value="Defensor de Ausente">Defensor de Ausente</option><option>Patrocinante presunto incapaz</option></option>
+                            <option value="Defensor Oficial Asesor Letrado">Asistencia Letrada del incapaz</option><option>Ministerio Público del incapaz</option><option>Ministerio Público en turno Abril</option><option>Ministerio Público en turno Agosto</option><option>Ministerio Público en turno Diciembre</option><option>Tutor Ad Litem</option><option>Defensor Oficial Art 329 CPCC</option><option>Defensor Oficial Art 626 CPCC</option>   
+                        </select>
                     </div>
                     <div class="filter-group">
                         <label class="filter-label" for="filtroEstado">Estado</label>
                         <select id="filtroEstado" class="dropdown">
                             <option value="">Estado (todos)</option>
-                            <option>En trámite</option><option>Finalizado</option><option>Archivado</option>
+                            <option>En trámite</option><option>Finalizado</option><option>En Alzada</option><option>Archivado</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroUsuario">Usuario</label>
+                        <select id="filtroUsuario" class="dropdown">
+                            <option value="">Usuario (todos)</option>
                         </select>
                     </div>
                     <div class="filter-group">
@@ -880,18 +1235,6 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label class="filter-label" for="filtroJuzgado">Juzgado</label>
-                        <select id="filtroJuzgado" class="dropdown">
-                            <option value="">Juzgado (todos)</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label class="filter-label" for="filtroTipoProceso">Tipo de Proceso</label>
-                        <select id="filtroTipoProceso" class="dropdown">
-                            <option value="">Tipo de Proceso (todos)</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
                         <label class="filter-label" for="filtroEventos">Filtrar por Evento</label>
                         <select id="filtroEventos" class="dropdown">
                             <option value="">Todos los eventos</option>
@@ -901,6 +1244,14 @@
                             <option value="recursos">Recursos</option>
                             <option value="diligencias">Diligencias</option>
                         </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroFechaDesde">Fecha Desde</label>
+                        <input type="date" id="filtroFechaDesde" class="input">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroFechaHasta">Fecha Hasta</label>
+                        <input type="date" id="filtroFechaHasta" class="input">
                     </div>
                 </div>
                 <div class="action-buttons">
@@ -912,26 +1263,25 @@
                     </button>
                 </div>
             </section>
-            
             <section class="table-section">
-                <h2 class="table-title">Expedientes Judiciales</h2>
+                <h2 class="table-title">Expedientes Judiciales <span id="totalRegistros">(0 registros)</span></h2>
                 <div class="table-wrap">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th data-sort="numCausa">N°</th>
-                                <th data-sort="caratula">Carátula</th>
-                                <th data-sort="tipoProceso">Tipo</th>
-                                <th data-sort="juzgado">Juzgado</th>
-                                <th data-sort="usuarioAsignado">Usuario</th>
-                                <th data-sort="estado">Estado</th>
-                                <th data-sort="prioridad">Prioridad</th>
-                                <th data-sort="fechaRegistro">Registro</th>
+                                <th>N°</th>
+                                <th>Carátula</th>
+                                <th>Tipo</th>
+                                <th>Juzgado</th>
+                                <th>Usuario</th>
+                                <th>Estado</th>
+                                <th>Prioridad</th>
+                                <th>Registro</th>
                                 <th>Eventos</th>
                                 <th class="no-print">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody">
+                        <tbody id="tbodyCausas">
                             <tr>
                                 <td colspan="10">Cargando expedientes...</td>
                             </tr>
@@ -939,13 +1289,198 @@
                     </table>
                 </div>
             </section>
-            
-            <div class="pagination-container" id="paginacion-container"></div>
+            <div id="paginacion-container"></div>
+        </section>
+    </main>
+
+    <!-- MODAL EVENTOS HOY -->
+    <div id="modalEventosHoy">
+        <div class="content">
+            <div class="modal-header">
+                <i class="fas fa-calendar-day"></i>
+                <h2 style="margin:0;">Eventos de Hoy</h2>
+            </div>
+            <div class="modal-body eventos-hoy-modal">
+                <div class="eventos-hoy">
+                    <div class="evento-titulo evento-audiencias">Audiencias</div>
+                    <div id="listAudHoy"></div>
+                </div>
+                <div class="eventos-hoy">
+                    <div class="evento-titulo evento-gesell">Cámara Gesell</div>
+                    <div id="listGesellHoy"></div>
+                </div>
+                <div class="eventos-hoy">
+                    <div class="evento-titulo evento-vencimientos">Vencimientos</div>
+                    <div id="listVencHoy"></div>
+                </div>
+                <div class="eventos-hoy">
+                    <div class="evento-titulo evento-recursos">Recursos</div>
+                    <div id="listRecursosHoy"></div>
+                </div>
+                <div class="eventos-hoy">
+                    <div class="evento-titulo evento-diligencias">Diligencias</div>
+                    <div id="listDiligenciasHoy"></div>
+                </div>
+            </div>
+            <div class="controls-form">
+                <button id="btnCerrarEventosHoy" class="button button-secondary">
+                    <i class="fa fa-xmark"></i> Cerrar
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Modal para ver detalles completos -->
-    <div class="modal" id="modalVer">
+    <!-- MODALES EXISTENTES -->
+    <div id="modal">
+        <div class="content">
+            <div class="modal-header">
+                <i class="fa-solid fa-file-pen"></i>
+                <h2 id="tituloForm" style="margin:0;">Nuevo Expediente</h2>
+            </div>
+            <div class="modal-body">
+                <form id="formCausa" action="#" method="post" aria-label="Formulario para nuevo expediente o edición">
+                    <input type="hidden" id="editId" />
+                    <div class="tabs-container">
+                        <div class="tabs-nav">
+                            <button type="button" class="tab-button active" data-tab="tab1">Datos Principales</button>
+                            <button type="button" class="tab-button" data-tab="tab2">Fechas</button>
+                            <button type="button" class="tab-button" data-tab="tab3">Audiencias</button>
+                            <button type="button" class="tab-button" data-tab="tab4">Vencimientos</button>
+                            <button type="button" class="tab-button" data-tab="tab5">Diligencias</button>
+                            <button type="button" class="tab-button" data-tab="tab6">Recursos</button>
+                            <button type="button" class="tab-button" data-tab="tab7">Observaciones</button>
+                        </div>
+                        <div id="tab1" class="tab-content active">
+                            <div class="field">
+                                <label for="numCausa">N° Expediente *</label>
+                                <input id="numCausa" required autocomplete="off" />
+                                <span class="error-message">Este campo es obligatorio.</span>
+                            </div>
+                            <div class="field">
+                                <label for="caratula">Carátula Completa *</label>
+                                <textarea id="caratula" rows="2" required></textarea>
+                                <span class="error-message">Este campo es obligatorio.</span>
+                            </div>
+                            <div class="field">
+                                <label for="tipoProceso">Tipo de Proceso *</label>
+                                <select id="tipoProceso" required>
+                                    <option value="">Seleccione un tipo</option>
+                                </select>
+                                <span class="error-message">Este campo es obligatorio.</span>
+                            </div>
+                            <div class="field">
+                                <label for="juzgado">Juzgado *</label>
+                                <select id="juzgado" required>
+                                    <option value="">Seleccione un juzgado</option>
+                                </select>
+                                <span class="error-message">Este campo es obligatorio.</span>
+                            </div>
+                            <div class="field">
+                                <label for="prioridad">Prioridad *</label>
+                                <select id="prioridad" required>
+                                    <option value="Ninguna"><strong>Ninguna</strong> (gris)</option>
+                                    <option value="Baja"><strong>Baja</strong> (verde)</option>
+                                    <option value="Media"><strong>Media</strong> (naranja)</option>
+                                    <option value="Alta"><strong>Alta</strong> (roja)</option>
+                                </select>
+                                <span class="error-message">Este campo es obligatorio.</span>
+                            </div>
+                            <div class="field">
+                                <label for="usuarioAsignado">Usuario Asignado *</label>
+                                <select id="usuarioAsignado" required>
+                                    <option value="">Seleccione un usuario</option>
+                                </select>
+                                <span class="error-message">Este campo es obligatorio.</span>
+                            </div>
+                            <div class="field">
+                                <label for="estado">Estado del Proceso</label>
+                                <select id="estado"><option>En trámite</option><option>Finalizado</option><option>Archivado</option><option>En Alzada</option></select>
+                            </div>
+                            <div class="field">
+                                <label for="intervencion">Intervención</label>
+                                <select id="intervencion">
+                                    <option value="">Seleccione intervención</option>
+                                    <option>Defensor Oficial</option><option>Ministerio Principal</option><option>Ministerio Complementario</option><option>Patrocinante Actor</option>
+                                    <option>Patrocinante Demandado</option><option>Patrocinante Tercero</option><option value="Defensor de Ausente">Defensor de Ausente</option><option>Patrocinante presunto incapaz</option>
+                                    <option value="Defensor Oficial Asesor Letrado">Asistencia Letrada del incapaz</option><option>Ministerio Público del incapaz</option><option>Ministerio Público en turno Abril</option><option>Ministerio Público en turno Agosto</option><option>Ministerio Público en turno Diciembre</option><option>Tutor Ad Litem</option><option>Defensor Oficial Art 329 CPCC</option><option>Defensor Oficial Art 626 CPCC</option>   
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="datosNnya">Datos de NNyA (máx. 500 palabras)</label>
+                                <textarea id="datosNnya"></textarea><div class="counter" id="counterNnya" style="display:none">0/500</div>
+                            </div>
+                        </div>
+                        <div id="tab2" class="tab-content">
+                            <div class="field"><label for="fechaInicio">Fecha de Inicio</label><input type="date" id="fechaInicio" /></div>
+                            <div class="field"><label for="fechaPase">Fecha de Pase</label><input type="datetime-local" id="fechaPase" /></div>
+                        </div>
+                        <div id="tab3" class="tab-content">
+                            <div class="field">
+                                <label for="audiencias">Audiencias señaladas</label>
+                                <div id="audiencias-container" class="audiencias-container"></div>
+                                <button type="button" id="btnAgregarAudiencia" class="btn-audiencia"><i class="fa fa-plus"></i> Agregar Audiencia</button>
+                            </div>
+                            <div class="field">
+                                <label for="audienciaGesell">Audiencia en Cámara Gesell</label>
+                                <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="habilitarAudienciaGesell" /><span>Habilitar</span></div>
+                                <input type="datetime-local" id="audienciaGesell" disabled />
+                            </div>
+                            <div class="field">
+                                <label for="nnyaGesell">NNyA en Gesell (máx. 400 palabras)</label>
+                                <textarea id="nnyaGesell" disabled></textarea><div class="counter" id="counterNnyaGesell" style="display:none">0/400</div>
+                            </div>
+                        </div>
+                        <div id="tab4" class="tab-content">
+                            <div class="field"><label for="vencimiento">Vencimiento</label><input type="datetime-local" id="vencimiento" /></div>
+                            <div class="field"><label for="vencimientoRecursos">Vencimiento de Recursos</label><input type="datetime-local" id="vencimientoRecursos" /></div>
+                        </div>
+                        <div id="tab5" class="tab-content">
+                            <div class="field">
+                                <label for="diligencias">Diligencias</label>
+                                <div id="diligencias-container" class="diligencias-container"></div>
+                                <button type="button" id="btnAgregarDiligencia" class="btn-diligencia"><i class="fa fa-plus"></i> Agregar Diligencia</button>
+                            </div>
+                        </div>
+                        <div id="tab6" class="tab-content">
+                            <div class="field">
+                                <label for="recursos">Recursos Interpuestos</label>
+                                <select id="recursos"><option value="">Seleccione un recurso</option><option>Apelación</option><option>Queja</option><option>Inconstitucionalidad</option><option>Nulidad</option><option>Reposición</option><option>Aclaratoria</option><option>Recurso Extraordinario</option><option>Recurso de Inaplicabilidad</option></select>
+                            </div>
+                            <div id="recursos-opcionales" style="display:none;">
+                                <div class="field">
+                                    <label for="recursosContestacion">Recursos Contestación</label>
+                                    <select id="recursosContestacion"><option value="">Seleccione un recurso</option><option>Apelación</option><option>Queja</option><option>Inconstitucionalidad</option><option>Nulidad</option><option>Reposición</option><option>Aclaratoria</option><option>Recurso Extraordinario</option><option>Recurso de Inaplicabilidad</option></select>
+                                </div>
+                                <div class="field">
+                                    <label for="estadoRecursos">Estado de Recursos</label>
+                                    <select id="estadoRecursos"><option value="">Seleccione un estado</option><option>Pendiente</option><option>En trámite</option><option>Resuelto</option><option>Rechazado</option></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tab7" class="tab-content">
+                            <div class="field">
+                                <label for="observaciones">Observaciones (máx. 1000 palabras)</label>
+                                <div class="editor-toolbar">
+                                    <button type="button" id="btnBold" title="Negrita"><i class="fas fa-bold"></i></button>
+                                    <button type="button" id="btnColorAzul" class="color-button azul" title="Color Azul">A</button>
+                                    <button type="button" id="btnColorRojo" class="color-button rojo" title="Color Rojo">A</button>
+                                    <button type="button" id="btnColorVerde" class="color-button verde" title="Color Verde">A</button>
+                                    <button type="button" id="btnColorNormal" class="color-button normal" title="Color Normal">Normal</button>
+                                </div>
+                                <div id="observaciones-editor" contenteditable="true"></div>
+                                <input type="hidden" id="observaciones" name="observaciones">
+                                <div class="counter" id="counter">0/1000</div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="controls-form">
+                <button class="button button-success" type="button" id="btnGuardar"><i class="fa fa-save"></i>Guardar</button>
+            </div>
+        </div>
+    </div>
+    <div id="modalVer">
         <div class="content">
             <div class="modal-header">
                 <i class="fa-solid fa-eye"></i>
@@ -953,6 +1488,16 @@
             </div>
             <div class="modal-body">
                 <div id="verContenido"></div>
+                <div class="eventos-container" id="eventosContainer"></div>
+                <div id="agregarNota">
+                    <label for="notaBitacora">Agregar Nota de Seguimiento:</label>
+                    <textarea id="notaBitacora" placeholder="Escribe aquí la nota..."></textarea>
+                    <button id="btnAgregarNota" class="button"><i class="fa fa-plus"></i> Guardar Nota</button>
+                </div>
+                <div class="notes-history">
+                    <h4>Historial de Notas</h4>
+                    <div id="historialNotas"></div>
+                </div>
             </div>
             <div class="controls-form" style="justify-content:flex-end;">
                 <button id="btnCerrarVer" class="button button-secondary"><i class="fa fa-xmark"></i>Cerrar</button>
@@ -960,391 +1505,111 @@
             </div>
         </div>
     </div>
-
+    <div id="alertModal">
+        <div class="content">
+            <h3 id="alertTitle"></h3>
+            <p id="alertMessage"></p>
+            <div class="actions-row">
+                <button id="btnAlertOK" class="button alert-success"><i class="fa fa-check"></i> OK</button>
+            </div>
+        </div>
+    </div>
     <script>
-        // Variables globales
+        // Variables globales - IDÉNTICAS AL SISTEMA ORIGINAL
         let causasData = [];
-        let currentPage = 1;
-        const itemsPerPage = 10;
         let filteredData = [];
-        let sortColumn = 'numCausa';
-        let sortDirection = 'asc';
-        let datosFiltrados = [];
-        let paginaActual = 1;
-
-        // Inicializar la aplicación
-        document.addEventListener('DOMContentLoaded', function() {
-            setupEventListeners();
-        });
-
-        // Configurar event listeners
-        function setupEventListeners() {
-            // Botón de carga de archivo
-            document.getElementById('uploadBtn').addEventListener('click', function() {
-                document.getElementById('fileInput').click();
-            });
-            
-            // Input de archivo
-            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
-            
-            // Filtros y búsqueda
-            document.getElementById('buscador').addEventListener('input', handleFilterChange);
-            document.getElementById('filtroEstado').addEventListener('change', handleFilterChange);
-            document.getElementById('filtroPrioridad').addEventListener('change', handleFilterChange);
-            document.getElementById('filtroJuzgado').addEventListener('change', handleFilterChange);
-            document.getElementById('filtroTipoProceso').addEventListener('change', handleFilterChange);
-            document.getElementById('filtroEventos').addEventListener('change', handleFilterChange);
-            
-            // Ordenar al hacer clic en los encabezados
-            document.querySelectorAll('th[data-sort]').forEach(th => {
-                th.addEventListener('click', () => {
-                    const column = th.getAttribute('data-sort');
-                    if (sortColumn === column) {
-                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-                    } else {
-                        sortColumn = column;
-                        sortDirection = 'asc';
-                    }
-                    renderTable();
-                });
-            });
-            
-            // Modal
-            document.getElementById('btnCerrarVer').addEventListener('click', closeModal);
-            document.getElementById('modalVer').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
-            
-            // Botones de impresión
-            document.getElementById('btnPrintTodos').addEventListener('click', printTodos);
-            document.getElementById('btnPrintFiltrado').addEventListener('click', printFiltrado);
-            document.getElementById('btnPrintRegistro').addEventListener('click', printRegistro);
+        let currentPage = 1;
+        const recordsPerPage = 10;
+        let modo = "nuevo";
+        let causaActualId = null;
+        let usuariosCache = [];
+        let juzgadosPorTipoCache = {};
+        
+        // Elementos DOM
+        const $ = (id) => document.getElementById(id);
+        const tbody = $("tbodyCausas");
+        const modal = $("modal");
+        const modalVer = $("modalVer");
+        const modalEventosHoy = $("modalEventosHoy");
+        const verContenido = $("verContenido");
+        const tituloForm = $("tituloForm");
+        const editId = $("editId");
+        const buscador = $("buscador");
+        const filtroEstado = $("filtroEstado");
+        const filtroUsuario = $("filtroUsuario");
+        const filtroPrioridad = $("filtroPrioridad");
+        const filtroIntervencion = $("filtroIntervencion");
+        const filtroTipoProceso = $("filtroTipoProceso");
+        const filtroEventos = $("filtroEventos");
+        const filtroFechaDesde = $("filtroFechaDesde");
+        const filtroFechaHasta = $("filtroFechaHasta");
+        const notaBitacora = $("notaBitacora");
+        const historialNotas = $("historialNotas");
+        const btnAgregarNota = $("btnAgregarNota");
+        const listAudHoy = $("listAudHoy");
+        const listGesellHoy = $("listGesellHoy");
+        const listVencHoy = $("listVencHoy");
+        const listRecursosHoy = $("listRecursosHoy");
+        const listDiligenciasHoy = $("listDiligenciasHoy");
+        const floatingAlert = $("floating-alert");
+        const floatingAlertText = $("floating-alert-text");
+        const audienciasContainer = $("audiencias-container");
+        const diligenciasContainer = $("diligencias-container");
+        const btnAgregarAudiencia = $("btnAgregarAudiencia");
+        const btnAgregarDiligencia = $("btnAgregarDiligencia");
+        const alertModal = $("alertModal");
+        const alertTitle = $("alertTitle");
+        const alertMessage = $("alertMessage");
+        const btnAlertOK = $("btnAlertOK");
+        const eventosContainer = $("eventosContainer");
+        const dataSection = $("dataSection");
+        const uploadSection = $("uploadSection");
+        const fileInput = $("fileInput");
+        const uploadBtn = $("uploadBtn");
+        const fileInfo = $("fileInfo");
+        const btnExportarJSON = $("btnExportarJSON");
+        const statsSection = $("statsSection");
+        const totalRegistros = $("totalRegistros");
+        
+        const selTipo = $("tipoProceso"), selJuz = $("juzgado"), selUsu = $("usuarioAsignado"), selPrioridad = $("prioridad");
+        const tabButtons = document.querySelectorAll(".tab-button");
+        const tabContents = document.querySelectorAll(".tab-content");
+        
+        const btnBold = $("btnBold");
+        const btnColorAzul = $("btnColorAzul");
+        const btnColorRojo = $("btnColorRojo");
+        const btnColorVerde = $("btnColorVerde");
+        const btnColorNormal = $("btnColorNormal");
+        const observacionesEditor = $("observaciones-editor");
+        const observacionesHidden = $("observaciones");
+        
+        // FUNCIONES DE UTILIDAD - MISMAS QUE EL SISTEMA ORIGINAL
+        function generarId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
         }
-
-        // Manejar la carga de archivos
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            // Mostrar nombre del archivo
-            document.getElementById('fileName').textContent = file.name;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    processData(data);
-                } catch (error) {
-                    showError('Error al procesar el archivo JSON. Asegúrate de que el formato es correcto.');
-                    console.error('Error parsing JSON:', error);
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        // Procesar datos cargados
-        function processData(data) {
-            // Verificar si los datos tienen la estructura esperada
-            if (!Array.isArray(data)) {
-                showError('El archivo JSON debe contener un array de causas judiciales.');
-                return;
-            }
-            
-            // Validar que cada elemento tenga la estructura básica esperada
-            const validData = data.filter(item => 
-                item && item.data && (item.data.numCausa || item.data.caratula)
-            );
-            
-            if (validData.length === 0) {
-                showError('No se encontraron datos válidos en el archivo JSON.');
-                return;
-            }
-            
-            causasData = validData;
-            initFilters();
-            renderStats();
-            handleFilterChange();
-            
-            // Mostrar sección de datos
-            document.getElementById('dataSection').style.display = 'block';
-            document.getElementById('uploadSection').style.display = 'none';
-        }
-
-        // Inicializar filtros
-        function initFilters() {
-            // Obtener valores únicos para los filtros
-            const juzgados = [...new Set(causasData.map(item => item.data.juzgado))].filter(Boolean);
-            const tiposProceso = [...new Set(causasData.map(item => item.data.tipoProceso))].filter(Boolean);
-            
-            const juzgadoFilter = document.getElementById('filtroJuzgado');
-            juzgadoFilter.innerHTML = '<option value="">Juzgado (todos)</option>';
-            juzgados.forEach(juzgado => {
-                const option = document.createElement('option');
-                option.value = juzgado;
-                option.textContent = juzgado;
-                juzgadoFilter.appendChild(option);
-            });
-            
-            const tipoProcesoFilter = document.getElementById('filtroTipoProceso');
-            tipoProcesoFilter.innerHTML = '<option value="">Tipo de Proceso (todos)</option>';
-            tiposProceso.forEach(tipo => {
-                const option = document.createElement('option');
-                option.value = tipo;
-                option.textContent = tipo;
-                tipoProcesoFilter.appendChild(option);
-            });
-        }
-
-        // Renderizar estadísticas
-        function renderStats() {
-            const kpiCardsContainer = document.getElementById('kpiCards');
-            const totalCausas = causasData.length;
-            const enTramite = causasData.filter(item => item.data.estado === 'En trámite').length;
-            const finalizadas = causasData.filter(item => item.data.estado === 'Finalizado').length;
-            const archivadas = causasData.filter(item => item.data.estado === 'Archivado').length;
-            
-            // KPIs predefinidos con etiquetas formateadas
-            const kpisConfig = [
-                { key: 'total', label: 'Total de Causas', class: 'total', value: totalCausas },
-                { key: 'enTramite', label: 'En Trámite', class: 'en-tramite', value: enTramite },
-                { key: 'finalizado', label: 'Finalizado', class: 'finalizado', value: finalizadas },
-                { key: 'archivado', label: 'Archivado', class: 'archivado', value: archivadas }
-            ];
-            
-            let kpisHTML = '';
-            
-            // Generar tarjetas de KPIs basadas en los datos
-            kpisConfig.forEach(kpi => {
-                kpisHTML += `
-                    <div class="kpi-card ${kpi.class}">
-                        <div class="kpi-number">${kpi.value}</div>
-                        <div class="kpi-label">${kpi.label}</div>
-                    </div>
-                `;
-            });
-            
-            kpiCardsContainer.innerHTML = kpisHTML;
-        }
-
-        // Filtrar datos - CORREGIDO: Filtro por eventos funcionando correctamente
-        function filtrarDatos() {
-            const q = (document.getElementById('buscador').value || "").toLowerCase();
-            const est = (document.getElementById('filtroEstado').value || "").toLowerCase();
-            const prio = (document.getElementById('filtroPrioridad').value || "").toLowerCase();
-            const juzgado = (document.getElementById('filtroJuzgado').value || "").toLowerCase();
-            const tipoProc = (document.getElementById('filtroTipoProceso').value || "").toLowerCase();
-            const evento = (document.getElementById('filtroEventos').value || "").toLowerCase();
-
-            return causasData.filter(item => {
-                const data = item.data;
-                
-                // Búsqueda en TODOS los campos del objeto
-                let matchesSearch = !q;
-                if (q) {
-                    matchesSearch = false;
-                    // Buscar en todos los campos del objeto data
-                    for (const [key, value] of Object.entries(data)) {
-                        if (value !== null && value !== undefined) {
-                            const stringValue = String(value).toLowerCase();
-                            if (stringValue.includes(q)) {
-                                matchesSearch = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                const matchesEstado = !est || (data.estado && data.estado.toLowerCase() === est);
-                const matchesPrioridad = !prio || (data.prioridad && data.prioridad.toLowerCase() === prio);
-                const matchesJuzgado = !juzgado || (data.juzgado && data.juzgado.toLowerCase() === juzgado);
-                const matchesTipoProceso = !tipoProc || (data.tipoProceso && data.tipoProceso.toLowerCase() === tipoProc);
-                
-                // Filtro por eventos - CORREGIDO
-                let matchesEvento = !evento;
-                if (evento) {
-                    const eventos = obtenerTodosEventos(data);
-                    matchesEvento = eventos.some(e => e.clase === evento);
-                }
-                
-                return matchesSearch && matchesEstado && matchesPrioridad && matchesJuzgado && matchesTipoProceso && matchesEvento;
-            });
-        }
-
-        // Manejar cambio de filtros
-        function handleFilterChange() {
-            datosFiltrados = filtrarDatos();
-            paginaActual = 1;
-            renderTable();
-            renderStats();
-        }
-
-        // Ordenar datos
-        function sortData(data) {
-            return data.sort((a, b) => {
-                const aValue = a.data[sortColumn] || '';
-                const bValue = b.data[sortColumn] || '';
-                
-                if (sortDirection === 'asc') {
-                    return aValue.localeCompare(bValue);
-                } else {
-                    return bValue.localeCompare(aValue);
-                }
-            });
-        }
-
-        // Renderizar la tabla
-        function renderTable() {
-            const sortedData = sortData([...datosFiltrados]);
-            
-            const startIndex = (paginaActual - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const pageData = sortedData.slice(startIndex, endIndex);
-            
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
-            
-            if (pageData.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="10" class="no-data">No se encontraron resultados</td></tr>';
-            } else {
-                pageData.forEach(item => {
-                    const data = item.data;
-                    const row = document.createElement('tr');
-                    
-                    // Obtener eventos para esta causa
-                    const eventos = obtenerTodosEventos(data);
-                    let eventosHTML = "—";
-                    if (eventos.length > 0) {
-                        eventosHTML = `<div class="eventos-lista">`;
-                        eventos.forEach(evento => {
-                            let eventoTexto = `${evento.tipo}: ${formatearFecha(evento.fecha, true)}`;
-                            if (evento.tipo === "Diligencia" && evento.detalle) {
-                                eventoTexto += ` - ${evento.detalle}`;
-                            }
-                            eventosHTML += `<div class="evento-tabla ${evento.clase}">${eventoTexto}</div>`;
-                        });
-                        eventosHTML += `</div>`;
-                    }
-                    
-                    row.innerHTML = `
-                        <td>${data.numCausa || ''}</td>
-                        <td>${data.caratula || ''}</td>
-                        <td>${data.tipoProceso || ''}</td>
-                        <td>${data.juzgado || ''}</td>
-                        <td>${data.usuarioAsignado || ''}</td>
-                        <td><span class="status-badge status-${getEstadoClass(data.estado)}">${data.estado || ''}</span></td>
-                        <td><span class="prioridad-pill ${prioridadClase(data.prioridad)}">${data.prioridad || 'Ninguna'}</span></td>
-                        <td>${formatearFecha(data.fechaRegistro, false)}</td>
-                        <td>${eventosHTML}</td>
-                        <td class="actions">
-                            <button class="button ver-detalles" data-id="${item.id}" title="Ver"><i class="fa fa-eye"></i></button>
-                        </td>
-                    `;
-                    
-                    tableBody.appendChild(row);
-                });
-                
-                // Añadir event listeners a los botones de detalles
-                document.querySelectorAll('.ver-detalles').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const id = this.getAttribute('data-id');
-                        showDetails(id);
-                    });
-                });
-            }
-            
-            renderPagination(sortedData.length);
-            updateSortIndicators();
-        }
-
-        // Obtener todos los eventos de una causa - CORREGIDO: Clases de eventos actualizadas
-        function obtenerTodosEventos(data) {
-            const eventos = [];
-            
-            // Audiencias
-            if (Array.isArray(data.audiencias)) {
-                data.audiencias.forEach(aud => {
-                    const fecha = toDate(aud);
-                    if (fecha) {
-                        eventos.push({ 
-                            tipo: "Audiencia", 
-                            fecha: fecha,
-                            clase: "audiencias"
-                        });
-                    }
-                });
-            }
-            
-            // Cámara Gesell
-            if (data.audienciaGesell) {
-                const fecha = toDate(data.audienciaGesell);
-                if (fecha) {
-                    eventos.push({ 
-                        tipo: "Gesell", 
-                        fecha: fecha,
-                        clase: "gesell"
-                    });
-                }
-            }
-            
-            // Vencimiento
-            if (data.vencimiento) {
-                const fecha = toDate(data.vencimiento);
-                if (fecha) {
-                    eventos.push({ 
-                        tipo: "Vencimiento", 
-                        fecha: fecha,
-                        clase: "vencimientos"
-                    });
-                }
-            }
-            
-            // Vencimiento de Recursos
-            if (data.vencimientoRecursos) {
-                const fecha = toDate(data.vencimientoRecursos);
-                if (fecha) {
-                    eventos.push({ 
-                        tipo: "Recurso", 
-                        fecha: fecha,
-                        clase: "recursos"
-                    });
-                }
-            }
-            
-            // Diligencias
-            if (Array.isArray(data.diligencias)) {
-                data.diligencias.forEach(dilig => {
-                    const fecha = toDate(dilig.fecha);
-                    if (fecha) {
-                        eventos.push({ 
-                            tipo: "Diligencia", 
-                            fecha: fecha,
-                            detalle: dilig.detalle || '',
-                            clase: "diligencias"
-                        });
-                    }
-                });
-            }
-            
-            // Ordenar eventos por fecha (más reciente primero)
-            eventos.sort((a, b) => b.fecha - a.fecha);
-            return eventos;
-        }
-
-        // Función utilitaria para convertir a fecha
-        function toDate(v) {
+        
+        // Función toDate IDÉNTICA a la del sistema original
+        const toDate = (v) => {
             if (!v) return null;
-            if (v.seconds) {
+            // Si ya es una fecha, devolverla
+            if (v instanceof Date) return v;
+            // Si es un objeto con seconds (Firebase timestamp)
+            if (v.seconds !== undefined) {
                 return new Date(v.seconds * 1000);
             }
+            // Si es un string ISO
             if (typeof v === 'string') {
+                const d = new Date(v);
+                return isNaN(d) ? null : d;
+            }
+            // Si es un número (timestamp)
+            if (typeof v === 'number') {
                 return new Date(v);
             }
-            return v;
-        }
-
-        // Formatear fecha
+            return null;
+        };
+        
+        // Función formatearFecha IDÉNTICA a la del sistema original
         function formatearFecha(d, conHora = false) {
             const fecha = toDate(d);
             if (!fecha || isNaN(fecha)) return "";
@@ -1358,274 +1623,1234 @@
             const minutos = String(fecha.getMinutes()).padStart(2, '0');
             return `${dia}/${mes}/${año} ${horas}:${minutos}`;
         }
-
-        // Obtener clase CSS para el estado
-        function getEstadoClass(estado) {
-            if (!estado) return '';
+        
+        // Función formatFechaParaInput IDÉNTICA a la del sistema original
+        function formatFechaParaInput(fecha, conHora = true) {
+            if (!fecha || isNaN(fecha)) return "";
             
-            switch(estado.toLowerCase()) {
-                case 'en trámite': return 'en-tramite';
-                case 'finalizado': return 'finalizado';
-                case 'archivado': return 'archivado';
-                default: return '';
-            }
-        }
-
-        // Obtener clase CSS para la prioridad
-        function prioridadClase(prioridad) {
-            if (!prioridad) return "prioridad-ninguna";
+            const año = fecha.getFullYear();
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dia = String(fecha.getDate()).padStart(2, '0');
             
-            switch(prioridad.toLowerCase()) {
-                case 'alta': return 'prioridad-alta';
-                case 'media': return 'prioridad-media';
-                case 'baja': return 'prioridad-baja';
-                default: return 'prioridad-ninguna';
-            }
-        }
-
-        // Obtener clase CSS para la prioridad en texto
-        function prioridadClaseTexto(prioridad) {
-            if (!prioridad) return "ninguna";
-            
-            switch(prioridad.toLowerCase()) {
-                case 'alta': return 'alta';
-                case 'media': return 'media';
-                case 'baja': return 'baja';
-                default: return 'ninguna';
-            }
-        }
-
-        // Actualizar indicadores de ordenamiento
-        function updateSortIndicators() {
-            document.querySelectorAll('th[data-sort]').forEach(th => {
-                th.classList.remove('sort-asc', 'sort-desc');
-                
-                if (th.getAttribute('data-sort') === sortColumn) {
-                    th.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
-                }
-            });
-        }
-
-        // Renderizar paginación
-        function renderPagination(totalItems) {
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-            const pagination = document.getElementById('paginacion-container');
-            pagination.innerHTML = '';
-            
-            if (totalPages <= 1) {
-                pagination.innerHTML = `<div class="page-info">Mostrando ${totalItems} resultados</div>`;
-                return;
+            if (!conHora) {
+                return `${año}-${mes}-${dia}`;
             }
             
-            // Botón anterior
-            const prevButton = document.createElement('button');
-            prevButton.textContent = 'Anterior';
-            prevButton.className = 'button';
-            prevButton.disabled = paginaActual === 1;
-            prevButton.addEventListener('click', () => {
-                if (paginaActual > 1) {
-                    paginaActual--;
-                    renderTable();
-                }
-            });
-            pagination.appendChild(prevButton);
+            const horas = String(fecha.getHours()).padStart(2, '0');
+            const minutos = String(fecha.getMinutes()).padStart(2, '0');
+            return `${año}-${mes}-${dia}T${horas}:${minutos}`;
+        }
+        
+        // Funciones de prioridad IDÉNTICAS al sistema original
+        const prioridadClase = (p) => {
+            p = (p || "Ninguna").toLowerCase();
+            if(p === "alta") return "prioridad-alta";
+            if(p === "media") return "prioridad-media";
+            if(p === "baja") return "prioridad-baja";
+            return "prioridad-ninguna";
+        };
+        
+        const prioridadClaseTexto = (p) => {
+            p = (p || "Ninguna").toLowerCase();
+            if(p === "alta") return "alta";
+            if(p === "media") return "media";
+            if(p === "baja") return "baja";
+            return "ninguna";
+        };
+        
+        // Función mostrarAlertaFlotante IDÉNTICA al sistema original
+        function mostrarAlertaFlotante(mensaje, tipo = 'danger') {
+            floatingAlertText.textContent = mensaje;
+            floatingAlert.classList.remove('danger', 'success', 'show');
+            floatingAlert.classList.add(tipo);
             
-            // Números de página
-            const startPage = Math.max(1, paginaActual - 2);
-            const endPage = Math.min(totalPages, paginaActual + 2);
-            
-            // Primera página si no está en el rango
-            if (startPage > 1) {
-                const firstButton = document.createElement('button');
-                firstButton.textContent = '1';
-                firstButton.className = 'button';
-                firstButton.addEventListener('click', () => {
-                    paginaActual = 1;
-                    renderTable();
-                });
-                pagination.appendChild(firstButton);
-                
-                if (startPage > 2) {
-                    const ellipsis = document.createElement('span');
-                    ellipsis.textContent = '...';
-                    ellipsis.style.padding = '0.5rem';
-                    pagination.appendChild(ellipsis);
-                }
+            const icon = floatingAlert.querySelector('i');
+            if (icon) {
+                icon.style.display = 'block';
             }
             
-            // Páginas en el rango
-            for (let i = startPage; i <= endPage; i++) {
-                const pageButton = document.createElement('button');
-                pageButton.textContent = i;
-                pageButton.className = 'button';
-                if (i === paginaActual) {
-                    pageButton.classList.add('active');
-                }
-                pageButton.addEventListener('click', () => {
-                    paginaActual = i;
-                    renderTable();
-                });
-                pagination.appendChild(pageButton);
-            }
-            
-            // Última página si no está en el rango
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    const ellipsis = document.createElement('span');
-                    ellipsis.textContent = '...';
-                    ellipsis.style.padding = '0.5rem';
-                    pagination.appendChild(ellipsis);
-                }
-                
-                const lastButton = document.createElement('button');
-                lastButton.textContent = totalPages;
-                lastButton.className = 'button';
-                lastButton.addEventListener('click', () => {
-                    paginaActual = totalPages;
-                    renderTable();
-                });
-                pagination.appendChild(lastButton);
-            }
-            
-            // Botón siguiente
-            const nextButton = document.createElement('button');
-            nextButton.textContent = 'Siguiente';
-            nextButton.className = 'button';
-            nextButton.disabled = paginaActual === totalPages;
-            nextButton.addEventListener('click', () => {
-                if (paginaActual < totalPages) {
-                    paginaActual++;
-                    renderTable();
-                }
-            });
-            pagination.appendChild(nextButton);
-            
-            // Información de página
-            const pageInfo = document.createElement('div');
-            pageInfo.className = 'page-info';
-            const startItem = (paginaActual - 1) * itemsPerPage + 1;
-            const endItem = Math.min(paginaActual * itemsPerPage, totalItems);
-            pageInfo.textContent = `Página ${paginaActual} de ${totalPages} | Mostrando ${startItem}-${endItem} de ${totalItems} registros`;
-            pagination.appendChild(pageInfo);
-        }
-
-        // Mostrar detalles de una causa
-        function showDetails(id) {
-            const causa = causasData.find(item => item.id === id);
-            if (!causa) return;
-            
-            const data = causa.data;
-            document.getElementById('modalVer').style.display = 'flex';
-            
-            const verContenido = document.getElementById('verContenido');
-            let contenidoHTML = "";
-            
-            // Mostrar prioridad en texto con colores según el nivel
-            const prioridadClaseTextoVal = prioridadClaseTexto(data.prioridad);
-            const prioridadTexto = `<div class="prioridad-texto ${prioridadClaseTextoVal}"><strong>Prioridad: ${data.prioridad || "Ninguna"}</strong></div>`;
-            contenidoHTML += prioridadTexto;
-            
-            const etiquetas = {
-                numCausa: "N° Expediente", 
-                caratula: "Carátula", 
-                tipoProceso: "Tipo de Proceso", 
-                juzgado: "Juzgado",
-                fechaInicio: "Fecha de Inicio", 
-                fechaPase: "Fecha de Pase", 
-                intervencion: "Intervención",
-                datosNnya: "Datos de NNyA", 
-                vencimiento: "Vencimiento", 
-                usuarioAsignado: "Usuario Asignado",
-                estado: "Estado", 
-                recursos: "Recursos Interpuestos",
-                recursosContestacion: "Contestación de Recursos", 
-                estadoRecursos: "Estado de Recursos",
-                vencimientoRecursos: "Vencimiento de Recursos", 
-                audienciaGesell: "Audiencia Gesell",
-                nnyaGesell: "NNyA en Gesell", 
-                observaciones: "Observaciones", 
-                fechaRegistro: "Fecha de Registro"
-            };
-            
-            const ordenClaves = [
-                "numCausa", "caratula", "tipoProceso", "juzgado", "estado", "usuarioAsignado",
-                "fechaRegistro", "fechaInicio", "fechaPase", "intervencion", "datosNnya", "vencimiento",
-                "audiencias", "diligencias", "recursos", "recursosContestacion", "estadoRecursos", "vencimientoRecursos",
-                "audienciaGesell", "nnyaGesell", "observaciones"
-            ];
-            
-            ordenClaves.forEach(k => {
-                const v = data[k];
-                if (v !== null && v !== undefined && v !== "" && k !== "prioridad") {
-                    const etiqueta = etiquetas[k] || k;
-                    if (k === "audiencias" && Array.isArray(v) && v.length > 0) {
-                        contenidoHTML += `<p><strong>Audiencias:</strong></p>`;
-                        v.forEach(aud => {
-                            contenidoHTML += `<p style="margin-left: 20px;">${formatearFecha(aud, true)}</p>`;
-                        });
-                    } else if (k === "diligencias" && Array.isArray(v) && v.length > 0) {
-                        contenidoHTML += `<p><strong>Diligencias:</strong></p>`;
-                        v.forEach(dilig => {
-                            const fecha = formatearFecha(dilig.fecha, true);
-                            const detalle = dilig.detalle ? ` - ${dilig.detalle}` : '';
-                            contenidoHTML += `<p style="margin-left: 20px;">${fecha}${detalle}</p>`;
-                        });
-                    } else if (['fechaInicio', 'fechaRegistro'].includes(k)) {
-                        contenidoHTML += `<p><strong>${etiqueta}:</strong> ${formatearFecha(v, false)}</p>`;
-                    } else if (v.seconds) {
-                        contenidoHTML += `<p><strong>${etiqueta}:</strong> ${formatearFecha(v, true)}</p>`;
-                    } else if (k !== "audiencias" && k !== "diligencias") {
-                        contenidoHTML += `<p><strong>${etiqueta}:</strong> ${v}</p>`;
-                    }
-                }
-            });
-            
-            verContenido.innerHTML = contenidoHTML;
-        }
-
-        // Cerrar modal
-        function closeModal() {
-            document.getElementById('modalVer').style.display = 'none';
-        }
-
-        // Mostrar error
-        function showError(message) {
-            const floatingAlert = document.getElementById('floating-alert');
-            floatingAlert.textContent = message;
-            floatingAlert.classList.remove('success');
-            floatingAlert.classList.add('danger');
-            floatingAlert.classList.add('show');
+            setTimeout(() => {
+                floatingAlert.classList.add('show');
+            }, 10);
             
             setTimeout(() => {
                 floatingAlert.classList.remove('show');
             }, 5000);
         }
-
-        // Funciones de impresión
-        function printTodos() {
-            const html = generarTablaImpresion(causasData, "Listado Completo de Expedientes Judiciales");
-            printSection(html);
+        
+        // Función mostrarAlertaPersonalizada IDÉNTICA al sistema original
+        function mostrarAlertaPersonalizada(titulo, mensaje) {
+            alertTitle.textContent = titulo;
+            alertMessage.textContent = mensaje;
+            alertModal.style.display = "flex";
         }
-
-        function printFiltrado() {
-            const html = generarTablaImpresion(datosFiltrados, "Listado Filtrado de Expedientes Judiciales");
-            printSection(html);
+        
+        btnAlertOK.onclick = () => {
+            alertModal.style.display = "none";
+        };
+        
+        // FUNCIÓN obtenerTodosEventos IDÉNTICA al sistema original
+        function obtenerTodosEventos(causa) {
+            const eventos = [];
+            
+            if (Array.isArray(causa.audiencias)) {
+                causa.audiencias.forEach(aud => {
+                    const fecha = toDate(aud);
+                    if (fecha) {
+                        eventos.push({ 
+                            tipo: "Audiencia", 
+                            fecha: fecha,
+                            clase: "audiencia"
+                        });
+                    }
+                });
+            }
+            
+            if (causa.audienciaGesell) {
+                const fecha = toDate(causa.audienciaGesell);
+                if (fecha) {
+                    eventos.push({ 
+                        tipo: "Gesell", 
+                        fecha: fecha,
+                        clase: "gesell"
+                    });
+                }
+            }
+            
+            if (causa.vencimiento) {
+                const fecha = toDate(causa.vencimiento);
+                if (fecha) {
+                    eventos.push({ 
+                        tipo: "Vencimiento", 
+                        fecha: fecha,
+                        clase: "vencimiento"
+                    });
+                }
+            }
+            
+            if (causa.vencimientoRecursos) {
+                const fecha = toDate(causa.vencimientoRecursos);
+                if (fecha) {
+                    eventos.push({ 
+                        tipo: "Recurso", 
+                        fecha: fecha,
+                        clase: "recurso"
+                    });
+                }
+            }
+            
+            if (Array.isArray(causa.diligencias)) {
+                causa.diligencias.forEach(dilig => {
+                    const fecha = toDate(dilig.fecha);
+                    if (fecha) {
+                        eventos.push({ 
+                            tipo: "Diligencia", 
+                            fecha: fecha,
+                            detalle: dilig.detalle || '',
+                            clase: "diligencia"
+                        });
+                    }
+                });
+            }
+            
+            eventos.sort((a, b) => b.fecha - a.fecha);
+            return eventos;
         }
-
-        function printRegistro() {
-            const contenido = `
-                <div style="padding: 20px; font-family: Arial, sans-serif;">
-                    <h2 style="text-align: center; margin-bottom: 20px; color: #007bff;">Detalle del Expediente</h2>
-                    <div style="margin-bottom: 20px;">
-                        ${document.getElementById('verContenido').innerHTML}
-                    </div>
+        
+        // MANEJO DE ARCHIVOS JSON
+        function cargarArchivoJSON(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    procesarDatosJSON(data);
+                    fileInfo.textContent = `Archivo cargado: ${file.name} (${data.length || 0} registros)`;
+                    fileInfo.className = "file-info success";
+                    mostrarAlertaFlotante(`Archivo cargado exitosamente: ${data.length || 0} registros`, 'success');
+                } catch (error) {
+                    fileInfo.textContent = `Error al procesar el archivo: ${error.message}`;
+                    fileInfo.className = "file-info error";
+                    mostrarAlertaFlotante("Error al procesar el archivo JSON", 'danger');
+                    console.error("Error parsing JSON:", error);
+                }
+            };
+            reader.onerror = function() {
+                fileInfo.textContent = "Error al leer el archivo";
+                fileInfo.className = "file-info error";
+                mostrarAlertaFlotante("Error al leer el archivo", 'danger');
+            };
+            reader.readAsText(file);
+        }
+        
+        function procesarDatosJSON(data) {
+            // Normalizar datos del JSON
+            if (Array.isArray(data)) {
+                causasData = data.map(item => {
+                    // Si el item tiene propiedad data (como en el sistema de reserva), extraerlo
+                    const causa = item.data || item;
+                    // Asegurar que tenga un ID
+                    if (!causa.id) {
+                        causa.id = generarId();
+                    }
+                    // Asegurar que tenga fecha de registro
+                    if (!causa.fechaRegistro) {
+                        causa.fechaRegistro = new Date().toISOString();
+                    }
+                    // Asegurar arrays
+                    if (!causa.audiencias) causa.audiencias = [];
+                    if (!causa.diligencias) causa.diligencias = [];
+                    if (!causa.seguimiento) causa.seguimiento = [];
+                    return causa;
+                });
+            } else if (typeof data === 'object') {
+                // Si es un objeto con múltiples causas
+                const keys = Object.keys(data);
+                causasData = keys.map(key => {
+                    const causa = data[key];
+                    if (!causa.id) causa.id = key;
+                    if (!causa.fechaRegistro) causa.fechaRegistro = new Date().toISOString();
+                    if (!causa.audiencias) causa.audiencias = [];
+                    if (!causa.diligencias) causa.diligencias = [];
+                    if (!causa.seguimiento) causa.seguimiento = [];
+                    return causa;
+                });
+            } else {
+                throw new Error("Formato JSON no válido");
+            }
+            
+            // Mostrar sección de datos
+            dataSection.style.display = 'block';
+            
+            // Actualizar caché de datos
+            actualizarCacheDatos();
+            
+            // Renderizar estadísticas y tabla
+            renderizarStats();
+            handleFilterChange();
+        }
+        
+        function exportarJSON() {
+            if (causasData.length === 0) {
+                mostrarAlertaFlotante("No hay datos para exportar", 'warning');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(causasData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `causas-judiciales-${new Date().toISOString().split('T')[0]}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            mostrarAlertaFlotante(`Datos exportados: ${causasData.length} registros`, 'success');
+        }
+        
+        // FUNCIONES DE GESTIÓN DE DATOS - IGUALES AL SISTEMA ORIGINAL
+        function actualizarCacheDatos() {
+            // Extraer usuarios únicos
+            usuariosCache = [...new Set(causasData.map(c => c.usuarioAsignado).filter(Boolean))].sort();
+            
+            // Extraer tipos de proceso únicos
+            const tiposProcesoCache = [...new Set(causasData.map(c => c.tipoProceso).filter(Boolean))].sort();
+            
+            // Extraer juzgados por tipo (igual que en el sistema original)
+            juzgadosPorTipoCache = {};
+            causasData.forEach(causa => {
+                if (causa.tipoProceso && causa.juzgado) {
+                    if (!juzgadosPorTipoCache[causa.tipoProceso]) {
+                        juzgadosPorTipoCache[causa.tipoProceso] = [];
+                    }
+                    if (!juzgadosPorTipoCache[causa.tipoProceso].includes(causa.juzgado)) {
+                        juzgadosPorTipoCache[causa.tipoProceso].push(causa.juzgado);
+                    }
+                }
+            });
+            
+            // Ordenar juzgados
+            Object.keys(juzgadosPorTipoCache).forEach(tipo => {
+                juzgadosPorTipoCache[tipo].sort();
+            });
+            
+            // Poblar filtros
+            poblarFiltroUsuarios();
+            poblarFiltroTiposProceso();
+            poblarTiposProceso();
+            poblarSelectUsuarios();
+        }
+        
+        // FUNCIONES DE FILTRADO - EXACTAMENTE IGUALES AL SISTEMA ORIGINAL
+        function poblarTiposProceso() {
+            const tipos = Object.keys(juzgadosPorTipoCache).sort((a, b) => a.localeCompare(b));
+            selTipo.innerHTML = '<option value="">Seleccione un tipo</option>' + 
+                tipos.map(t => `<option value="${t}">${t}</option>`).join('');
+        }
+        
+        function poblarFiltroTiposProceso() {
+            const current = filtroTipoProceso.value;
+            const tipos = Object.keys(juzgadosPorTipoCache).sort((a, b) => a.localeCompare(b));
+            filtroTipoProceso.innerHTML = '<option value="">Tipo de Proceso (todos)</option>' + 
+                tipos.map(t => `<option value="${t}">${t}</option>`).join('');
+            if (current) filtroTipoProceso.value = current;
+        }
+        
+        function poblarFiltroIntervencion() {
+            const current = filtroIntervencion.value;
+            // Opciones de intervención iguales al sistema original
+            const intervencionOptions = [
+                "Defensor Oficial", "Ministerio Principal", "Ministerio Complementario", "Patrocinante Actor",
+                "Patrocinante Demandado", "Patrocinante Tercero", "Defensor de Ausente",
+                "Patrocinante presunto incapaz", "Asesor Letrado", "Ministerio Público del incapaz",
+                "Ministerio Público en turno Abril", "Ministerio Público en turno Agosto",
+                "Ministerio Público en turno Diciembre", "Asistencia Letrada del incapaz", "Tutor Ad Litem", 
+                "Defensor Oficial Art 329 CPCC", "Defensor Oficial Art 626 CPCC"   
+            ];
+            filtroIntervencion.innerHTML = '<option value="">Intervención (todas)</option>' + 
+                intervencionOptions.map(i => `<option value="${i}">${i}</option>`).join('');
+            if (current) filtroIntervencion.value = current;
+        }
+        
+        function poblarJuzgadosPorTipo(tipoSeleccionado) {
+            const juzgados = juzgadosPorTipoCache[tipoSeleccionado] || [];
+            selJuz.innerHTML = '<option value="">Seleccione un juzgado</option>' + 
+                juzgados.map(j => `<option value="${j}">${j}</option>`).join('');
+        }
+        
+        function poblarSelectUsuarios() {
+            selUsu.innerHTML = '<option value="">Seleccione un usuario</option>' + 
+                usuariosCache.map(u => `<option value="${u}">${u}</option>`).join('');
+        }
+        
+        function poblarFiltroUsuarios() {
+            const current = filtroUsuario.value; 
+            filtroUsuario.innerHTML = '<option value="">Usuario (todos)</option>' + 
+                usuariosCache.map(u => `<option value="${u}">${u}</option>`).join('');
+            if (current) filtroUsuario.value = current;
+        }
+        
+        function renderizarStats() {
+            const totalCausas = causasData.length;
+            const enTramite = causasData.filter(c => c.estado === 'En trámite').length;
+            const finalizadas = causasData.filter(c => c.estado === 'Finalizado').length;
+            const archivadas = causasData.filter(c => c.estado === 'Archivado').length;
+            const altaPrioridad = causasData.filter(c => c.prioridad === 'Alta').length;
+            
+            statsSection.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalCausas}</div>
+                    <div class="stat-label">Total Causas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${enTramite}</div>
+                    <div class="stat-label">En Trámite</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${finalizadas}</div>
+                    <div class="stat-label">Finalizadas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${archivadas}</div>
+                    <div class="stat-label">Archivadas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${altaPrioridad}</div>
+                    <div class="stat-label">Alta Prioridad</div>
                 </div>
             `;
-            printSection(contenido);
+        }
+        
+        // FUNCIÓN filtrarDatos - EXACTAMENTE IGUAL AL SISTEMA ORIGINAL
+        function filtrarDatos() {
+            const q = (buscador.value || "").toLowerCase();
+            const est = filtroEstado.value;
+            const usu = filtroUsuario.value;
+            const prio = filtroPrioridad.value;
+            const interv = filtroIntervencion.value;
+            const tipoProc = filtroTipoProceso.value;
+            const evento = filtroEventos.value;
+            const fechaDesde = filtroFechaDesde.value;
+            const fechaHasta = filtroFechaHasta.value;
+            
+            return causasData.filter(d => {
+                // Búsqueda general
+                if (q) {
+                    const contieneTexto = 
+                        (d.numCausa && d.numCausa.toLowerCase().includes(q)) ||
+                        (d.caratula && d.caratula.toLowerCase().includes(q)) ||
+                        (d.tipoProceso && d.tipoProceso.toLowerCase().includes(q)) ||
+                        (d.juzgado && d.juzgado.toLowerCase().includes(q)) ||
+                        (d.usuarioAsignado && d.usuarioAsignado.toLowerCase().includes(q));
+                    
+                    if (!contieneTexto) {
+                        return false;
+                    }
+                }
+                
+                // Filtros individuales
+                if (est && d.estado !== est) return false;
+                if (usu && d.usuarioAsignado !== usu) return false;
+                if (prio && d.prioridad !== prio) return false;
+                if (interv && d.intervencion !== interv) return false;
+                if (tipoProc && d.tipoProceso !== tipoProc) return false;
+                
+                // Filtro por tipo de evento
+                if (evento) {
+                    switch(evento) {
+                        case 'audiencias':
+                            if (!Array.isArray(d.audiencias) || d.audiencias.length === 0) return false;
+                            break;
+                        case 'gesell':
+                            if (!d.audienciaGesell) return false;
+                            break;
+                        case 'vencimientos':
+                            if (!d.vencimiento && !d.vencimientoRecursos) return false;
+                            break;
+                        case 'recursos':
+                            if (!d.recursos && !d.vencimientoRecursos) return false;
+                            break;
+                        case 'diligencias':
+                            if (!Array.isArray(d.diligencias) || d.diligencias.length === 0) return false;
+                            break;
+                    }
+                }
+                
+                // Filtro por rango de fechas
+                if (fechaDesde || fechaHasta) {
+                    const desde = fechaDesde ? new Date(fechaDesde) : null;
+                    const hasta = fechaHasta ? new Date(fechaHasta + 'T23:59:59') : null;
+                    let tieneEventoEnRango = false;
+                    
+                    // Verificar audiencias
+                    if (Array.isArray(d.audiencias)) {
+                        for (const aud of d.audiencias) {
+                            const fecha = toDate(aud);
+                            if (fecha) {
+                                if ((!desde || fecha >= desde) && (!hasta || fecha <= hasta)) {
+                                    tieneEventoEnRango = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Verificar otros eventos si aún no se encontró uno
+                    if (!tieneEventoEnRango) {
+                        const eventos = [
+                            d.audienciaGesell,
+                            d.vencimiento,
+                            d.vencimientoRecursos
+                        ];
+                        
+                        for (const ev of eventos) {
+                            const fecha = toDate(ev);
+                            if (fecha) {
+                                if ((!desde || fecha >= desde) && (!hasta || fecha <= hasta)) {
+                                    tieneEventoEnRango = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Verificar diligencias si aún no se encontró uno
+                    if (!tieneEventoEnRango && Array.isArray(d.diligencias)) {
+                        for (const dilig of d.diligencias) {
+                            const fecha = toDate(dilig.fecha);
+                            if (fecha) {
+                                if ((!desde || fecha >= desde) && (!hasta || fecha <= hasta)) {
+                                    tieneEventoEnRango = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (!tieneEventoEnRango) return false;
+                }
+                
+                return true;
+            });
         }
 
-        function printSection(html) {
-            const w = window.open("", "_blank", "width=900,height=700");
+        // FUNCIÓN handleFilterChange - EXACTAMENTE IGUAL AL SISTEMA ORIGINAL
+        const handleFilterChange = () => {
+            filteredData = filtrarDatos();
+            currentPage = 1;
+            renderTablaPaginada();
+        };
+        
+        // FUNCIÓN renderTablaPaginada - EXACTAMENTE IGUAL AL SISTEMA ORIGINAL
+        const renderTablaPaginada = () => {
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const endIndex = startIndex + recordsPerPage;
+            const dataToRender = filteredData.slice(startIndex, endIndex);
+            renderTablas(dataToRender);
+            renderPaginacion(filteredData.length, dataToRender.length);
+            totalRegistros.textContent = `(${filteredData.length} registros)`;
+        };
+        
+        // FUNCIÓN accionesHTML - EXACTAMENTE IGUAL AL SISTEMA ORIGINAL
+        function accionesHTML(id){
+            return `<button class="button ver-detalles" data-id="${id}" title="Ver"><i class="fa fa-eye"></i></button>
+                    <button class="button button-secondary editar-detalles" data-id="${id}" title="Editar"><i class="fa fa-pen"></i></button>`;
+        }
+        
+        // FUNCIÓN renderTablas - EXACTAMENTE IGUAL AL SISTEMA ORIGINAL
+        function renderTablas(data){
+            tbody.innerHTML = data.length ? "" : "<tr><td colspan='10'>No hay registros que coincidan con los filtros</td></tr>";
+            data.forEach(d=>{
+                const todosEventos = obtenerTodosEventos(d);
+                let eventosHTML = "—";
+                if (todosEventos.length > 0) {
+                    eventosHTML = `<div class="eventos-lista">`;
+                    todosEventos.forEach(evento => {
+                        let eventoTexto = `${evento.tipo}: ${formatearFecha(evento.fecha, true)}`;
+                        if (evento.tipo === "Diligencia" && evento.detalle) {
+                            eventoTexto += ` - ${evento.detalle}`;
+                        }
+                        eventosHTML += `<div class="evento-tabla ${evento.clase}">${eventoTexto}</div>`;
+                    });
+                    eventosHTML += `</div>`;
+                }
+                tbody.insertAdjacentHTML("beforeend", `
+                    <tr>
+                        <td>${d.numCausa||""}</td>
+                        <td>${d.caratula||""}</td>
+                        <td>${d.tipoProceso||""}</td>
+                        <td>${d.juzgado||""}</td>
+                        <td>${d.usuarioAsignado||""}</td>
+                        <td>${d.estado||""}</td>
+                        <td><span class="prioridad-pill ${prioridadClase(d.prioridad)}">${d.prioridad||"Ninguna"}</span></td>
+                        <td>${formatearFecha(d.fechaRegistro, false)}</td>
+                        <td>${eventosHTML}</td>
+                        <td class="actions">${accionesHTML(d.id)}</td>
+                    </tr>`);
+            });
+            document.querySelectorAll(".ver-detalles").forEach(b=>b.onclick=()=>abrirVer(b.dataset.id));
+            document.querySelectorAll(".editar-detalles").forEach(b=>b.onclick=()=>abrirEditar(b.dataset.id));
+        }
+        
+        // FUNCIÓN renderPaginacion - EXACTAMENTE IGUAL AL SISTEMA ORIGINAL
+        function renderPaginacion(totalRecords, recordsOnPage) {
+            const container = $("paginacion-container");
+            const totalPages = Math.ceil(totalRecords / recordsPerPage);
+            container.style.display = totalPages > 1 ? "flex" : "none";
+            container.innerHTML = `
+                <div class="page-info">
+                    Página ${currentPage} de ${totalPages} | Mostrando ${recordsOnPage} de ${totalRecords} registros
+                </div>
+                <div class="nav-buttons">
+                    <button id="btnPrevPage" class="button" ${currentPage === 1 ? 'disabled' : ''}><i class="fa fa-arrow-left"></i> Anterior</button>
+                    <button id="btnNextPage" class="button" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente <i class="fa fa-arrow-right"></i></button>
+                </div>
+            `;
+            if ($("btnPrevPage")) {
+                $("btnPrevPage").onclick = () => {
+                    currentPage--;
+                    renderTablaPaginada();
+                };
+            }
+            if ($("btnNextPage")) {
+                $("btnNextPage").onclick = () => {
+                    currentPage++;
+                    renderTablaPaginada();
+                };
+            }
+        }
+        
+        // FUNCIÓN renderEventosHoy - EXACTAMENTE IGUAL AL SISTEMA ORIGINAL
+        function renderEventosHoy() {
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const manana = new Date(hoy);
+            manana.setDate(manana.getDate() + 1);
+            
+            const eventosHoy = {
+                audiencias: [],
+                gesell: [],
+                vencimientos: [],
+                recursos: [],
+                diligencias: []
+            };
+            
+            causasData.forEach(d => {
+                const id = d.numCausa || d.id;
+                const causaId = d.id;
+                if (Array.isArray(d.audiencias)) {
+                    d.audiencias.forEach(aud => {
+                        const fechaAud = toDate(aud);
+                        if (fechaAud && fechaAud >= hoy && fechaAud < manana) {
+                            eventosHoy.audiencias.push({
+                                id: causaId,
+                                numCausa: id,
+                                fecha: fechaAud,
+                                tipo: 'Audiencia'
+                            });
+                        }
+                    });
+                }
+                const fechaGesell = toDate(d.audienciaGesell);
+                if (fechaGesell && fechaGesell >= hoy && fechaGesell < manana) {
+                    eventosHoy.gesell.push({
+                                id: causaId,
+                                numCausa: id,
+                                fecha: fechaGesell,
+                                tipo: 'Cámara Gesell'
+                            });
+                }
+                const fechaVenc = toDate(d.vencimiento);
+                if (fechaVenc && fechaVenc >= hoy && fechaVenc < manana) {
+                    eventosHoy.vencimientos.push({
+                                id: causaId,
+                                numCausa: id,
+                                fecha: fechaVenc,
+                                tipo: 'Vencimiento'
+                            });
+                }
+                const fechaVrec = toDate(d.vencimientoRecursos);
+                if (fechaVrec && fechaVrec >= hoy && fechaVrec < manana) {
+                    eventosHoy.recursos.push({
+                                id: causaId,
+                                numCausa: id,
+                                fecha: fechaVrec,
+                                tipo: 'Vencimiento de Recurso'
+                            });
+                }
+                if (Array.isArray(d.diligencias)) {
+                    d.diligencias.forEach(dilig => {
+                        const fechaDilig = toDate(dilig.fecha);
+                        if (fechaDilig && fechaDilig >= hoy && fechaDilig < manana) {
+                            eventosHoy.diligencias.push({
+                                id: causaId,
+                                numCausa: id,
+                                fecha: fechaDilig,
+                                tipo: 'Diligencia',
+                                detalle: dilig.detalle || ''
+                            });
+                        }
+                    });
+                }
+            });
+            
+            const renderListaEventos = (eventos, target, tipo) => {
+                target.innerHTML = "";
+                if (!eventos.length) {
+                    target.innerHTML = `<div class="evento-vacio">No hay eventos para hoy</div>`;
+                    return;
+                }
+                eventos.sort((a, b) => a.fecha - b.fecha);
+                eventos.forEach(evento => {
+                    const elemento = document.createElement('div');
+                    elemento.className = `evento-item evento-item-${tipo}`;
+                    let contenido = `
+                        <span class="evento-numero" data-id="${evento.id}">${evento.numCausa}</span>
+                        <span class="evento-hora">${formatearFecha(evento.fecha, true)}</span>
+                    `;
+                    if (tipo === 'diligencias' && evento.detalle) {
+                        contenido += `<span class="evento-detalle" style="font-size:0.8rem;color:var(--text-secondary);">${evento.detalle}</span>`;
+                    }
+                    elemento.innerHTML = contenido;
+                    target.appendChild(elemento);
+                    const numeroCausa = elemento.querySelector('.evento-numero');
+                    numeroCausa.onclick = (e) => {
+                        e.preventDefault();
+                        abrirVer(evento.id);
+                    };
+                });
+            };
+            
+            renderListaEventos(eventosHoy.audiencias, listAudHoy, 'audiencias');
+            renderListaEventos(eventosHoy.gesell, listGesellHoy, 'gesell');
+            renderListaEventos(eventosHoy.vencimientos, listVencHoy, 'vencimientos');
+            renderListaEventos(eventosHoy.recursos, listRecursosHoy, 'recursos');
+            renderListaEventos(eventosHoy.diligencias, listDiligenciasHoy, 'diligencias');
+        }
+        
+        // FUNCIONES DEL FORMULARIO - IGUALES AL SISTEMA ORIGINAL
+        function abrirNuevoExpediente() {
+            modo = "nuevo"; 
+            resetFormCausa(); 
+            editId.value = ""; 
+            tituloForm.textContent = "Nuevo Expediente"; 
+            modal.style.display = "flex"; 
+        }
+        
+        function validateForm() {
+            let isValid = true;
+            const requiredFields = ["numCausa", "caratula", "tipoProceso", "juzgado", "prioridad", "usuarioAsignado"];
+            
+            requiredFields.forEach(id => {
+                const field = $(id);
+                const parent = field.closest('.field');
+                if (field.value.trim() === "") {
+                    parent.classList.add('error');
+                    isValid = false;
+                } else {
+                    parent.classList.remove('error');
+                }
+            });
+            
+            if (!isValid) {
+                mostrarAlertaFlotante("Complete todos los campos obligatorios marcados con *", 'danger');
+                return false;
+            }
+            
+            if (modo === "nuevo") {
+                const numCausa = $("numCausa").value.trim();
+                const numCausaExistente = causasData.some(d => d.numCausa === numCausa);
+                const numCausaField = $("numCausa").closest('.field');
+                
+                if (numCausaExistente) {
+                    numCausaField.classList.add('error');
+                    numCausaField.querySelector('.error-message').textContent = "Esta causa ya se encuentra registrada.";
+                    
+                    mostrarAlertaFlotante("Existe en el sistema ese registro, por favor verifique e intente nuevamente.", 'danger');
+                    
+                    isValid = false;
+                } else {
+                    numCausaField.classList.remove('error');
+                    numCausaField.querySelector('.error-message').textContent = "Este campo es obligatorio.";
+                }
+            }
+            
+            return isValid;
+        }
+        
+        const guardarExpediente = async () => {
+            if (!validateForm()) {
+                return;
+            }
+            
+            const datos = recolectarDatosForm();
+            const btnGuardar = $("btnGuardar");
+            btnGuardar.disabled = true;
+            
+            try {
+                if (modo === "nuevo") {
+                    datos.id = generarId();
+                    datos.fechaRegistro = new Date().toISOString();
+                    if (!datos.seguimiento) datos.seguimiento = [];
+                    causasData.push(datos);
+                    mostrarAlertaFlotante("Se guardó correctamente el expediente.", 'success');
+                } else {
+                    const index = causasData.findIndex(c => c.id === editId.value);
+                    if (index !== -1) {
+                        const oldData = causasData[index];
+                        datos.id = oldData.id;
+                        datos.fechaRegistro = oldData.fechaRegistro;
+                        datos.seguimiento = oldData.seguimiento || [];
+                        causasData[index] = datos;
+                        mostrarAlertaFlotante("El registro fue correctamente actualizado.", 'success');
+                    } else {
+                        mostrarAlertaFlotante("No se encontró el expediente a editar", 'danger');
+                        return;
+                    }
+                }
+                
+                modal.style.display = "none";
+                resetFormCausa();
+                
+                // Actualizar cache y renderizar
+                actualizarCacheDatos();
+                renderizarStats();
+                handleFilterChange();
+                
+            } catch (e) {
+                console.error(e);
+                if (modo === "nuevo") {
+                    mostrarAlertaFlotante("Fallo al crear el registro: " + e.message, 'danger');
+                } else {
+                    mostrarAlertaFlotante("Fallo de actualización del registro: " + e.message, 'danger');
+                }
+            } finally {
+                btnGuardar.disabled = false;
+            }
+        };
+        
+        async function abrirEditar(id){
+            modo = "editar"; 
+            resetFormCausa();
+            editId.value = id; 
+            tituloForm.textContent = "Editar Expediente";
+            try{
+                const causa = causasData.find(c => c.id === id);
+                if (causa){
+                    cargarDatosEnForm(causa);
+                    modal.style.display = "flex"; 
+                } else {
+                    mostrarAlertaPersonalizada("Error", "El expediente no fue encontrado.");
+                }
+            }catch(e){ 
+                console.error(e); 
+                mostrarAlertaPersonalizada("Error", "No se pudo abrir el registro: " + e.message); 
+            }
+        }
+        
+        async function abrirVer(id){
+            causaActualId = id;
+            try{
+                const causa = causasData.find(c => c.id === id);
+                if (!causa) {
+                    mostrarAlertaPersonalizada("Error", "El expediente no fue encontrado.");
+                    return;
+                }
+                const d = causa;
+                let contenidoHTML = "";
+                const prioridadClaseTextoVal = prioridadClaseTexto(d.prioridad);
+                const prioridadTexto = `<div class="prioridad-texto ${prioridadClaseTextoVal}"><strong>Prioridad: ${d.prioridad || "Ninguna"}</strong></div>`;
+                contenidoHTML += prioridadTexto;
+                const etiquetas = {
+                    numCausa: "N° Expediente", caratula: "Carátula", tipoProceso: "Tipo de Proceso", juzgado: "Juzgado",
+                    fechaInicio: "Fecha de Inicio", fechaPase: "Fecha de Pase", intervencion: "Intervención",
+                    datosNnya: "Datos de NNyA", vencimiento: "Vencimiento", usuarioAsignado: "Usuario Asignado",
+                    estado: "Estado", recursos: "Recursos Interpuestos",
+                    recursosContestacion: "Contestación de Recursos", estadoRecursos: "Estado de Recursos",
+                    vencimientoRecursos: "Vencimiento de Recursos", audienciaGesell: "Audiencia Gesell",
+                    nnyaGesell: "NNyA en Gesell", observaciones: "Observaciones", fechaRegistro: "Fecha de Registro"
+                };
+                const ordenClaves = [
+                    "numCausa", "caratula", "tipoProceso", "juzgado", "estado", "usuarioAsignado",
+                    "fechaRegistro", "fechaInicio", "fechaPase", "intervencion", "datosNnya", "vencimiento",
+                    "audiencias", "diligencias", "recursos", "recursosContestacion", "estadoRecursos", "vencimientoRecursos",
+                    "audienciaGesell", "nnyaGesell", "observaciones"
+                ];
+                ordenClaves.forEach(k => {
+                    const v = d[k];
+                    if (v !== null && v !== undefined && v !== "" && k !== "prioridad") {
+                        const etiqueta = etiquetas[k] || k;
+                        if (k === "audiencias" && Array.isArray(v) && v.length > 0) {
+                            contenidoHTML += `<p><strong>Audiencias:</strong></p>`;
+                            v.forEach(aud => {
+                                contenidoHTML += `<p style="margin-left: 20px;">${formatearFecha(aud, true)}</p>`;
+                            });
+                        } else if (k === "diligencias" && Array.isArray(v) && v.length > 0) {
+                            contenidoHTML += `<p><strong>Diligencias:</strong></p>`;
+                            v.forEach(dilig => {
+                                const fecha = formatearFecha(dilig.fecha, true);
+                                const detalle = dilig.detalle ? ` - ${dilig.detalle}` : '';
+                                contenidoHTML += `<p style="margin-left: 20px;">${fecha}${detalle}</p>`;
+                            });
+                        } else if (['fechaInicio', 'fechaRegistro'].includes(k)) {
+                            contenidoHTML += `<p><strong>${etiqueta}:</strong> ${formatearFecha(v, false)}</p>`;
+                        } else if (v.seconds) {
+                            contenidoHTML += `<p><strong>${etiqueta}:</strong> ${formatearFecha(v, true)}</p>`;
+                        } else if (k === "observaciones") {
+                            contenidoHTML += `<p><strong>${etiqueta}:</strong></p><div>${v}</div>`;
+                        } else if (k !== "audiencias" && k !== "diligencias") {
+                            contenidoHTML += `<p><strong>${etiqueta}:</strong> ${v}</p>`;
+                        }
+                    }
+                });
+                verContenido.innerHTML = contenidoHTML;
+                await cargarNotas(d);
+                modalVer.style.display = "flex";
+            } catch(e) {
+                console.error(e);
+                mostrarAlertaPersonalizada("Error", "No se pudo abrir el detalle: " + e.message);
+            }
+        }
+        
+        async function cargarNotas(causa) {
+            historialNotas.innerHTML = "Cargando notas...";
+            try {
+                const notas = causa.seguimiento || [];
+                if (notas.length === 0) {
+                    historialNotas.innerHTML = `<p class="k">No hay notas de seguimiento.</p>`;
+                    return;
+                }
+                historialNotas.innerHTML = "";
+                notas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(nota => {
+                    const fecha = formatearFecha(nota.fecha, true);
+                    const notaHTML = `
+                        <div class="note-item">
+                        <div class="note-meta">
+                            <span>${fecha}</span>
+                            <span>por: ${nota.usuario || "Anónimo"}</span>
+                        </div>
+                        <div class="note-text">${nota.texto}</div>
+                        </div>
+                    `;
+                    historialNotas.insertAdjacentHTML("beforeend", notaHTML);
+                });
+            } catch(e) {
+                console.error("Error al cargar notas:", e);
+                historialNotas.innerHTML = `<p class="k">Error al cargar notas: ${e.message}</p>`;
+            }
+        }
+        
+        async function agregarNota() {
+            if (!causaActualId) return mostrarAlertaPersonalizada("Error", "No se ha seleccionado una causa.");
+            const notaTexto = notaBitacora.value.trim();
+            if (!notaTexto) return mostrarAlertaPersonalizada("Error", "Por favor, escribe un texto para la nota.");
+            const usuario = "Usuario Actual"; 
+            try {
+                const causaIndex = causasData.findIndex(c => c.id === causaActualId);
+                if (causaIndex === -1) {
+                    mostrarAlertaPersonalizada("Error", "No se encontró la causa.");
+                    return;
+                }
+                
+                const nuevaNota = {
+                    texto: notaTexto,
+                    fecha: new Date().toISOString(),
+                    usuario: usuario
+                };
+                
+                if (!causasData[causaIndex].seguimiento) {
+                    causasData[causaIndex].seguimiento = [];
+                }
+                
+                causasData[causaIndex].seguimiento.push(nuevaNota);
+                notaBitacora.value = "";
+                cargarNotas(causasData[causaIndex]);
+                mostrarAlertaPersonalizada("¡Éxito!", "Nota guardada con éxito.");
+            } catch (e) {
+                console.error("Error al guardar la nota:", e);
+                mostrarAlertaPersonalizada("Error", "No se pudo guardar la nota: " + e.message);
+            }
+        }
+        
+        // FUNCIONES AUXILIARES DEL FORMULARIO - IGUALES AL SISTEMA ORIGINAL
+        function toggleFormFields(enable) {
+            const formFields = document.querySelectorAll('#formCausa input, #formCausa textarea, #formCausa select');
+            formFields.forEach(field => {
+                if (field.id !== 'numCausa' && field.id !== 'editId') {
+                    field.disabled = !enable;
+                }
+            });
+            $("btnGuardar").disabled = !enable;
+        }
+        
+        function validarExistenciaCausa() {
+            if (modo !== "nuevo") return;
+            
+            const numCausa = $("numCausa").value.trim();
+            const numCausaField = $("numCausa").closest('.field');
+            const numCausaExistente = causasData.some(d => d.numCausa === numCausa);
+            
+            if (numCausaExistente) {
+                numCausaField.classList.add('error');
+                numCausaField.querySelector('.error-message').textContent = "Esta causa ya se encuentra registrada.";
+                
+                mostrarAlertaFlotante("Existe en el sistema ese registro, por favor verifique e intente nuevamente.", 'danger');
+                
+                toggleFormFields(false);
+            } else {
+                numCausaField.classList.remove('error');
+                numCausaField.querySelector('.error-message').textContent = "Este campo es obligatorio.";
+                toggleFormFields(true);
+            }
+        }
+        
+        function initEditor() {
+            if (btnBold) {
+                btnBold.addEventListener('click', function() {
+                    document.execCommand('bold', false, null);
+                    observacionesEditor.focus();
+                });
+            }
+            
+            if (btnColorAzul) {
+                btnColorAzul.addEventListener('click', function() {
+                    document.execCommand('styleWithCSS', false, true);
+                    document.execCommand('foreColor', false, '#007bff');
+                    observacionesEditor.focus();
+                });
+            }
+            
+            if (btnColorRojo) {
+                btnColorRojo.addEventListener('click', function() {
+                    document.execCommand('styleWithCSS', false, true);
+                    document.execCommand('foreColor', false, '#dc3545');
+                    observacionesEditor.focus();
+                });
+            }
+            
+            if (btnColorVerde) {
+                btnColorVerde.addEventListener('click', function() {
+                    document.execCommand('styleWithCSS', false, true);
+                    document.execCommand('foreColor', false, '#28a745');
+                    observacionesEditor.focus();
+                });
+            }
+            
+            if (btnColorNormal) {
+                btnColorNormal.addEventListener('click', function() {
+                    document.execCommand('styleWithCSS', false, true);
+                    document.execCommand('foreColor', false, '#212529');
+                    observacionesEditor.focus();
+                });
+            }
+            
+            if (observacionesEditor) {
+                observacionesEditor.addEventListener('input', function() {
+                    const text = this.innerText || this.textContent;
+                    const words = text.trim().split(/\s+/).filter(Boolean);
+                    $("counter").textContent = `${words.length}/1000`;
+                    
+                    observacionesHidden.value = this.innerHTML;
+                });
+                
+                observacionesEditor.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                    document.execCommand('insertText', false, text);
+                });
+            }
+        }
+        
+        function initFormEventListeners(){
+            if (selTipo) {
+                selTipo.addEventListener("change", function() {
+                    poblarJuzgadosPorTipo(this.value);
+                });
+            }
+            
+            if ($("recursos")) {
+                $("recursos").addEventListener("change", function(){
+                    const recursosOpcionales = $("recursos-opcionales");
+                    recursosOpcionales.style.display = this.value ? "block" : "none";
+                });
+            }
+            
+            if ($("numCausa")) {
+                $("numCausa").addEventListener("input", validarExistenciaCausa);
+            }
+            
+            if ($("intervencion")) {
+                $("intervencion").addEventListener("change", function(){
+                    const datosNnya = $("datosNnya"), contadorNnya = $("counterNnya");
+                    if (this.value === "Ministerio Complementario") { 
+                        datosNnya.removeAttribute("disabled"); 
+                        contadorNnya.style.display='block'; 
+                    } else { 
+                        datosNnya.value = ""; 
+                        datosNnya.setAttribute("disabled","true"); 
+                        contadorNnya.style.display='none'; 
+                    }
+                });
+            }
+            
+            const limitWords = (text, max)=>{ 
+                const words = text.trim().split(/\s+/).filter(Boolean); 
+                return words.length > max ? words.slice(0,max).join(" ") : text; 
+            };
+            
+            if ($("datosNnya")) {
+                $("datosNnya").addEventListener("input", function(){ 
+                    this.value = limitWords(this.value, 500); 
+                    $("counterNnya").textContent = `${this.value.trim().split(/\s+/).filter(Boolean).length}/500`; 
+                });
+            }
+            
+            if ($("nnyaGesell")) {
+                $("nnyaGesell").addEventListener("input", function(){ 
+                    this.value = limitWords(this.value, 400); 
+                    $("counterNnyaGesell").textContent = `${this.value.trim().split(/\s+/).filter(Boolean).length}/400`; 
+                });
+            }
+            
+            if ($("habilitarAudienciaGesell")) {
+                $("habilitarAudienciaGesell").addEventListener("change", function(){ 
+                    toggleGesell(this.checked); 
+                });
+            }
+            
+            initEditor();
+        }
+        
+        function toggleGesell(enabled){ 
+            const ag = $("audienciaGesell"), ng = $("nnyaGesell"); 
+            if (enabled){ 
+                ag.removeAttribute("disabled"); 
+                ng.removeAttribute("disabled"); 
+                $("counterNnyaGesell").style.display='block'; 
+            } else { 
+                ag.value = ""; 
+                ng.value = ""; 
+                ag.setAttribute("disabled","true"); 
+                ng.setAttribute("disabled","true"); 
+                $("counterNnyaGesell").style.display='none'; 
+            } 
+        }
+        
+        function resetFormCausa(){ 
+            $("formCausa").reset(); 
+            $("counter").textContent = "0/1000"; 
+            $("counterNnya").textContent = "0/500"; 
+            $("counterNnyaGesell").textContent = "0/400"; 
+            selPrioridad.value = "Ninguna"; 
+            audienciasContainer.innerHTML = ""; 
+            diligenciasContainer.innerHTML = "";
+            agregarAudiencia();
+            agregarDiligencia();
+            document.querySelectorAll('.field.error').forEach(el => el.classList.remove('error'));
+            tabButtons.forEach(btn => btn.classList.remove("active"));
+            tabContents.forEach(content => content.classList.remove("active"));
+            tabButtons[0].classList.add("active");
+            tabContents[0].classList.add("active");
+            $("recursos-opcionales").style.display = "none";
+            toggleGesell(false);
+            $("habilitarAudienciaGesell").checked = false;
+            toggleFormFields(true);
+            observacionesEditor.innerHTML = "";
+            observacionesHidden.value = "";
+        }
+        
+        function recolectarDatosForm(){
+            const fields = ["numCausa","caratula","tipoProceso","juzgado","fechaInicio","fechaPase","intervencion","datosNnya","vencimiento","usuarioAsignado","estado","prioridad","recursos","recursosContestacion","estadoRecursos","vencimientoRecursos","audienciaGesell","nnyaGesell","observaciones"];
+            const datos = {};
+            fields.forEach(id=>{ 
+                const el = $(id); 
+                if(!el) return; 
+                if (["date","datetime-local"].includes(el.type)) { 
+                    let fecha = el.value ? new Date(el.value) : null;
+                    datos[id] = fecha;
+                } else { 
+                    datos[id] = el.value || ""; 
+                } 
+            });
+            const audiencias = [];
+            audienciasContainer.querySelectorAll('input[type="datetime-local"]').forEach(input => { 
+                if (input.value) {
+                    let fecha = new Date(input.value);
+                    audiencias.push(fecha);
+                }
+            });
+            datos.audiencias = audiencias.length > 0 ? audiencias : null;
+            
+            const diligencias = [];
+            diligenciasContainer.querySelectorAll('.diligencia-item').forEach(item => {
+                const fechaInput = item.querySelector('input[type="datetime-local"]');
+                const detalleInput = item.querySelector('input[type="text"]');
+                if (fechaInput.value) {
+                    let fecha = new Date(fechaInput.value);
+                    diligencias.push({
+                        fecha: fecha,
+                        detalle: detalleInput.value || ''
+                    });
+                }
+            });
+            datos.diligencias = diligencias.length > 0 ? diligencias : null;
+            
+            return datos;
+        }
+        
+        function cargarDatosEnForm(d) {
+            const setVal = (id, val) => {
+                const el = $(id);
+                if (!el) return;
+                if (val?.seconds) {
+                    const fecha = toDate(val);
+                    if (el.type === "date") {
+                        el.value = formatFechaParaInput(fecha, false);
+                    } else if (el.type === "datetime-local") {
+                        el.value = formatFechaParaInput(fecha, true);
+                    } else {
+                        el.value = val ?? "";
+                    }
+                } else if (val && (el.type === "date" || el.type === "datetime-local")) {
+                    const fecha = toDate(val);
+                    el.value = formatFechaParaInput(fecha, el.type === "datetime-local");
+                }
+                else {
+                    el.value = val ?? "";
+                }
+            };
+            
+            if (d.tipoProceso) {
+                selTipo.value = d.tipoProceso;
+                poblarJuzgadosPorTipo(d.tipoProceso);
+            }
+            ["numCausa", "caratula", "tipoProceso", "juzgado", "intervencion", "datosNnya", "usuarioAsignado", "estado", "prioridad", "recursos", "recursosContestacion", "estadoRecursos", "nnyaGesell"].forEach(k => setVal(k, d[k]));
+            ["fechaInicio", "fechaPase", "vencimiento", "vencimientoRecursos", "audienciaGesell"].forEach(k => setVal(k, d[k]));
+            
+            if (d.observaciones) {
+                observacionesEditor.innerHTML = d.observaciones;
+                observacionesHidden.value = d.observaciones;
+                const text = observacionesEditor.innerText || observacionesEditor.textContent;
+                const words = text.trim().split(/\s+/).filter(Boolean);
+                $("counter").textContent = `${words.length}/1000`;
+            }
+            
+            const hayRecursos = !!d.recursos;
+            $("recursos-opcionales").style.display = hayRecursos ? "block" : "none";
+            audienciasContainer.innerHTML = "";
+            if (Array.isArray(d.audiencias) && d.audiencias.length > 0) {
+                d.audiencias.forEach(aud => {
+                    const fecha = toDate(aud);
+                    if (fecha) {
+                        audienciasContainer.appendChild(crearAudienciaItem(formatFechaParaInput(fecha, true)));
+                    }
+                });
+            } else {
+                agregarAudiencia();
+            }
+            diligenciasContainer.innerHTML = "";
+            if (Array.isArray(d.diligencias) && d.diligencias.length > 0) {
+                d.diligencias.forEach(dilig => {
+                    const fecha = toDate(dilig.fecha);
+                    if (fecha) {
+                        diligenciasContainer.appendChild(crearDiligenciaItem(formatFechaParaInput(fecha, true), dilig.detalle || ''));
+                    }
+                });
+            } else {
+                agregarDiligencia();
+            }
+            const habilitar = !!(d.audienciaGesell || d.nnyaGesell);
+            $("habilitarAudienciaGesell").checked = habilitar;
+            toggleGesell(habilitar);
+        }
+        
+        function crearAudienciaItem(value = "") {
+            const item = document.createElement('div');
+            item.className = 'audiencia-item';
+            item.innerHTML = `<input type="datetime-local" value="${value}"><button type="button" class="btn-eliminar-audiencia"><i class="fa fa-trash"></i></button>`;
+            const eliminarBtn = item.querySelector('.btn-eliminar-audiencia');
+            
+            eliminarBtn.onclick = function() { 
+                if (audienciasContainer.children.length > 1) {
+                    item.remove(); 
+                } else {
+                    mostrarAlertaPersonalizada("Error", "Debe haber al menos una audiencia"); 
+                }
+            };
+            return item;
+        }
+        
+        function agregarAudiencia() { 
+            audienciasContainer.appendChild(crearAudienciaItem()); 
+        }
+        
+        function crearDiligenciaItem(fechaValue = "", detalleValue = "") {
+            const item = document.createElement('div');
+            item.className = 'diligencia-item';
+            item.innerHTML = `
+                <input type="datetime-local" value="${fechaValue}">
+                <input type="text" placeholder="Detalle de la diligencia" value="${detalleValue}">
+                <button type="button" class="btn-eliminar-diligencia"><i class="fa fa-trash"></i></button>
+            `;
+            const eliminarBtn = item.querySelector('.btn-eliminar-diligencia');
+            
+            eliminarBtn.onclick = function() { 
+                if (diligenciasContainer.children.length > 1) {
+                    item.remove(); 
+                } else {
+                    mostrarAlertaPersonalizada("Error", "Debe haber al menos una diligencia"); 
+                }
+            };
+            return item;
+        }
+        
+        function agregarDiligencia() { 
+            diligenciasContainer.appendChild(crearDiligenciaItem()); 
+        }
+        
+        // FUNCIONES DE IMPRESIÓN - IGUALES AL SISTEMA ORIGINAL
+        const printSection = (html)=>{ 
+            const w = window.open("","_blank","width=900,height=700"); 
             w.document.write(`
                 <html>
                     <head>
@@ -1633,102 +2858,156 @@
                         <style>
                             @media print {
                                 .button, .actions, .action-buttons, .controls-form,
-                                #btnPrintTodos, #btnPrintFiltrado, #btnPrintRegistro, #btnCerrarVer,
+                                #btnNuevo, #btnPrintListado, #btnPrintFechas, #btnPrintForm,
+                                #btnPrintRegistro, #btnCerrarVer, #btnAgregarNota, #btnVerLineaTiempo,
+                                #btnPrintTodos, #btnPrintFiltrado, #btnEventosHoy, #btnExportarJSON,
                                 .fa-solid, .fas, .far, .fa, .fa-eye, .fa-pen, .fa-trash, .fa-plus,
                                 .fa-save, .fa-print, .fa-xmark, .fa-check, .fa-arrow-left, .fa-arrow-right,
-                                .fa-exclamation-triangle, .fa-timeline, .fa-file-pen,
-                                .floating-alert, .prioridad-destacada,
-                                .header, .filters-section, .sidebar, .pagination-container,
-                                .upload-section {
+                                .fa-exclamation-triangle, .fa-timeline, .fa-file-pen, .fa-calendar-day,
+                                .btn-eliminar-audiencia, .btn-audiencia, .floating-alert,
+                                .prioridad-destacada, .tabs-nav, .tab-button, .editor-toolbar,
+                                .upload-section, .upload-btn, .stats-section {
                                     display: none !important;
                                 }
-                                
+                                .header, .filters-section, .sidebar, .pagination-container {
+                                    display: none !important;
+                                }
                                 body, .container, .main-layout, .main {
                                     margin: 0 !important;
                                     padding: 0 !important;
                                     width: 100% !important;
                                     max-width: 100% !important;
                                 }
-                                
-                                .table-section, .kpi-section, .modal .content {
+                                .table-section, .kpi-section, .modal .content, #modalVer .content {
                                     box-shadow: none !important;
                                     border: 1px solid #ddd !important;
                                     page-break-inside: avoid;
                                 }
-                                
                                 .data-table {
                                     min-width: 100% !important;
                                 }
-                                
-                                .kpi-cards {
-                                    display: grid !important;
-                                    grid-template-columns: repeat(3, 1fr) !important;
-                                    gap: 10px !important;
-                                }
-                                
                                 .prioridad-pill {
                                     color: #000 !important;
                                     background-color: transparent !important;
                                     border: 1px solid #000 !important;
                                 }
-                                
                                 .actions {
                                     display: none !important;
                                 }
-                                
-                                /* Estilos para prioridad en texto durante impresión */
+                                .tab-content {
+                                    display: block !important;
+                                }
+                                #formCausa .grid {
+                                    display: table !important;
+                                    width: 100% !important;
+                                }
+                                .field {
+                                    display: table-row !important;
+                                    margin-bottom: 0 !important;
+                                }
+                                .field label {
+                                    display: table-cell !important;
+                                    padding: 8px !important;
+                                    font-weight: bold !important;
+                                    width: 40% !important;
+                                    border-bottom: 1px solid #ddd !important;
+                                }
+                                .field input, .field textarea, .field select {
+                                    display: table-cell !important;
+                                    width: 100% !important;
+                                    padding: 8px !important;
+                                    border: none !important;
+                                    border-bottom: 1px solid #ddd !important;
+                                    background: transparent !important;
+                                }
+                                .field textarea {
+                                    height: auto !important;
+                                    min-height: 60px !important;
+                                }
                                 .prioridad-texto {
                                     color: #000 !important;
                                     background-color: transparent !important;
                                     border: 1px solid #000 !important;
                                     font-weight: bold !important;
                                 }
-                                
-                                /* Estilos para impresión del detalle */
                                 #verContenido p {
                                     margin: 8px 0 !important;
                                     font-size: 14px !important;
                                     line-height: 1.4 !important;
                                 }
-                                
                                 #verContenido strong {
                                     color: #000 !important;
                                     font-weight: bold !important;
+                                }
+                                .notes-history {
+                                    margin-top: 20px !important;
+                                    padding-top: 20px !important;
+                                    border-top: 1px solid #ddd !important;
+                                }
+                                .notes-history h4 {
+                                    margin: 0 0 10px !important;
+                                    color: #000 !important;
+                                    font-size: 16px !important;
+                                    border-bottom: 2px solid #000 !important;
+                                    padding-bottom: 5px !important;
+                                }
+                                .note-item {
+                                    background: #f8f8f8 !important;
+                                    border-left: 4px solid #007bff !important;
+                                    padding: 10px !important;
+                                    margin-bottom: 10px !important;
+                                    border-radius: 8px !important;
+                                }
+                                .note-meta {
+                                    display: flex !important;
+                                    justify-content: space-between !important;
+                                    font-size: 12px !important;
+                                    color: #6c757d !important;
+                                    margin-bottom: 5px !important;
+                                }
+                                .note-text {
+                                    font-size: 14px !important;
+                                    line-height: 1.4 !important;
+                                }
+                                #observaciones-editor {
+                                    border: none !important;
+                                    padding: 0 !important;
+                                    min-height: auto !important;
+                                    max-height: none !important;
                                 }
                             }
                         </style>
                     </head>
                     <body>${html}</body>
                 </html>
-            `);
-            w.document.close();
-            w.focus();
-            w.print();
-        }
-
+            `); 
+            w.document.close(); 
+            w.focus(); 
+            w.print(); 
+        };
+        
         function generarTablaImpresion(data, titulo) {
             let tableHTML = `
-                <h2>${titulo}</h2>
-                <table border="1" style="width:100%; border-collapse:collapse; margin-top:20px;">
-                    <thead>
-                        <tr>
-                            <th>N°</th>
-                            <th>Carátula</th>
-                            <th>Tipo</th>
-                            <th>Juzgado</th>
-                            <th>Usuario</th>
-                            <th>Estado</th>
-                            <th>Prioridad</th>
-                            <th>Registro</th>
-                            <th>Eventos</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div style="padding: 20px; font-family: Arial, sans-serif;">
+                    <h2 style="text-align: center; margin-bottom: 20px;">${titulo}</h2>
+                    <table border="1" style="width:100%; border-collapse:collapse; margin-top:20px;">
+                        <thead>
+                            <tr>
+                                <th>N°</th>
+                                <th>Carátula</th>
+                                <th>Tipo</th>
+                                <th>Juzgado</th>
+                                <th>Usuario</th>
+                                <th>Estado</th>
+                                <th>Prioridad</th>
+                                <th>Registro</th>
+                                <th>Eventos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
             `;
-            
             data.forEach(d => {
-                const data = d.data;
-                const todosEventos = obtenerTodosEventos(data);
+                const todosEventos = obtenerTodosEventos(d);
                 let eventosTexto = "—";
                 if (todosEventos.length > 0) {
                     eventosTexto = todosEventos.map(evento => {
@@ -1739,29 +3018,201 @@
                         return texto;
                     }).join('; ');
                 }
-                
                 tableHTML += `
                     <tr>
-                        <td>${data.numCausa||""}</td>
-                        <td>${data.caratula||""}</td>
-                        <td>${data.tipoProceso||""}</td>
-                        <td>${data.juzgado||""}</td>
-                        <td>${data.usuarioAsignado||""}</td>
-                        <td>${data.estado||""}</td>
-                        <td>${data.prioridad||"Ninguna"}</td>
-                        <td>${formatearFecha(data.fechaRegistro, false)}</td>
+                        <td>${d.numCausa||""}</td>
+                        <td>${d.caratula||""}</td>
+                        <td>${d.tipoProceso||""}</td>
+                        <td>${d.juzgado||""}</td>
+                        <td>${d.usuarioAsignado||""}</td>
+                        <td>${d.estado||""}</td>
+                        <td>${d.prioridad||"Ninguna"}</td>
+                        <td>${formatearFecha(d.fechaRegistro, false)}</td>
                         <td>${eventosTexto}</td>
                     </tr>
                 `;
             });
-            
             tableHTML += `
                     </tbody>
                 </table>
+                <div style="margin-top: 20px; text-align: center; font-size: 12px; color: #666;">
+                    Impreso el ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+                </div>
+            </div>
             `;
-            
             return tableHTML;
         }
+        
+        // INICIALIZACIÓN
+        function initApp() {
+            console.log("Inicializando aplicación...");
+            
+            // Configurar event listeners - IGUAL AL SISTEMA ORIGINAL
+            if ($("btnNuevo")) {
+                $("btnNuevo").onclick = abrirNuevoExpediente;
+            }
+            if ($("btnGuardar")) {
+                $("btnGuardar").onclick = guardarExpediente;
+            }
+            if ($("btnCerrarVer")) {
+                $("btnCerrarVer").onclick = ()=> modalVer.style.display = "none";
+            }
+            if ($("btnCerrarEventosHoy")) {
+                $("btnCerrarEventosHoy").onclick = ()=> modalEventosHoy.style.display = "none";
+            }
+            if (btnAgregarNota) {
+                btnAgregarNota.onclick = agregarNota;
+            }
+            if (btnAgregarAudiencia) {
+                btnAgregarAudiencia.onclick = agregarAudiencia;
+            }
+            if (btnAgregarDiligencia) {
+                btnAgregarDiligencia.onclick = agregarDiligencia;
+            }
+            
+            // Event listeners para filtros - EXACTAMENTE IGUAL AL SISTEMA ORIGINAL
+            buscador.oninput = handleFilterChange;
+            filtroEstado.onchange = handleFilterChange;
+            filtroUsuario.onchange = handleFilterChange;
+            filtroPrioridad.onchange = handleFilterChange;
+            filtroIntervencion.onchange = handleFilterChange;
+            filtroTipoProceso.onchange = handleFilterChange;
+            filtroEventos.onchange = handleFilterChange;
+            filtroFechaDesde.onchange = handleFilterChange;
+            filtroFechaHasta.onchange = handleFilterChange;
+            
+            $("btnEventosHoy").onclick = function() {
+                renderEventosHoy();
+                modalEventosHoy.style.display = "flex";
+            };
+            
+            $("btnExportarJSON").onclick = exportarJSON;
+            
+            // Configurar carga de archivos
+            uploadBtn.onclick = () => fileInput.click();
+            fileInput.onchange = (e) => {
+                if (e.target.files.length > 0) {
+                    cargarArchivoJSON(e.target.files[0]);
+                }
+            };
+            
+            // Configurar impresión - IGUAL AL SISTEMA ORIGINAL
+            $("btnPrintTodos").onclick = ()=> { 
+                const html = generarTablaImpresion(causasData, "Listado Completo de Expedientes Judiciales");
+                printSection(html); 
+            };
+            $("btnPrintFiltrado").onclick = ()=> { 
+                const html = generarTablaImpresion(filteredData, "Listado Filtrado de Expedientes Judiciales");
+                printSection(html); 
+            };
+            $("btnPrintRegistro").onclick = ()=> {
+                const causa = causasData.find(c => c.id === causaActualId);
+                if (!causa) return;
+                
+                const contenido = `
+                    <div style="padding: 20px; font-family: Arial, sans-serif;">
+                        <h2 style="text-align: center; margin-bottom: 20px; color: #007bff;">Detalle del Expediente</h2>
+                        <div style="margin-bottom: 20px;">
+                            ${verContenido.innerHTML}
+                        </div>
+                        <div class="notes-history">
+                            <h4 style="color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 5px;">Historial de Notas</h4>
+                            ${historialNotas.innerHTML}
+                        </div>
+                    </div>
+                `;
+                printSection(contenido);
+            };
+            
+            // Configurar tabs - IGUAL AL SISTEMA ORIGINAL
+            tabButtons.forEach(button => {
+                button.addEventListener("click", () => {
+                    tabButtons.forEach(btn => btn.classList.remove("active"));
+                    tabContents.forEach(content => content.classList.remove("active"));
+                    button.classList.add("active");
+                    const tabId = button.dataset.tab;
+                    $(tabId).classList.add("active");
+                });
+            });
+            
+            // Configurar formatos de hora - IGUAL AL SISTEMA ORIGINAL
+            const set24HourFormat = () => {
+                const inputs = document.querySelectorAll('input[type="datetime-local"]');
+                inputs.forEach(input => {
+                    input.setAttribute('step', '3600');
+                });
+            };
+            
+            set24HourFormat();
+            const observer = new MutationObserver(set24HourFormat);
+            observer.observe(document.body, { childList: true, subtree: true });
+            
+            initFormEventListeners();
+            
+            // Cerrar modales al hacer clic fuera - IGUAL AL SISTEMA ORIGINAL
+            window.addEventListener("click", e=>{ 
+                if (e.target === modal) modal.style.display="none"; 
+                if (e.target === modalVer) modalVer.style.display="none"; 
+                if (e.target === alertModal) alertModal.style.display="none";
+                if (e.target === modalEventosHoy) modalEventosHoy.style.display="none";
+            });
+            
+            console.log("Aplicación inicializada correctamente");
+        }
+        
+        // Inicializar cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+        
+        // Datos de ejemplo para probar (opcional)
+        const datosEjemplo = [
+            {
+                id: "1",
+                numCausa: "EX-2023-0001",
+                caratula: "PEREZ, Juan c/ ESTADO NACIONAL s/ Daños y Perjuicios",
+                tipoProceso: "Civil",
+                juzgado: "Juzgado Civil N° 5",
+                usuarioAsignado: "Dr. Martínez",
+                estado: "En trámite",
+                prioridad: "Media",
+                fechaRegistro: "2023-01-15T10:30:00",
+                intervencion: "Defensor Oficial",
+                datosNnya: "Menor de 10 años",
+                observaciones: "Primera audiencia programada para marzo",
+                audiencias: ["2023-03-15T09:00:00"],
+                diligencias: [
+                    { fecha: "2023-02-10T14:00:00", detalle: "Recepción de pruebas" }
+                ],
+                seguimiento: [
+                    { texto: "Se presentó demanda", fecha: "2023-01-15T10:30:00", usuario: "Dr. Martínez" }
+                ]
+            },
+            {
+                id: "2",
+                numCausa: "EX-2023-0002",
+                caratula: "GOMEZ, María s/ Alimentos",
+                tipoProceso: "Familia",
+                juzgado: "Juzgado de Familia N° 3",
+                usuarioAsignado: "Dra. López",
+                estado: "En trámite",
+                prioridad: "Alta",
+                fechaRegistro: "2023-02-20T11:15:00",
+                intervencion: "Ministerio Principal",
+                datosNnya: "NNyA de 5 y 8 años",
+                observaciones: "Urgente por situación de vulnerabilidad",
+                audienciaGesell: "2023-03-25T10:00:00",
+                nnyaGesell: "Entrevista con psicóloga",
+                seguimiento: [
+                    { texto: "Se solicitó cámara Gesell", fecha: "2023-02-20T11:15:00", usuario: "Dra. López" }
+                ]
+            }
+        ];
+        
+        // Para probar automáticamente con datos de ejemplo, descomenta la siguiente línea:
+        // setTimeout(() => procesarDatosJSON(datosEjemplo), 500);
     </script>
 </body>
 </html>
