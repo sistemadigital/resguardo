@@ -929,8 +929,8 @@
             font-size: 1rem;
         }
         .evento-audiencias { color: var(--color-audiencias); border-color: var(--color-audiencias); }
-        .evento-vencimientos { color: var(--color-vencimientos); border-color: var(--color-vencimientos); }
         .evento-gesell { color: var(--color-gesell); border-color: var(--color-gesell); }
+        .evento-vencimientos { color: var(--color-vencimientos); border-color: var(--color-vencimientos); }
         .evento-recursos { color: var(--color-recursos); border-color: var(--color-recursos); }
         .evento-diligencias { color: var(--color-diligencias); border-color: var(--color-diligencias); }
         .evento-item {
@@ -945,8 +945,8 @@
             transition: all 0.2s;
         }
         .evento-item-audiencias { border-left-color: var(--color-audiencias); }
-        .evento-item-vencimientos { border-left-color: var(--color-vencimientos); }
         .evento-item-gesell { border-left-color: var(--color-gesell); }
+        .evento-item-vencimientos { border-left-color: var(--color-vencimientos); }
         .evento-item-recursos { border-left-color: var(--color-recursos); }
         .evento-item-diligencias { border-left-color: var(--color-diligencias); }
         .evento-item:hover {
@@ -1757,6 +1757,20 @@
             return eventos;
         }
         
+        // NUEVA FUNCIÓN: ordenar causas por fechaRegistro descendente (más reciente primero)
+        function sortCausasByFechaRegistro() {
+            causasData.sort((a, b) => {
+                const fechaA = toDate(a.fechaRegistro);
+                const fechaB = toDate(b.fechaRegistro);
+                // Si ambas fechas son válidas, orden descendente
+                if (fechaA && fechaB) return fechaB - fechaA;
+                // Poner las que tienen fecha válida antes que las que no
+                if (fechaA && !fechaB) return -1;
+                if (!fechaA && fechaB) return 1;
+                return 0;
+            });
+        }
+        
         // MANEJO DE ARCHIVOS JSON
         function cargarArchivoJSON(file) {
             const reader = new FileReader();
@@ -1817,6 +1831,9 @@
             } else {
                 throw new Error("Formato JSON no válido");
             }
+            
+            // Ordenar causas de más reciente a más antigua
+            sortCausasByFechaRegistro();
             
             // Mostrar sección de datos
             dataSection.style.display = 'block';
@@ -2348,6 +2365,9 @@
                         return;
                     }
                 }
+                
+                // Reordenar después de agregar o editar
+                sortCausasByFechaRegistro();
                 
                 modal.style.display = "none";
                 resetFormCausa();
