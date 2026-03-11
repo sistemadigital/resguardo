@@ -6,6 +6,7 @@
     <title>Registro de Oficios - Modo JSON</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* (Estilos idénticos a la versión anterior) */
         :root {
             --primary-color: #2563eb;
             --primary-light: #3b82f6;
@@ -21,358 +22,1737 @@
             --border-color: #e2e8f0;
             --white: #ffffff;
             --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
             --radius: 12px;
             --radius-sm: 8px;
             --transition: all 0.3s ease;
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: #f1f5f9; color: var(--text-color); padding: 20px; line-height: 1.6; }
-        .container { max-width: 1400px; margin: 0 auto; }
-
-        /* Header & Stats */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background-color: #f1f5f9;
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
         header {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-            color: white; padding: 1.5rem; border-radius: var(--radius); margin-bottom: 2rem;
-            display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .stats { display: flex; gap: 15px; background: rgba(255, 255, 255, 0.15); padding: 10px 15px; border-radius: var(--radius-sm); backdrop-filter: blur(10px); }
-        .stat-item { display: flex; flex-direction: column; align-items: center; min-width: 80px; }
-        .stat-value { font-size: 1.2rem; font-weight: 700; }
-        .stat-label { font-size: 0.75rem; opacity: 0.9; }
-
-        /* Controls */
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px 15px;
+            border-radius: var(--radius-sm);
+            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 80px;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+        
         .controls-container {
-            display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;
-            background: var(--white); padding: 15px; border-radius: var(--radius); box-shadow: var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            background: var(--white);
+            padding: 15px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            align-items: center;
         }
-        .search-container { flex: 1; display: flex; gap: 10px; }
-        .search-input { flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); }
+        
+        .search-container {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .year-filter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        
+        select.form-input {
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            background-color: var(--white);
+            cursor: pointer;
+        }
         
         .btn {
-            padding: 10px 20px; border: none; border-radius: var(--radius-sm); cursor: pointer;
-            font-weight: 600; display: flex; align-items: center; gap: 8px; transition: var(--transition);
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
         }
-        .btn-primary { background: var(--primary-color); color: white; }
-        .btn-success { background: var(--success-color); color: white; }
-        .btn-secondary { background: var(--secondary-color); color: white; }
-
-        /* Table */
-        .table-container { background: white; border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
-        th { background: #f8fafc; color: var(--text-light); text-transform: uppercase; font-size: 0.75rem; }
-        tr:hover { background: #f1f5f9; }
-
-        /* Badges */
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-        .badge-pending { background: #fef3c7; color: #d97706; }
-        .badge-success { background: #d1fae5; color: #059669; }
-
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #475569;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #0f9b6e;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .table-container {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 100%;
+            table-layout: auto;
+        }
+        
+        th, td {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+        
+        th {
+            background-color: #f8fafc;
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        th:hover {
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+        }
+        
+        tr {
+            transition: var(--transition);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:nth-child(even) {
+            background-color: var(--light-gray);
+        }
+        
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        
+        .btn-view {
+            background-color: var(--info-color);
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background-color: #0891b2;
+            transform: translateY(-2px);
+        }
+        
+        .btn-edit {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background-color: #d97706;
+            transform: translateY(-2px);
+        }
+        
         /* Modal */
         .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(4px);
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            padding: 20px;
         }
+        
         .modal-content {
-            background: white; padding: 25px; border-radius: var(--radius); width: 90%; max-width: 1000px;
-            max-height: 90vh; overflow-y: auto; position: relative;
+            background-color: var(--white);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            padding: 24px;
+            position: relative;
+            animation: modalFadeIn 0.3s ease-out;
         }
-        .close-btn { position: absolute; top: 15px; right: 15px; font-size: 1.5rem; cursor: pointer; border: none; background: none; }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: var(--transition);
+            background: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-btn:hover {
+            color: var(--danger-color);
+            background-color: #fef2f2;
+        }
+        
+        .modal-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        /* Formulario dividido */
+        .form-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .form-left {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .form-right {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        
+        textarea.form-input {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .date-input {
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+        
+        .date-input:valid {
+            border-color: var(--success-color);
+        }
+        
+        .date-input:invalid:not(:placeholder-shown) {
+            border-color: var(--danger-color);
+        }
+        
+        /* Contenido con paginación */
+        .content-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+        
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .content-tools {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .word-count {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+        
+        .content-area {
+            flex: 1;
+            padding: 15px;
+            min-height: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            border: none;
+            resize: none;
+            width: 100%;
+        }
+        
+        .content-area:focus {
+            outline: none;
+        }
+        
+        .content-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #f8fafc;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .page-info {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+        
+        .page-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .page-btn {
+            padding: 5px 10px;
+            border: 1px solid var(--border-color);
+            background-color: var(--white);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: var(--transition);
+        }
+        
+        .page-btn:hover:not(:disabled) {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .page-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        /* Responsive (igual que antes, omitido por brevedad) */
+        /* ... */
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--border-color);
+        }
+        
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+        
+        .floating-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+            cursor: pointer;
+            z-index: 100;
+            transition: var(--transition);
+        }
+        
+        .floating-btn:hover {
+            transform: translateY(-5px) rotate(5deg);
+            box-shadow: 0 15px 30px rgba(37, 99, 235, 0.4);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        
+        .status-completed {
+            background-color: #d1fae5;
+            color: #059669;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .pagination-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background-color: var(--white);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pagination-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .pagination-info {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        
+        .year-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background-color: #e0f2fe;
+            color: var(--primary-color);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .topic-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background-color: #e0e7ff;
+            color: #3730a3;
+        }
+        
+        .text-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background-color: #f0f9ff;
+            color: var(--info-color);
+            border: 1px solid #bae6fd;
+        }
+        
+        .text-yes {
+            background-color: #d1fae5;
+            color: #059669;
+            border-color: #a7f3d0;
+        }
+        
+        .text-no {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+        
+        .time-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background-color: #f0f9ff;
+            color: var(--info-color);
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid #bae6fd;
+            white-space: nowrap;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 20px;
+            border-radius: var(--radius-sm);
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: var(--shadow);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+        
+        .notification.error {
+            background-color: var(--danger-color);
+        }
+        
+        .notification.success {
+            background-color: var(--success-color);
+        }
+        
+        .created-date {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 5px;
+        }
+        
+        /* Firma */
+        .firma-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+        
+        .firma-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        
+        .firma-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .firma-option label {
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .dynamic-firma-field {
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .dynamic-firma-field.active {
+            display: block;
+        }
+        
+        .subrogante-input {
+            margin-top: 10px;
+        }
+        
+        .disabled-group {
+            opacity: 0.6;
+            pointer-events: none;
+        }
 
-        /* Form Layout */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
-        .form-input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); }
-        textarea.form-input { height: 200px; resize: vertical; }
+        /* Ocultar elementos que no usamos */
+        .loading-overlay, .connection-status {
+            display: none !important;
+        }
 
-        #fileInput { display: none; }
-        .hidden { display: none; }
+        #fileInput {
+            display: none;
+        }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <header>
-        <div>
-            <h1>Oficios <small>(Modo JSON)</small></h1>
-            <p id="fileNameDisplay" style="font-size: 0.8rem; opacity: 0.8;">Ningún archivo cargado</p>
-        </div>
-        <div class="stats">
-            <div class="stat-item"><span class="stat-value" id="statTotal">0</span><span class="stat-label">Total</span></div>
-            <div class="stat-item"><span class="stat-value" id="statPending">0</span><span class="stat-label">Pendientes</span></div>
-            <div class="stat-item"><span class="stat-value" id="statText">0</span><span class="stat-label">Con Texto</span></div>
-        </div>
-    </header>
-
-    <div class="controls-container">
-        <div class="search-container">
-            <input type="text" id="searchInput" class="search-input" placeholder="Buscar en destinatario, temática o contenido...">
-            <select id="yearFilter" class="form-input" style="width: 120px;">
-                <option value="todos">Años</option>
-            </select>
-        </div>
-        
-        <input type="file" id="fileInput" accept=".json">
-        <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
-            <i class="fas fa-upload"></i> Cargar JSON
-        </button>
-        <button class="btn btn-success" id="exportBtn" disabled>
-            <i class="fas fa-download"></i> Guardar/Exportar
-        </button>
-        <button class="btn btn-primary" id="newBtn">
-            <i class="fas fa-plus"></i> Nuevo Oficio
-        </button>
-    </div>
-
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>N°</th>
-                    <th>Año</th>
-                    <th>Destinatario</th>
-                    <th>Remisión</th>
-                    <th>Estado</th>
-                    <th>Temática</th>
-                    <th>Expediente</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="8" style="text-align:center; padding: 40px;">Cargue un archivo JSON para comenzar</td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div id="recordModal" class="modal">
-    <div class="modal-content">
-        <button class="close-btn" onclick="closeModal()">&times;</button>
-        <h2 id="modalTitle" style="margin-bottom: 20px; color: var(--primary-color);">Detalles del Oficio</h2>
-        <form id="recordForm">
-            <input type="hidden" id="editId">
-            <div class="form-grid">
-                <div class="form-left">
-                    <div class="form-group">
-                        <label>Destinatario *</label>
-                        <input type="text" id="recipient" class="form-input" required>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>Registro de Oficios <small style="font-size: 1rem;">(Modo JSON)</small></h1>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalRecords">0</span>
+                        <span class="stat-label">Total</span>
                     </div>
-                    <div class="form-group">
-                        <label>Fecha de Remisión (DD/MM/AAAA) *</label>
-                        <input type="text" id="remissionDate" class="form-input" placeholder="15/03/2024" required>
+                    <div class="stat-item">
+                        <span class="stat-value" id="pendingRecords">0</span>
+                        <span class="stat-label">Pendientes</span>
                     </div>
-                    <div class="form-group">
-                        <label>Fecha de Respuesta (DD/MM/AAAA)</label>
-                        <input type="text" id="responseDate" class="form-input">
+                    <div class="stat-item">
+                        <span class="stat-value" id="completedRecords">0</span>
+                        <span class="stat-label">Completados</span>
                     </div>
-                    <div class="form-group">
-                        <label>Temática *</label>
-                        <select id="topic" class="form-input" required>
-                            <option value="">Seleccione...</option>
-                            <option value="Civil">Civil</option>
-                            <option value="Familia">Familia</option>
-                            <option value="Laboral">Laboral</option>
-                            <option value="Penal">Penal</option>
-                            <option value="Violencia Familiar">Violencia Familiar</option>
-                            <option value="Otro">Otro</option>
-                        </select>
+                    <div class="stat-item">
+                        <span class="stat-value" id="textRecords">0</span>
+                        <span class="stat-label">Con Texto</span>
                     </div>
-                    <div class="form-group">
-                        <label>Usuario Asignado</label>
-                        <input type="text" id="assignedUser" class="form-input">
-                    </div>
-                </div>
-                <div class="form-right">
-                    <div class="form-group">
-                        <label>Contenido del Oficio *</label>
-                        <textarea id="content" class="form-input" placeholder="Pegue o escriba el texto aquí..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Expediente</label>
-                        <input type="text" id="expediente" class="form-input">
+                    <div class="stat-item">
+                        <span class="stat-value" id="noTextRecords">0</span>
+                        <span class="stat-label">Sin Texto</span>
                     </div>
                 </div>
             </div>
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-    let allRecords = [];
-    let currentFileName = "";
-
-    // --- Lógica de Archivos ---
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        currentFileName = file.name;
-        document.getElementById('fileNameDisplay').textContent = `Archivo: ${currentFileName}`;
+        </header>
         
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const json = JSON.parse(e.target.result);
-                // Si el JSON viene de Firebase exportado, suele ser un array o un objeto de docs
-                allRecords = Array.isArray(json) ? json : Object.values(json);
-                
-                // Normalizar campos básicos si es necesario (ej: convertir Timestamps de Firebase)
-                allRecords = allRecords.map(r => ({
-                    ...r,
-                    id: r.id || Math.random().toString(36).substr(2, 9),
-                    year: r.year || (r.remissionDate ? r.remissionDate.split('/').pop() : new Date().getFullYear().toString())
-                }));
+        <div class="controls-container">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar por número o texto en todos los campos...">
+                <div class="year-filter">
+                    <label for="yearFilter" class="form-label">Año:</label>
+                    <select id="yearFilter" class="form-input">
+                        <option value="todos">Todos</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="file" id="fileInput" accept=".json">
+                <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-upload"></i> Cargar JSON
+                </button>
+                <button class="btn btn-success" id="exportBtn">
+                    <i class="fas fa-download"></i> Exportar JSON
+                </button>
+                <button id="newRecordBtn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nuevo Oficio
+                </button>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="recordsTable">
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>Año</th>
+                        <th>Destinatario</th>
+                        <th>Fecha de Remisión</th>
+                        <th>Fecha de Respuesta</th>
+                        <th>Estado</th>
+                        <th>Temática</th>
+                        <th>Texto</th>
+                        <th>Registrado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsBody">
+                    </tbody>
+            </table>
+            <div id="emptyState" class="empty-state">
+                <i class="fas fa-file-alt"></i>
+                <p>No hay oficios registrados</p>
+                <button id="emptyStateBtn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Crear primer oficio
+                </button>
+            </div>
+        </div>
 
-                document.getElementById('exportBtn').disabled = false;
-                updateApp();
-            } catch (err) {
-                alert("Error al procesar el JSON: " + err.message);
-            }
-        };
-        reader.readAsText(file);
-    });
+        <div class="pagination">
+            <button id="prevPageBtn" class="pagination-btn" disabled>
+                <i class="fas fa-chevron-left"></i> Anterior
+            </button>
+            <span class="pagination-info" id="pageInfo">Página 1 de 1</span>
+            <button id="nextPageBtn" class="pagination-btn" disabled>
+                Siguiente <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal de edición/creación -->
+    <div id="recordModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Detalles del Oficio</h2>
+            </div>
+            <div class="modal-body">
+                <form id="recordForm">
+                    <input type="hidden" id="recordId">
+                    <div class="form-container">
+                        <div class="form-left">
+                            <div class="form-group">
+                                <label for="recipient" class="form-label">Destinatario *</label>
+                                <input type="text" id="recipient" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="remissionDate" class="form-label">Fecha de Remisión *</label>
+                                <input type="text" id="remissionDate" class="form-input date-input" 
+                                       pattern="(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/\d{4}"
+                                       placeholder="DD/MM/AAAA"
+                                       required
+                                       title="Formato: DD/MM/AAAA (Día: 01-31, Mes: 01-12, Año: 4 dígitos)">
+                                <small class="created-date">Formato: DD/MM/AAAA (ej: 15/03/2024)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="responseDate" class="form-label">Fecha de Respuesta</label>
+                                <input type="text" id="responseDate" class="form-input date-input" 
+                                       pattern="(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/\d{4}"
+                                       placeholder="DD/MM/AAAA"
+                                       title="Formato: DD/MM/AAAA (ej: 20/03/2024)">
+                                <small class="created-date">Formato: DD/MM/AAAA (ej: 20/03/2024)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="topic" class="form-label">Temática del Oficio *</label>
+                                <select id="topic" class="form-input" required>
+                                    <option value="">Seleccione una temática</option>
+                                    <option value="Civil">Civil</option>
+                                    <option value="Familia">Familia</option>
+                                    <option value="Laboral">Laboral</option>
+                                    <option value="Otro">Otro</option>
+                                    <option value="Penal">Penal</option>
+                                    <option value="Violencia Familiar">Violencia Familiar</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="assignedUser" class="form-label">Usuario asignado</label>
+                                <select id="assignedUser" class="form-input">
+                                    <option value="">Seleccione un usuario</option>
+                                    <option value="Bazante Nadia Romina">Bazante Nadia Romina</option>
+                                    <option value="Cardozo Maria Raquel">Cardozo Maria Raquel</option>
+                                    <option value="Cedron Noelia Aurora">Cedron Noelia Aurora</option>
+                                    <option value="Corrales Alicia Mariela">Corrales Alicia Mariela</option>
+                                    <option value="Escobar Monica Graciela">Escobar Monica Graciela</option>
+                                    <option value="Fioravante Romulo">Fioravante Romulo</option>
+                                    <option value="Gonzalez Alberto Misael">Gonzalez Alberto Misael</option>
+                                    <option value="Gonzalez Juan Jose">Gonzalez Juan Jose</option>
+                                    <option value="Gudiño Natalia Esther">Gudiño Natalia Esther</option>
+                                    <option value="Magnani Enzo Luciano">Magnani Enzo Luciano</option>
+                                    <option value="Pablos Patricia">Pablos Patricia</option>
+                                    <option value="Palacios Ana Gabriela">Palacios Ana Gabriela</option>
+                                    <option value="Ramos Marcelo Gustavo">Ramos Marcelo Gustavo</option>
+                                    <option value="Riveros Patricia Soledad">Riveros Patricia Soledad</option>
+                                    <option value="Sosa Rita Cecilia">Sosa Rita Cecilia</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="firmaDefensorGroup">
+                                <label class="form-label">Firma Defensor Titular</label>
+                                <div class="firma-options">
+                                    <div class="firma-option">
+                                        <input type="radio" id="firmaDefensorSi" name="firmaDefensor" value="Sí" checked>
+                                        <label for="firmaDefensorSi">Sí</label>
+                                    </div>
+                                    <div class="firma-option">
+                                        <input type="radio" id="firmaDefensorNo" name="firmaDefensor" value="No">
+                                        <label for="firmaDefensorNo">No</label>
+                                    </div>
+                                    <div class="firma-option">
+                                        <input type="radio" id="firmaDefensorNoFirma" name="firmaDefensor" value="No firma">
+                                        <label for="firmaDefensorNoFirma">No firma</label>
+                                    </div>
+                                </div>
+                                <div class="dynamic-firma-field" id="subroganteField">
+                                    <label class="form-label">Firma Defensor Subrogante</label>
+                                    <input type="text" id="firmaDefensorSubrogante" class="form-input subrogante-input" placeholder="Nombre del defensor subrogante">
+                                </div>
+                            </div>
+                            <div class="form-group" id="firmaSecretarioGroup">
+                                <label class="form-label">Seleccionar Secretario/a</label>
+                                <select id="firmaSecretarioNombre" class="form-input">
+                                    <option value="">Seleccione un secretario/a</option>
+                                    <option value="Alicia Mariela Corrales">Alicia Mariela Corrales</option>
+                                    <option value="Patricia Soledad Riveros">Patricia Soledad Riveros</option>
+                                    <option value="Enzo Luciano Magnani">Enzo Luciano Magnani</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="createdAtContainer" style="display: none;">
+                                <label class="form-label">Registrado el</label>
+                                <div class="form-input" style="background-color: #f8fafc;" id="createdAtDisplay"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-right">
+                            <div class="form-group">
+                                <label for="content" class="form-label">Contenido del Oficio *</label>
+                                <div class="content-container">
+                                    <div class="content-header">
+                                        <span class="word-count" id="wordCount">0 palabras</span>
+                                        <div class="content-tools">
+                                            <button type="button" id="clearContent" class="page-btn" title="Limpiar contenido">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea id="content" class="content-area" placeholder="Escriba el contenido del oficio aquí..." required></textarea>
+                                    <div class="content-pagination">
+                                        <span class="page-info" id="pageInfoContent">Página 1</span>
+                                        <div class="page-buttons">
+                                            <button type="button" id="prevPageContent" class="page-btn" disabled>
+                                                <i class="fas fa-chevron-left"></i>
+                                            </button>
+                                            <button type="button" id="nextPageContent" class="page-btn" disabled>
+                                                <i class="fas fa-chevron-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="expediente" class="form-label">Expediente</label>
+                                <input type="text" id="expediente" class="form-input" placeholder="Número o referencia del expediente (texto libre)">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" id="cancelBtn" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="saveBtn">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de visualización -->
+    <div id="contentModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title">Oficio #<span id="contentNumber"></span></h2>
+                <p><strong>Destinatario:</strong> <span id="contentRecipient"></span></p>
+                <p><strong>Fecha de Remisión:</strong> <span id="contentRemissionDate"></span></p>
+                <p><strong>Fecha de Respuesta:</strong> <span id="contentResponseDate"></span></p>
+                <p><strong>Temática:</strong> <span id="contentTopic"></span></p>
+                <p><strong>Usuario asignado:</strong> <span id="contentAssignedUser"></span></p>
+                <div id="firmaContainer"></div>
+                <p><strong>Expediente:</strong> <span id="contentExpediente"></span></p>
+                <p><strong>Registrado el:</strong> <span id="contentCreatedAt" class="time-badge"></span></p>
+            </div>
+            <div class="modal-body">
+                <div class="content-box">
+                    <p id="fullContent"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="viewAllBtn" class="floating-btn" title="Ver todos los registros">
+        <i class="fas fa-list"></i>
+    </div>
 
-    document.getElementById('exportBtn').addEventListener('click', () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allRecords, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "oficios_actualizado_" + new Date().toISOString().split('T')[0] + ".json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    });
-
-    // --- Funciones de UI ---
-    function updateApp() {
-        renderTable();
-        renderStats();
-        updateYearFilter();
-    }
-
-    function renderStats() {
-        document.getElementById('statTotal').textContent = allRecords.length;
-        document.getElementById('statPending').textContent = allRecords.filter(r => !r.responseDate).length;
-        document.getElementById('statText').textContent = allRecords.filter(r => r.content && r.content.length > 10).length;
-    }
-
-    function renderTable() {
-        const tbody = document.getElementById('tableBody');
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const yearVal = document.getElementById('yearFilter').value;
-
-        const filtered = allRecords.filter(r => {
-            const matchSearch = !searchTerm || 
-                (r.recipient?.toLowerCase().includes(searchTerm)) || 
-                (r.content?.toLowerCase().includes(searchTerm)) ||
-                (r.expediente?.toLowerCase().includes(searchTerm));
+    <script>
+        (function() {
+            // --- Variables globales ---
+            let allRecords = [];
+            let filteredRecords = [];
+            let currentFileName = "sin_nombre.json";
+            let editingId = null;
+            let currentPage = 1;
+            const recordsPerPage = 10;
             
-            const matchYear = yearVal === "todos" || r.year === yearVal;
-            return matchSearch && matchYear;
-        });
+            // Variables para paginación de contenido
+            let contentPages = [];
+            let currentContentPage = 1;
 
-        if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px;">No se encontraron registros</td></tr>`;
-            return;
-        }
+            // Elementos del DOM
+            const recordsBody = document.getElementById('recordsBody');
+            const emptyState = document.getElementById('emptyState');
+            const recordModal = document.getElementById('recordModal');
+            const contentModal = document.getElementById('contentModal');
+            const recordForm = document.getElementById('recordForm');
+            const searchInput = document.getElementById('searchInput');
+            const yearFilter = document.getElementById('yearFilter');
+            const newRecordBtn = document.getElementById('newRecordBtn');
+            const emptyStateBtn = document.getElementById('emptyStateBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const viewAllBtn = document.getElementById('viewAllBtn');
+            const closeButtons = document.querySelectorAll('.close-btn');
+            const prevPageBtn = document.getElementById('prevPageBtn');
+            const nextPageBtn = document.getElementById('nextPageBtn');
+            const pageInfo = document.getElementById('pageInfo');
+            const totalRecordsSpan = document.getElementById('totalRecords');
+            const pendingRecordsSpan = document.getElementById('pendingRecords');
+            const completedRecordsSpan = document.getElementById('completedRecords');
+            const textRecordsSpan = document.getElementById('textRecords');
+            const noTextRecordsSpan = document.getElementById('noTextRecords');
+            const exportBtn = document.getElementById('exportBtn');
+            const fileInput = document.getElementById('fileInput');
+            
+            // Elementos del formulario
+            const recordId = document.getElementById('recordId');
+            const recipient = document.getElementById('recipient');
+            const remissionDate = document.getElementById('remissionDate');
+            const responseDate = document.getElementById('responseDate');
+            const topic = document.getElementById('topic');
+            const assignedUser = document.getElementById('assignedUser');
+            const firmaDefensorSi = document.getElementById('firmaDefensorSi');
+            const firmaDefensorNo = document.getElementById('firmaDefensorNo');
+            const firmaDefensorNoFirma = document.getElementById('firmaDefensorNoFirma');
+            const subroganteField = document.getElementById('subroganteField');
+            const firmaDefensorSubrogante = document.getElementById('firmaDefensorSubrogante');
+            const firmaSecretarioGroup = document.getElementById('firmaSecretarioGroup');
+            const firmaSecretarioNombre = document.getElementById('firmaSecretarioNombre');
+            const createdAtContainer = document.getElementById('createdAtContainer');
+            const createdAtDisplay = document.getElementById('createdAtDisplay');
+            const contentTextarea = document.getElementById('content');
+            const wordCount = document.getElementById('wordCount');
+            const clearContent = document.getElementById('clearContent');
+            const pageInfoContent = document.getElementById('pageInfoContent');
+            const prevPageContent = document.getElementById('prevPageContent');
+            const nextPageContent = document.getElementById('nextPageContent');
+            
+            // Elementos del modal de contenido
+            const contentNumber = document.getElementById('contentNumber');
+            const contentRecipient = document.getElementById('contentRecipient');
+            const contentRemissionDate = document.getElementById('contentRemissionDate');
+            const contentResponseDate = document.getElementById('contentResponseDate');
+            const contentTopic = document.getElementById('contentTopic');
+            const contentAssignedUser = document.getElementById('contentAssignedUser');
+            const firmaContainer = document.getElementById('firmaContainer');
+            const contentExpediente = document.getElementById('contentExpediente');
+            const contentCreatedAt = document.getElementById('contentCreatedAt');
+            const fullContent = document.getElementById('fullContent');
 
-        tbody.innerHTML = filtered.map((r, index) => `
-            <tr>
-                <td>${index + 1}</td>
-                <td><span class="badge" style="background:#e0f2fe; color:#0369a1">${r.year || '-'}</span></td>
-                <td><strong>${r.recipient || 'Sin nombre'}</strong></td>
-                <td>${r.remissionDate || '-'}</td>
-                <td>
-                    <span class="badge ${r.responseDate ? 'badge-success' : 'badge-pending'}">
-                        ${r.responseDate ? 'Completado' : 'Pendiente'}
-                    </span>
-                </td>
-                <td><span class="badge" style="background:#e0e7ff; color:#4338ca">${r.topic || 'S/D'}</span></td>
-                <td>${r.expediente || '-'}</td>
-                <td>
-                    <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.7rem;" onclick="editRecord('${r.id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    }
+            // --- Funciones de utilidad ---
+            function formatDateForDisplay(dateString) {
+                if (!dateString) return '';
+                if (dateString.includes('-')) {
+                    const parts = dateString.split('-');
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return dateString;
+            }
 
-    function updateYearFilter() {
-        const years = [...new Set(allRecords.map(r => r.year))].filter(Boolean).sort().reverse();
-        const select = document.getElementById('yearFilter');
-        select.innerHTML = '<option value="todos">Años</option>' + 
-            years.map(y => `<option value="${y}">${y}</option>`).join('');
-    }
+            function formatDateForStorage(dateString) {
+                if (!dateString) return '';
+                const parts = dateString.split('/');
+                if (parts.length === 3) {
+                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                return dateString;
+            }
 
-    // --- CRUD ---
-    const modal = document.getElementById('recordModal');
-    const form = document.getElementById('recordForm');
+            function isValidDate(dateString) {
+                const pattern = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+                if (!pattern.test(dateString)) return false;
+                const parts = dateString.split('/');
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10);
+                const year = parseInt(parts[2], 10);
+                if (year < 1900 || year > 2100) return false;
+                const date = new Date(year, month - 1, day);
+                return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+            }
 
-    document.getElementById('newBtn').addEventListener('click', () => {
-        form.reset();
-        document.getElementById('editId').value = "";
-        document.getElementById('modalTitle').textContent = "Nuevo Oficio";
-        modal.style.display = 'flex';
-    });
+            function getYearFromDate(dateString) {
+                if (!dateString) return new Date().getFullYear().toString();
+                const parts = dateString.split('/');
+                if (parts.length === 3) return parts[2];
+                return new Date().getFullYear().toString();
+            }
 
-    function editRecord(id) {
-        const r = allRecords.find(rec => rec.id === id);
-        if (!r) return;
-        
-        document.getElementById('editId').value = r.id;
-        document.getElementById('recipient').value = r.recipient || "";
-        document.getElementById('remissionDate').value = r.remissionDate || "";
-        document.getElementById('responseDate').value = r.responseDate || "";
-        document.getElementById('topic').value = r.topic || "";
-        document.getElementById('assignedUser').value = r.assignedUser || "";
-        document.getElementById('content').value = r.content || "";
-        document.getElementById('expediente').value = r.expediente || "";
-        
-        document.getElementById('modalTitle').textContent = "Editar Oficio";
-        modal.style.display = 'flex';
-    }
+            function parseFecha(fechaStr) {
+                if (!fechaStr) return null;
+                const partes = fechaStr.split('/');
+                if (partes.length !== 3) return null;
+                const dia = parseInt(partes[0], 10);
+                const mes = parseInt(partes[1], 10) - 1;
+                const anio = parseInt(partes[2], 10);
+                return new Date(anio, mes, dia);
+            }
 
-    form.onsubmit = (e) => {
-        e.preventDefault();
-        const id = document.getElementById('editId').value;
-        const remissionDate = document.getElementById('remissionDate').value;
-        const year = remissionDate.split('/').pop();
+            // --- NUEVA FUNCIÓN DE ORDENAMIENTO ---
+            // Primero por número descendente (null al final), luego por fecha de remisión descendente,
+            // luego por fecha de registro (createdAt) descendente.
+            function sortRecords(a, b) {
+                // Número: los null se consideran -Infinity (van al final)
+                const numA = a.number !== undefined && a.number !== null ? a.number : -Infinity;
+                const numB = b.number !== undefined && b.number !== null ? b.number : -Infinity;
+                if (numA !== numB) return numB - numA;
 
-        const data = {
-            recipient: document.getElementById('recipient').value,
-            remissionDate: remissionDate,
-            responseDate: document.getElementById('responseDate').value,
-            topic: document.getElementById('topic').value,
-            assignedUser: document.getElementById('assignedUser').value,
-            content: document.getElementById('content').value,
-            expediente: document.getElementById('expediente').value,
-            year: year
-        };
+                // Fecha de remisión
+                const fechaA = parseFecha(formatDateForDisplay(a.remissionDate));
+                const fechaB = parseFecha(formatDateForDisplay(b.remissionDate));
+                if (fechaA && fechaB) {
+                    if (fechaA.getTime() !== fechaB.getTime()) return fechaB - fechaA;
+                } else if (fechaA && !fechaB) return -1;
+                else if (!fechaA && fechaB) return 1;
 
-        if (id) {
-            // Update
-            const idx = allRecords.findIndex(r => r.id === id);
-            allRecords[idx] = { ...allRecords[idx], ...data };
-        } else {
-            // Create
-            data.id = Math.random().toString(36).substr(2, 9);
-            data.createdAt = new Date().toISOString();
-            allRecords.unshift(data);
-        }
+                // Fecha de registro
+                const regA = a.createdAt ? new Date(a.createdAt).getTime() : -Infinity;
+                const regB = b.createdAt ? new Date(b.createdAt).getTime() : -Infinity;
+                return regB - regA;
+            }
 
-        closeModal();
-        updateApp();
-    };
+            // --- Notificaciones ---
+            function showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i><span>${message}</span>`;
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 5000);
+            }
 
-    function closeModal() { modal.style.display = 'none'; }
-    document.getElementById('searchInput').addEventListener('input', renderTable);
-    document.getElementById('yearFilter').addEventListener('change', renderTable);
-</script>
+            // --- Actualizar estadísticas ---
+            function updateStats() {
+                totalRecordsSpan.textContent = allRecords.length;
+                const pending = allRecords.filter(r => !r.responseDate).length;
+                const completed = allRecords.filter(r => r.responseDate).length;
+                const withText = allRecords.filter(r => r.content && r.content.trim() !== '').length;
+                pendingRecordsSpan.textContent = pending;
+                completedRecordsSpan.textContent = completed;
+                textRecordsSpan.textContent = withText;
+                noTextRecordsSpan.textContent = allRecords.length - withText;
+            }
 
+            // --- Actualizar filtro de años ---
+            function updateYearFilter() {
+                const years = new Set();
+                allRecords.forEach(r => { if (r.year) years.add(r.year.toString()); });
+                const currentYear = new Date().getFullYear();
+                for (let y = 2020; y <= currentYear + 5; y++) years.add(y.toString());
+                const sorted = Array.from(years).sort((a, b) => b - a);
+                yearFilter.innerHTML = '<option value="todos">Todos</option>' + 
+                    sorted.map(y => `<option value="${y}">${y}</option>`).join('');
+            }
+
+            // --- Obtener siguiente número para un año ---
+            function getNextNumberForYear(year) {
+                const yearRecords = allRecords.filter(r => r.year === year && r.number !== null && r.number !== undefined);
+                if (yearRecords.length === 0) return 1;
+                const max = Math.max(...yearRecords.map(r => r.number));
+                return max + 1;
+            }
+
+            // --- Renderizar tabla ---
+            function renderTable() {
+                const searchText = searchInput.value.trim().toLowerCase();
+                const selectedYear = yearFilter.value;
+                
+                // Filtrar
+                filteredRecords = allRecords.filter(record => {
+                    const yearMatch = selectedYear === 'todos' || record.year.toString() === selectedYear;
+                    if (!searchText) return yearMatch;
+                    
+                    const inFields = 
+                        (record.recipient && record.recipient.toLowerCase().includes(searchText)) ||
+                        (record.topic && record.topic.toLowerCase().includes(searchText)) ||
+                        (record.assignedUser && record.assignedUser.toLowerCase().includes(searchText)) ||
+                        (record.expediente && record.expediente.toLowerCase().includes(searchText)) ||
+                        (record.content && record.content.toLowerCase().includes(searchText)) ||
+                        (record.firmaDefensor && record.firmaDefensor.toLowerCase().includes(searchText)) ||
+                        (record.firmaDefensorSubrogante && record.firmaDefensorSubrogante.toLowerCase().includes(searchText)) ||
+                        (record.firmaSecretarioNombre && record.firmaSecretarioNombre.toLowerCase().includes(searchText)) ||
+                        (record.number && record.number.toString().includes(searchText)) ||
+                        (formatDateForDisplay(record.remissionDate) && formatDateForDisplay(record.remissionDate).includes(searchText)) ||
+                        (record.responseDate && formatDateForDisplay(record.responseDate).includes(searchText));
+                    
+                    return yearMatch && inFields;
+                });
+
+                // Ordenar usando la nueva función
+                filteredRecords.sort(sortRecords);
+
+                if (filteredRecords.length === 0) {
+                    emptyState.style.display = 'block';
+                    recordsBody.innerHTML = '';
+                    updatePagination(0);
+                    return;
+                }
+                emptyState.style.display = 'none';
+
+                const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+                if (currentPage > totalPages) currentPage = totalPages || 1;
+                updatePagination(filteredRecords.length);
+
+                const start = (currentPage - 1) * recordsPerPage;
+                const end = start + recordsPerPage;
+                const pageRecords = filteredRecords.slice(start, end);
+
+                recordsBody.innerHTML = pageRecords.map(record => {
+                    const hasText = record.content && record.content.trim() !== '';
+                    const registroDisplay = record.createdAt ? new Date(record.createdAt).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }) : 'No disponible';
+                    return `
+                    <tr>
+                        <td>${record.number !== null ? record.number : '-'}</td>
+                        <td><span class="year-badge">${record.year}</span></td>
+                        <td>${record.recipient}</td>
+                        <td>${formatDateForDisplay(record.remissionDate)}</td>
+                        <td>${record.responseDate ? formatDateForDisplay(record.responseDate) : '--'}</td>
+                        <td><span class="status-badge ${record.responseDate ? 'status-completed' : 'status-pending'}">${record.responseDate ? 'Completado' : 'Pendiente'}</span></td>
+                        <td><span class="topic-badge">${record.topic || 'Sin especificar'}</span></td>
+                        <td><span class="text-badge ${hasText ? 'text-yes' : 'text-no'}">${hasText ? 'Sí' : 'No'}</span></td>
+                        <td><span class="time-badge">${registroDisplay}</span></td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn btn-view view-content" data-id="${record.id}"><i class="fas fa-eye"></i> Ver</button>
+                                <button class="action-btn btn-edit edit-record" data-id="${record.id}"><i class="fas fa-edit"></i> Editar</button>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
+
+                // Asignar eventos
+                document.querySelectorAll('.view-content').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.getAttribute('data-id');
+                        viewContent(id);
+                    });
+                });
+                document.querySelectorAll('.edit-record').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.getAttribute('data-id');
+                        editRecord(id);
+                    });
+                });
+            }
+
+            function updatePagination(total) {
+                const totalPages = Math.ceil(total / recordsPerPage);
+                pageInfo.textContent = `Página ${currentPage} de ${totalPages || 1}`;
+                prevPageBtn.disabled = currentPage === 1;
+                nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+            }
+
+            function goToPrevPage() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                }
+            }
+
+            function goToNextPage() {
+                const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable();
+                }
+            }
+
+            // --- CRUD: Nuevo ---
+            function openNewRecordModal() {
+                editingId = null;
+                document.getElementById('modalTitle').textContent = 'Nuevo Oficio';
+                recordForm.reset();
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const year = today.getFullYear();
+                remissionDate.value = `${day}/${month}/${year}`;
+                responseDate.value = '';
+                topic.value = '';
+                assignedUser.value = '';
+                firmaDefensorSi.checked = true;
+                firmaDefensorNo.checked = false;
+                firmaDefensorNoFirma.checked = false;
+                subroganteField.classList.remove('active');
+                firmaDefensorSubrogante.value = '';
+                firmaSecretarioGroup.classList.add('disabled-group');
+                firmaSecretarioNombre.value = '';
+                expediente.value = '';
+                createdAtContainer.style.display = 'none';
+                contentTextarea.value = '';
+                updateWordCount();
+                contentPages = [];
+                currentContentPage = 1;
+                updateContentPagination();
+                recordModal.style.display = 'flex';
+            }
+
+            // --- CRUD: Editar ---
+            function editRecord(id) {
+                const record = allRecords.find(r => r.id === id);
+                if (!record) return;
+                editingId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Oficio';
+                recordId.value = record.id;
+                recipient.value = record.recipient || '';
+                remissionDate.value = formatDateForDisplay(record.remissionDate);
+                responseDate.value = record.responseDate ? formatDateForDisplay(record.responseDate) : '';
+                topic.value = record.topic || '';
+                assignedUser.value = record.assignedUser || '';
+                expediente.value = record.expediente || '';
+
+                // Firma
+                if (record.firmaDefensor === 'No firma') {
+                    firmaDefensorNoFirma.checked = true;
+                    firmaDefensorSi.checked = false;
+                    firmaDefensorNo.checked = false;
+                    subroganteField.classList.remove('active');
+                    firmaDefensorSubrogante.value = '';
+                    firmaSecretarioGroup.classList.remove('disabled-group');
+                    firmaSecretarioNombre.value = record.firmaSecretarioNombre || '';
+                } else if (record.firmaDefensor === 'No') {
+                    firmaDefensorNo.checked = true;
+                    firmaDefensorSi.checked = false;
+                    firmaDefensorNoFirma.checked = false;
+                    subroganteField.classList.add('active');
+                    firmaDefensorSubrogante.value = record.firmaDefensorSubrogante || '';
+                    firmaSecretarioGroup.classList.add('disabled-group');
+                    firmaSecretarioNombre.value = '';
+                } else {
+                    firmaDefensorSi.checked = true;
+                    firmaDefensorNo.checked = false;
+                    firmaDefensorNoFirma.checked = false;
+                    subroganteField.classList.remove('active');
+                    firmaDefensorSubrogante.value = '';
+                    firmaSecretarioGroup.classList.add('disabled-group');
+                    firmaSecretarioNombre.value = '';
+                }
+
+                if (record.createdAt) {
+                    createdAtContainer.style.display = 'block';
+                    createdAtDisplay.textContent = new Date(record.createdAt).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+                } else {
+                    createdAtContainer.style.display = 'none';
+                }
+
+                contentTextarea.value = record.content || '';
+                updateWordCount();
+                contentPages = [];
+                currentContentPage = 1;
+                updateContentPagination();
+                recordModal.style.display = 'flex';
+            }
+
+            // --- Guardar (Crear o Actualizar) ---
+            function saveRecord(e) {
+                e.preventDefault();
+
+                // Validaciones
+                if (!recipient.value || !remissionDate.value || !contentTextarea.value || !topic.value) {
+                    showNotification('Complete los campos obligatorios (*)', 'error');
+                    return;
+                }
+                if (!isValidDate(remissionDate.value)) {
+                    showNotification('Fecha de remisión inválida (use DD/MM/AAAA)', 'error');
+                    return;
+                }
+                if (responseDate.value && !isValidDate(responseDate.value)) {
+                    showNotification('Fecha de respuesta inválida (use DD/MM/AAAA)', 'error');
+                    return;
+                }
+
+                const year = getYearFromDate(remissionDate.value);
+                const data = {
+                    recipient: recipient.value,
+                    remissionDate: formatDateForStorage(remissionDate.value),
+                    responseDate: responseDate.value ? formatDateForStorage(responseDate.value) : null,
+                    topic: topic.value,
+                    assignedUser: assignedUser.value || '',
+                    expediente: expediente.value || '',
+                    content: contentTextarea.value,
+                    year: year
+                };
+
+                // Determinar firma
+                if (firmaDefensorNoFirma.checked) {
+                    data.firmaDefensor = 'No firma';
+                    data.firmaSecretarioNombre = firmaSecretarioNombre.value || '';
+                    data.firmaDefensorSubrogante = '';
+                } else if (firmaDefensorNo.checked) {
+                    data.firmaDefensor = 'No';
+                    data.firmaDefensorSubrogante = firmaDefensorSubrogante.value || '';
+                    data.firmaSecretarioNombre = '';
+                } else {
+                    data.firmaDefensor = 'Sí';
+                    data.firmaDefensorSubrogante = '';
+                    data.firmaSecretarioNombre = '';
+                }
+
+                if (editingId) {
+                    // Actualizar
+                    const index = allRecords.findIndex(r => r.id === editingId);
+                    if (index !== -1) {
+                        const oldRecord = allRecords[index];
+                        // Si cambia de año, reasignar número
+                        if (oldRecord.year !== year) {
+                            data.number = getNextNumberForYear(year);
+                        } else {
+                            data.number = oldRecord.number;
+                        }
+                        data.id = editingId;
+                        data.createdAt = oldRecord.createdAt; // conservar fecha creación
+                        allRecords[index] = data;
+                        showNotification('Oficio actualizado', 'success');
+                    }
+                } else {
+                    // Crear nuevo
+                    data.number = getNextNumberForYear(year);
+                    data.id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+                    data.createdAt = new Date().toISOString();
+                    allRecords.push(data);
+                    showNotification('Oficio creado', 'success');
+                }
+
+                // Reordenar usando la nueva función
+                allRecords.sort(sortRecords);
+
+                closeModal();
+                updateYearFilter();
+                updateStats();
+                currentPage = 1;
+                renderTable();
+            }
+
+            function closeModal() {
+                recordModal.style.display = 'none';
+                contentModal.style.display = 'none';
+            }
+
+            // --- Ver contenido completo ---
+            function viewContent(id) {
+                const record = allRecords.find(r => r.id === id);
+                if (!record) return;
+                contentNumber.textContent = `${record.number !== null ? record.number : '-'}/${record.year}`;
+                contentRecipient.textContent = record.recipient;
+                contentRemissionDate.textContent = formatDateForDisplay(record.remissionDate);
+                contentResponseDate.textContent = record.responseDate ? formatDateForDisplay(record.responseDate) : 'Pendiente';
+                contentTopic.textContent = record.topic || 'Sin especificar';
+                contentAssignedUser.textContent = record.assignedUser || 'No asignado';
+                contentExpediente.textContent = record.expediente || 'No especificado';
+                contentCreatedAt.textContent = record.createdAt ? new Date(record.createdAt).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }) : 'No disponible';
+
+                let firmaHtml = '';
+                if (record.firmaDefensor === 'No firma') {
+                    firmaHtml = `<p><strong>Firma Defensor Titular:</strong> No firma</p>`;
+                    if (record.firmaSecretarioNombre) firmaHtml += `<p><strong>Secretario/a:</strong> ${record.firmaSecretarioNombre}</p>`;
+                } else if (record.firmaDefensor === 'No' && record.firmaDefensorSubrogante) {
+                    firmaHtml = `<p><strong>Firma Defensor Titular:</strong> No</p><p><strong>Firma Defensor Subrogante:</strong> ${record.firmaDefensorSubrogante}</p>`;
+                } else if (record.firmaDefensor) {
+                    firmaHtml = `<p><strong>Firma Defensor Titular:</strong> ${record.firmaDefensor}</p>`;
+                } else if (record.firmaSecretarioNombre) {
+                    firmaHtml = `<p><strong>Secretario/a:</strong> ${record.firmaSecretarioNombre}</p>`;
+                }
+                firmaContainer.innerHTML = firmaHtml;
+
+                fullContent.innerHTML = (record.content || '').replace(/\n/g, '<br>');
+                contentModal.style.display = 'flex';
+            }
+
+            // --- Ver todos (flotante) ---
+            function viewAllRecords() {
+                if (allRecords.length === 0) {
+                    showNotification('No hay registros para mostrar', 'info');
+                    return;
+                }
+                let allContentHtml = '';
+                allRecords.forEach(record => {
+                    let firma = '';
+                    if (record.firmaDefensor === 'No firma') {
+                        firma = `Firma: No firma${record.firmaSecretarioNombre ? ' - Secretario: ' + record.firmaSecretarioNombre : ''}`;
+                    } else if (record.firmaDefensor === 'No' && record.firmaDefensorSubrogante) {
+                        firma = `Firma: No (Subrogante: ${record.firmaDefensorSubrogante})`;
+                    } else if (record.firmaDefensor) {
+                        firma = `Firma: ${record.firmaDefensor}`;
+                    } else if (record.firmaSecretarioNombre) {
+                        firma = `Secretario: ${record.firmaSecretarioNombre}`;
+                    }
+                    allContentHtml += `
+                        <h3>Oficio ${record.number !== null ? record.number : '-'}/${record.year}</h3>
+                        <p><strong>Destinatario:</strong> ${record.recipient}</p>
+                        <p><strong>Remisión:</strong> ${formatDateForDisplay(record.remissionDate)} | <strong>Respuesta:</strong> ${record.responseDate ? formatDateForDisplay(record.responseDate) : 'Pendiente'}</p>
+                        <p><strong>Temática:</strong> ${record.topic} | <strong>Usuario:</strong> ${record.assignedUser || 'No asignado'}</p>
+                        <p><strong>Expediente:</strong> ${record.expediente || 'No especificado'}</p>
+                        <p><strong>${firma}</strong></p>
+                        <p><strong>Contenido:</strong><br>${(record.content || '').replace(/\n/g, '<br>')}</p>
+                        <hr>
+                    `;
+                });
+                contentNumber.textContent = 'Todos';
+                contentRecipient.textContent = 'Lista completa de oficios';
+                contentRemissionDate.textContent = '';
+                contentResponseDate.textContent = '';
+                contentTopic.textContent = '';
+                contentAssignedUser.textContent = '';
+                contentExpediente.textContent = '';
+                contentCreatedAt.textContent = '';
+                firmaContainer.innerHTML = '';
+                fullContent.innerHTML = allContentHtml;
+                contentModal.style.display = 'flex';
+            }
+
+            // --- Funciones de contenido (paginación, palabras) ---
+            function updateWordCount() {
+                const text = contentTextarea.value;
+                const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+                wordCount.textContent = `${words} palabras`;
+            }
+
+            function updateContentPagination() {
+                const totalPages = contentPages.length || 1;
+                pageInfoContent.textContent = `Página ${currentContentPage} de ${totalPages}`;
+                contentTextarea.value = contentPages[currentContentPage - 1] || '';
+                prevPageContent.disabled = currentContentPage === 1;
+                nextPageContent.disabled = currentContentPage === totalPages || totalPages === 0;
+            }
+
+            function goToPrevContentPage() {
+                if (currentContentPage > 1) {
+                    contentPages[currentContentPage - 1] = contentTextarea.value;
+                    currentContentPage--;
+                    updateContentPagination();
+                }
+            }
+
+            function goToNextContentPage() {
+                if (currentContentPage < contentPages.length) {
+                    contentPages[currentContentPage - 1] = contentTextarea.value;
+                    currentContentPage++;
+                    updateContentPagination();
+                }
+            }
+
+            function clearContentText() {
+                if (confirm('¿Limpiar todo el contenido?')) {
+                    contentTextarea.value = '';
+                    updateWordCount();
+                    contentPages = [''];
+                    currentContentPage = 1;
+                    updateContentPagination();
+                }
+            }
+
+            // --- Carga y exportación JSON ---
+            function loadFromJSON(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        let data = JSON.parse(e.target.result);
+                        if (!Array.isArray(data)) data = Object.values(data);
+                        
+                        // Normalizar: asegurar id y extraer número de propiedades comunes
+                        allRecords = data.map(r => {
+                            let num = r.number;
+                            if (num === undefined) num = r.numero;
+                            if (num === undefined) num = r.nro;
+                            if (num === undefined) num = r.oficio;
+                            if (num !== undefined && !isNaN(parseInt(num))) num = parseInt(num);
+                            else num = null;
+                            
+                            return {
+                                ...r,
+                                number: num,
+                                id: r.id || Date.now().toString() + Math.random().toString(36).substr(2, 5)
+                            };
+                        });
+
+                        // Reordenar con la nueva función
+                        allRecords.sort(sortRecords);
+                        currentFileName = file.name;
+                        updateYearFilter();
+                        updateStats();
+                        currentPage = 1;
+                        renderTable();
+                        showNotification('Archivo cargado correctamente', 'success');
+                    } catch (err) {
+                        showNotification('Error al procesar el JSON: ' + err.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            function exportToJSON() {
+                const dataStr = JSON.stringify(allRecords, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = currentFileName.replace('.json', '') + '_actualizado.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                showNotification('Archivo exportado', 'success');
+            }
+
+            // --- Event listeners ---
+            newRecordBtn.addEventListener('click', openNewRecordModal);
+            emptyStateBtn.addEventListener('click', openNewRecordModal);
+            cancelBtn.addEventListener('click', closeModal);
+            recordForm.addEventListener('submit', saveRecord);
+            searchInput.addEventListener('input', () => {
+                currentPage = 1;
+                renderTable();
+            });
+            yearFilter.addEventListener('change', () => {
+                currentPage = 1;
+                renderTable();
+            });
+            prevPageBtn.addEventListener('click', goToPrevPage);
+            nextPageBtn.addEventListener('click', goToNextPage);
+            viewAllBtn.addEventListener('click', viewAllRecords);
+
+            closeButtons.forEach(btn => btn.addEventListener('click', closeModal));
+            window.addEventListener('click', (e) => {
+                if (e.target === recordModal || e.target === contentModal) closeModal();
+            });
+
+            // Eventos de firma
+            firmaDefensorNo.addEventListener('change', function() {
+                if (this.checked) {
+                    firmaSecretarioGroup.classList.add('disabled-group');
+                    subroganteField.classList.add('active');
+                    firmaDefensorSubrogante.focus();
+                }
+            });
+            firmaDefensorSi.addEventListener('change', function() {
+                if (this.checked) {
+                    firmaSecretarioGroup.classList.add('disabled-group');
+                    subroganteField.classList.remove('active');
+                    firmaDefensorSubrogante.value = '';
+                }
+            });
+            firmaDefensorNoFirma.addEventListener('change', function() {
+                if (this.checked) {
+                    firmaSecretarioGroup.classList.remove('disabled-group');
+                    subroganteField.classList.remove('active');
+                    firmaDefensorSubrogante.value = '';
+                }
+            });
+
+            // Eventos de contenido
+            contentTextarea.addEventListener('input', updateWordCount);
+            clearContent.addEventListener('click', clearContentText);
+            prevPageContent.addEventListener('click', goToPrevContentPage);
+            nextPageContent.addEventListener('click', goToNextContentPage);
+
+            // Máscara de fecha
+            [remissionDate, responseDate].forEach(input => {
+                input.addEventListener('input', function(e) {
+                    let val = e.target.value.replace(/\D/g, '');
+                    if (val.length > 8) val = val.slice(0,8);
+                    if (val.length >= 2) val = val.slice(0,2) + '/' + val.slice(2);
+                    if (val.length >= 5) val = val.slice(0,5) + '/' + val.slice(5);
+                    e.target.value = val;
+                });
+            });
+
+            // Carga de archivo
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files[0]) loadFromJSON(e.target.files[0]);
+            });
+
+            // Exportar
+            exportBtn.addEventListener('click', exportToJSON);
+
+            // Inicializar sin datos (mostrar empty state)
+            renderTable();
+        })();
+    </script>
 </body>
 </html>
