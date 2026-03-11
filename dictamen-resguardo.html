@@ -1087,6 +1087,11 @@
             document.getElementById('downloadJsonBtn').addEventListener('click', downloadJSON);
         }
 
+        // --- Función de ordenamiento por número (mayor a menor) ---
+        function sortRecordsByNumberDesc() {
+            globalRecords.sort((a, b) => (parseInt(b.number) || 0) - (parseInt(a.number) || 0));
+        }
+
         // --- Lógica de Archivos ---
 
         function handleFileUpload(event) {
@@ -1121,12 +1126,8 @@
                     // Procesar y normalizar cada registro
                     globalRecords = data.map(normalizeRecord);
                     
-                    // Ordenar por fecha descendente
-                    globalRecords.sort((a, b) => {
-                        const dateA = parseDateForSort(a.dictamenDate);
-                        const dateB = parseDateForSort(b.dictamenDate);
-                        return dateB - dateA;
-                    });
+                    // Ordenar por número descendente (mayor a menor)
+                    sortRecordsByNumberDesc();
 
                     // UI Switch
                     document.getElementById('uploadContainer').style.display = 'none';
@@ -1404,14 +1405,14 @@
                     recordData.number = globalRecords[index].number;
                     recordData.createdAt = globalRecords[index].createdAt;
                     
-                    // Si cambia el año, técnicamente debería cambiar el número, 
-                    // pero en modo offline simple mantenemos el número o asignamos uno nuevo?
-                    // Para simplificar, mantenemos el número si el año no cambia.
+                    // Si cambia el año, actualizar número (se mantiene el mismo criterio original)
                     if (globalRecords[index].year !== year) {
                         recordData.number = getNextNumber(year);
                     }
 
                     globalRecords[index] = recordData;
+                    // Reordenar después de editar
+                    sortRecordsByNumberDesc();
                     showNotification("Dictamen actualizado", "success");
                 }
             } else {
@@ -1419,7 +1420,9 @@
                 recordData.id = 'new_' + Date.now();
                 recordData.createdAt = new Date().toLocaleString();
                 recordData.number = getNextNumber(year);
-                globalRecords.unshift(recordData); // Agregar al principio
+                globalRecords.unshift(recordData);
+                // Reordenar después de agregar
+                sortRecordsByNumberDesc();
                 showNotification("Dictamen creado", "success");
             }
 
@@ -1437,6 +1440,8 @@
         function deleteRecord(id) {
             if (confirm("¿Está seguro de eliminar este registro? Esta acción no se puede deshacer hasta volver a cargar el archivo.")) {
                 globalRecords = globalRecords.filter(r => r.id !== id);
+                // Reordenar después de eliminar (por si acaso)
+                sortRecordsByNumberDesc();
                 initApp();
                 showNotification("Registro eliminado", "success");
             }
