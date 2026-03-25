@@ -1235,6 +1235,16 @@
                         </select>
                     </div>
                     <div class="filter-group">
+                        <label class="filter-label" for="filtroTrimestre">Trimestre</label>
+                        <select id="filtroTrimestre" class="dropdown">
+                            <option value="">Trimestre (todos)</option>
+                            <option value="1">1° Trimestre (Ene - Mar)</option>
+                            <option value="2">2° Trimestre (Abr - Jun)</option>
+                            <option value="3">3° Trimestre (Jul - Sep)</option>
+                            <option value="4">4° Trimestre (Oct - Dic)</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
                         <label class="filter-label" for="filtroEventos">Filtrar por Evento</label>
                         <select id="filtroEventos" class="dropdown">
                             <option value="">Todos los eventos</option>
@@ -1293,7 +1303,6 @@
         </section>
     </main>
 
-    <!-- MODAL EVENTOS HOY -->
     <div id="modalEventosHoy">
         <div class="content">
             <div class="modal-header">
@@ -1330,7 +1339,6 @@
         </div>
     </div>
 
-    <!-- MODALES EXISTENTES -->
     <div id="modal">
         <div class="content">
             <div class="modal-header">
@@ -1543,6 +1551,7 @@
         const filtroEventos = $("filtroEventos");
         const filtroFechaDesde = $("filtroFechaDesde");
         const filtroFechaHasta = $("filtroFechaHasta");
+        const filtroTrimestre = $("filtroTrimestre");
         const notaBitacora = $("notaBitacora");
         const historialNotas = $("historialNotas");
         const btnAgregarNota = $("btnAgregarNota");
@@ -1948,11 +1957,14 @@
         }
         
         function renderizarStats() {
-            const totalCausas = causasData.length;
-            const enTramite = causasData.filter(c => c.estado === 'En trámite').length;
-            const finalizadas = causasData.filter(c => c.estado === 'Finalizado').length;
-            const archivadas = causasData.filter(c => c.estado === 'Archivado').length;
-            const altaPrioridad = causasData.filter(c => c.prioridad === 'Alta').length;
+            // Usar filteredData si hay datos filtrados o si hay algún filtro activo; de lo contrario, usar causasData original.
+            const dataBase = (filteredData.length > 0 || buscador.value || filtroEstado.value || filtroUsuario.value || filtroPrioridad.value || filtroIntervencion.value || filtroTipoProceso.value || filtroEventos.value || filtroFechaDesde.value || filtroFechaHasta.value || filtroTrimestre.value) ? filteredData : causasData;
+            
+            const totalCausas = dataBase.length;
+            const enTramite = dataBase.filter(c => c.estado === 'En trámite').length;
+            const finalizadas = dataBase.filter(c => c.estado === 'Finalizado').length;
+            const archivadas = dataBase.filter(c => c.estado === 'Archivado').length;
+            const altaPrioridad = dataBase.filter(c => c.prioridad === 'Alta').length;
             
             statsSection.innerHTML = `
                 <div class="stat-card">
@@ -1978,7 +1990,7 @@
             `;
         }
         
-        // FUNCIÓN filtrarDatos - EXACTAMENTE IGUAL AL SISTEMA ORIGINAL
+        // FUNCIÓN filtrarDatos - EXACTAMENTE IGUAL AL SISTEMA ORIGINAL + FILTRO TRIMESTRAL
         function filtrarDatos() {
             const q = (buscador.value || "").toLowerCase();
             const est = filtroEstado.value;
@@ -1989,6 +2001,7 @@
             const evento = filtroEventos.value;
             const fechaDesde = filtroFechaDesde.value;
             const fechaHasta = filtroFechaHasta.value;
+            const trimestre = filtroTrimestre.value;
             
             return causasData.filter(d => {
                 // Búsqueda general
@@ -2012,6 +2025,15 @@
                 if (interv && d.intervencion !== interv) return false;
                 if (tipoProc && d.tipoProceso !== tipoProc) return false;
                 
+                // Filtro por trimestre (basado en fechaRegistro)
+                if (trimestre) {
+                    const fechaReg = toDate(d.fechaRegistro);
+                    if (!fechaReg) return false;
+                    const mes = fechaReg.getMonth();
+                    const trim = Math.floor(mes / 3) + 1;
+                    if (trim.toString() !== trimestre) return false;
+                }
+
                 // Filtro por tipo de evento
                 if (evento) {
                     switch(evento) {
@@ -2095,6 +2117,7 @@
         const handleFilterChange = () => {
             filteredData = filtrarDatos();
             currentPage = 1;
+            renderizarStats(); // Se asegura que los KPIs se actualicen al usar filtros
             renderTablaPaginada();
         };
         
@@ -3100,6 +3123,7 @@
             filtroEventos.onchange = handleFilterChange;
             filtroFechaDesde.onchange = handleFilterChange;
             filtroFechaHasta.onchange = handleFilterChange;
+            filtroTrimestre.onchange = handleFilterChange;
             
             $("btnEventosHoy").onclick = function() {
                 renderEventosHoy();
