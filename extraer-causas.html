@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Causas-Reserva Digital</title>
+    <title>Causas-Reserva Digital - Dual Base</title>
     <style>
         :root {
             --primary-color: #4285F4;
@@ -41,13 +41,31 @@
         .config-section, .app-section {
             margin-bottom: 20px;
         }
-        input[type="text"] {
-            width: calc(100% - 22px);
-            padding: 11px;
+        .config-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: flex-end;
             margin-bottom: 15px;
+        }
+        .config-row .field-group {
+            flex: 1;
+            min-width: 180px;
+        }
+        label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text-dark);
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 11px;
             border: 1px solid var(--border-light);
             border-radius: 8px;
             font-size: 16px;
+            background-color: white;
         }
         button {
             background-color: var(--primary-color);
@@ -256,8 +274,8 @@
             h1 {
                 font-size: 24px;
             }
-            input[type="text"] {
-                width: 100%;
+            .config-row {
+                flex-direction: column;
             }
             th, td {
                 padding: 8px;
@@ -273,363 +291,415 @@
 </head>
 <body>
 
-    <div class="container">
-        <h1>Causas-Reserva Digital</h1>
-        <p>Esta aplicacion permite descargar los registros de Causas del Sistema Digital de la Defensoria Civil y Comercial 6. Uso Autorizado. Para descarga usar: causas.</p>
+<div class="container">
+    <h1>Causas-Reserva Digital</h1>
+    <p>Selecciona la base de datos, ingresa el nombre de la colección y administra los documentos.</p>
 
-        <div id="config-section">
-            <h2>1. Conexión</h2>
-            <p>Introduce el nombre exacto de la colección que quieres administrar.</p>
-            <input type="text" id="collectionName" placeholder="Ej: usuarios, productos, etc.">
-            <button id="connectBtn">Cargar Colección</button>
-        </div>
-
-        <div id="app-section">
-            <h2 id="collectionTitle"></h2>
-            <input type="text" id="filterInput" placeholder="🔍 Filtrar por cualquier campo...">
-            <p id="recordCount"></p>
-            <div class="batch-actions">
-                <button id="deleteSelectedBtn" class="delete-btn" disabled>🗑️ Eliminar Seleccionados</button>
-                <button id="exportSelectedBtn" class="export-btn" disabled>➡️ Exportar Seleccionados (JSON)</button>
+    <div id="config-section">
+        <h2>1. Conexión</h2>
+        <div class="config-row">
+            <div class="field-group">
+                <label>Base de datos:</label>
+                <select id="dbSelector">
+                    <option value="historica">Base Histórica (causas-defensoria)</option>
+                    <option value="nueva">Base Nueva (causas-2defensoria - misma que tabla.html)</option>
+                </select>
             </div>
-            <div class="table-container">
-                <table id="dataTable">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="selectAllCheckbox"></th>
-                            <th>ID del Documento</th>
-                            <th>Última Modificación</th>
-                            <th>Datos (JSON)</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+            <div class="field-group">
+                <label>Nombre de la colección:</label>
+                <input type="text" id="collectionName" placeholder="Ej: causas, usuarios, etc." value="causas">
             </div>
-        </div>
-
-        <div id="status">Esperando conexión...</div>
-    </div>
-
-    <!-- Modal de confirmación de eliminación -->
-    <div class="modal-overlay" id="deleteModal">
-        <div class="delete-modal">
-            <div class="modal-header">
-                <span style="font-size: 2rem;">⚠️</span>
-                <h3>Confirmar Eliminación</h3>
-            </div>
-            <div class="modal-body">
-                <p>Esta acción <strong>NO SE PUEDE DESHACER</strong>. Los documentos eliminados se perderán permanentemente.</p>
-                <div class="modal-details" id="modalDetails">
-                    <!-- Los detalles de la eliminación se insertarán aquí -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-cancel" id="modalCancel">Cancelar</button>
-                <button class="modal-confirm" id="modalConfirm">Eliminar Permanentemente</button>
+            <div class="field-group">
+                <button id="connectBtn" style="margin-top: 22px;">Cargar Colección</button>
             </div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+    <div id="app-section">
+        <h2 id="collectionTitle"></h2>
+        <input type="text" id="filterInput" placeholder="🔍 Filtrar por cualquier campo...">
+        <p id="recordCount"></p>
+        <div class="batch-actions">
+            <button id="deleteSelectedBtn" class="delete-btn" disabled>🗑️ Eliminar Seleccionados</button>
+            <button id="exportSelectedBtn" class="export-btn" disabled>➡️ Exportar Seleccionados (JSON)</button>
+        </div>
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAllCheckbox"></th>
+                    <th>ID del Documento</th>
+                    <th>Última Modificación</th>
+                    <th>Datos (JSON)</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-        // -------------------------------------------------------------------
-        // CONFIGURACIÓN DE FIREBASE
-        // -------------------------------------------------------------------
-        const firebaseConfig = {
-           apiKey: "AIzaSyBt6X0u0BpiNPcV2SNPrN-spCmjl2AhZaA",
-           authDomain: "causas-defensoria.firebaseapp.com",
-           projectId: "causas-defensoria",
-           storageBucket: "causas-defensoria.appspot.com",
-           messagingSenderId: "186064671470",
-           appId: "1:186064671470:web:b58bae5eadbe6e469f19ff"
-        };
-        // -------------------------------------------------------------------
+    <div id="status">Esperando conexión...</div>
+</div>
 
-        let db;
-        let currentCollectionName = '';
-        let documentsCache = [];
-        let pendingDeleteAction = null; // Para almacenar la acción de eliminación pendiente
+<!-- Modal de confirmación de eliminación -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="delete-modal">
+        <div class="modal-header">
+            <span style="font-size: 2rem;">⚠️</span>
+            <h3>Confirmar Eliminación</h3>
+        </div>
+        <div class="modal-body">
+            <p>Esta acción <strong>NO SE PUEDE DESHACER</strong>. Los documentos eliminados se perderán permanentemente.</p>
+            <div class="modal-details" id="modalDetails">
+                <!-- Los detalles de la eliminación se insertarán aquí -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-cancel" id="modalCancel">Cancelar</button>
+            <button class="modal-confirm" id="modalConfirm">Eliminar Permanentemente</button>
+        </div>
+    </div>
+</div>
 
-        // Elementos del DOM
-        const connectBtn = document.getElementById('connectBtn');
-        const collectionNameInput = document.getElementById('collectionName');
-        const statusDiv = document.getElementById('status');
-        const appSection = document.getElementById('app-section');
-        const configSection = document.getElementById('config-section');
-        const dataTableBody = document.querySelector("#dataTable tbody");
-        const filterInput = document.getElementById('filterInput');
-        const collectionTitle = document.getElementById('collectionTitle');
-        const recordCount = document.getElementById('recordCount');
-        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
-        const exportSelectedBtn = document.getElementById('exportSelectedBtn');
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+    // -------------------------------------------------------------------
+    // CONFIGURACIONES DE FIREBASE
+    // -------------------------------------------------------------------
+    const firebaseConfigHistorica = {
+        apiKey: "AIzaSyBt6X0u0BpiNPcV2SNPrN-spCmjl2AhZaA",
+        authDomain: "causas-defensoria.firebaseapp.com",
+        projectId: "causas-defensoria",
+        storageBucket: "causas-defensoria.appspot.com",
+        messagingSenderId: "186064671470",
+        appId: "1:186064671470:web:b58bae5eadbe6e469f19ff"
+    };
+
+    const firebaseConfigNueva = {
+        apiKey: "AIzaSyBevCwkh4iOWVqhp3gG2ae1eCUMkFpnr6I",
+        authDomain: "causas-2defensoria.firebaseapp.com",
+        projectId: "causas-2defensoria",
+        storageBucket: "causas-2defensoria.firebasestorage.app",
+        messagingSenderId: "663905632804",
+        appId: "1:663905632804:web:4f686a88004dc642ad0eb1"
+    };
+    // -------------------------------------------------------------------
+
+    let dbActual = null;           // base de datos activa (Firestore)
+    let currentCollectionName = '';
+    let documentsCache = [];
+    let pendingDeleteAction = null;
+
+    // Inicializar ambas apps con nombres únicos
+    const appHistorica = initializeApp(firebaseConfigHistorica, "historica");
+    const dbHistorica = getFirestore(appHistorica);
+
+    const appNueva = initializeApp(firebaseConfigNueva, "nueva");
+    const dbNueva = getFirestore(appNueva);
+
+    // Elementos del DOM
+    const connectBtn = document.getElementById('connectBtn');
+    const dbSelector = document.getElementById('dbSelector');
+    const collectionNameInput = document.getElementById('collectionName');
+    const statusDiv = document.getElementById('status');
+    const appSection = document.getElementById('app-section');
+    const configSection = document.getElementById('config-section');
+    const dataTableBody = document.querySelector("#dataTable tbody");
+    const filterInput = document.getElementById('filterInput');
+    const collectionTitle = document.getElementById('collectionTitle');
+    const recordCount = document.getElementById('recordCount');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    const exportSelectedBtn = document.getElementById('exportSelectedBtn');
+    
+    // Modal
+    const deleteModal = document.getElementById('deleteModal');
+    const modalDetails = document.getElementById('modalDetails');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalConfirm = document.getElementById('modalConfirm');
+
+    // Helper: mostrar modal de confirmación
+    const showDeleteModal = (detailsHtml, confirmCallback) => {
+        modalDetails.innerHTML = detailsHtml;
+        pendingDeleteAction = confirmCallback;
+        deleteModal.classList.add('active');
+    };
+
+    const hideDeleteModal = () => {
+        deleteModal.classList.remove('active');
+        pendingDeleteAction = null;
+    };
+
+    // Cambiar la base activa según selector
+    const setActiveDatabase = () => {
+        const selected = dbSelector.value;
+        if (selected === 'historica') {
+            dbActual = dbHistorica;
+            statusDiv.textContent = `Base seleccionada: Histórica (causas-defensoria)`;
+        } else {
+            dbActual = dbNueva;
+            statusDiv.textContent = `Base seleccionada: Nueva (causas-2defensoria) - misma que tabla.html`;
+        }
+    };
+
+    // Conectar y cargar colección
+    const initializeAndConnect = async () => {
+        setActiveDatabase(); // asegura dbActual actualizada
+        currentCollectionName = collectionNameInput.value.trim();
+
+        if (!currentCollectionName) {
+            alert('Por favor, ingresa el nombre de una colección.');
+            return;
+        }
+
+        statusDiv.textContent = `Cargando datos de la colección "${currentCollectionName}" desde ${dbSelector.options[dbSelector.selectedIndex].text}...`;
+        await fetchAndDisplayData();
+    };
+
+    // Obtener y mostrar datos de la colección actual
+    const fetchAndDisplayData = async () => {
+        if (!dbActual || !currentCollectionName) return;
         
-        // Elementos del modal
-        const deleteModal = document.getElementById('deleteModal');
-        const modalDetails = document.getElementById('modalDetails');
-        const modalCancel = document.getElementById('modalCancel');
-        const modalConfirm = document.getElementById('modalConfirm');
+        const collectionRef = collection(dbActual, currentCollectionName);
+        dataTableBody.innerHTML = '';
+        
+        try {
+            const querySnapshot = await getDocs(collectionRef);
+            documentsCache = [];
+            querySnapshot.forEach((doc) => {
+                documentsCache.push({ 
+                    id: doc.id, 
+                    data: doc.data(), 
+                    timestamp: doc.data().updatedAt || doc.data().createdAt || doc.data().fechaRegistro || null 
+                });
+            });
 
-        // Mostrar modal de confirmación
-        const showDeleteModal = (detailsHtml, confirmCallback) => {
-            modalDetails.innerHTML = detailsHtml;
-            pendingDeleteAction = confirmCallback;
-            deleteModal.classList.add('active');
+            if (documentsCache.length === 0) {
+                statusDiv.textContent = `La colección "${currentCollectionName}" está vacía o no existe en la base seleccionada.`;
+                appSection.style.display = 'block';
+                configSection.style.display = 'none';
+                collectionTitle.textContent = `Colección: ${currentCollectionName} (${dbSelector.options[dbSelector.selectedIndex].text})`;
+            } else {
+                displayDocuments(documentsCache);
+                configSection.style.display = 'none';
+                appSection.style.display = 'block';
+                collectionTitle.textContent = `Colección: ${currentCollectionName} (${dbSelector.options[dbSelector.selectedIndex].text})`;
+                statusDiv.textContent = `Datos cargados correctamente desde ${dbSelector.options[dbSelector.selectedIndex].text}.`;
+            }
+            updateBatchButtonState();
+
+        } catch (error) {
+            statusDiv.textContent = `Error al obtener los datos: ${error.message}`;
+            console.error("Error fetching documents: ", error);
+        }
+    };
+
+    // Formatear fecha (timestamp de Firestore o Date)
+    const formatDate = (timestamp) => {
+        if (!timestamp) return 'N/A';
+        const date = timestamp instanceof Timestamp ? timestamp.toDate() : new Date(timestamp);
+        if (isNaN(date.getTime())) return 'Fecha inválida';
+        
+        const options = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+            timeZone: 'America/Argentina/Buenos_Aires'
         };
+        
+        const formattedDate = new Intl.DateTimeFormat('es-AR', options).format(date);
+        return formattedDate.replace(',', '');
+    };
 
-        // Ocultar modal
-        const hideDeleteModal = () => {
-            deleteModal.classList.remove('active');
-            pendingDeleteAction = null;
-        };
+    // Mostrar documentos en la tabla
+    const displayDocuments = (docs) => {
+        dataTableBody.innerHTML = '';
+        recordCount.textContent = `${docs.length} registro(s) encontrado(s).`;
+        docs.forEach(docData => {
+            const row = document.createElement('tr');
+            const jsonDataString = JSON.stringify(docData.data, null, 2);
+            const formattedDate = formatDate(docData.timestamp);
+            
+            row.innerHTML = `
+                <td><input type="checkbox" class="doc-checkbox" data-id="${docData.id}"></td>
+                <td>${docData.id}</td>
+                <td>${formattedDate}</td>
+                <td><pre>${escapeHtml(jsonDataString)}</pre></td>
+                <td><button class="delete-btn" data-id="${docData.id}">🗑️ Eliminar</button></td>
+            `;
+            dataTableBody.appendChild(row);
+        });
+        selectAllCheckbox.checked = false;
+    };
 
-        // Inicializar Firebase y conectar
-        const initializeAndConnect = () => {
+    // Escapar HTML básico para evitar inyección
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    // Actualizar estado de botones de lote
+    const updateBatchButtonState = () => {
+        const checkedCheckboxes = document.querySelectorAll('.doc-checkbox:checked');
+        const isDisabled = checkedCheckboxes.length === 0;
+        deleteSelectedBtn.disabled = isDisabled;
+        exportSelectedBtn.disabled = isDisabled;
+        
+        const allCheckboxes = document.querySelectorAll('.doc-checkbox');
+        const allChecked = allCheckboxes.length > 0 && checkedCheckboxes.length === allCheckboxes.length;
+        selectAllCheckbox.checked = allChecked;
+    };
+
+    // Seleccionar/deseleccionar todos
+    const toggleSelectAll = () => {
+        const checkboxes = document.querySelectorAll('.doc-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        updateBatchButtonState();
+    };
+
+    // Eliminar documentos seleccionados (batch)
+    const deleteSelected = async () => {
+        const checkedCheckboxes = document.querySelectorAll('.doc-checkbox:checked');
+        const docIdsToDelete = Array.from(checkedCheckboxes).map(cb => cb.getAttribute('data-id'));
+
+        if (docIdsToDelete.length === 0) return;
+
+        const detailsHtml = `
+            <p><strong>Base:</strong> ${dbSelector.options[dbSelector.selectedIndex].text}</p>
+            <p><strong>Colección:</strong> ${currentCollectionName}</p>
+            <p><strong>Documentos a eliminar:</strong> ${docIdsToDelete.length}</p>
+            <p><strong>IDs:</strong> ${docIdsToDelete.join(', ')}</p>
+        `;
+        
+        showDeleteModal(detailsHtml, async () => {
+            statusDiv.textContent = `Eliminando ${docIdsToDelete.length} documento(s)...`;
+            const promises = docIdsToDelete.map(id => deleteDoc(doc(dbActual, currentCollectionName, id)));
             try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                currentCollectionName = collectionNameInput.value.trim();
-
-                if (!currentCollectionName) {
-                    alert('Por favor, ingresa el nombre de una colección.');
-                    return;
-                }
-
-                statusDiv.textContent = `Cargando datos de la colección "${currentCollectionName}"...`;
+                await Promise.all(promises);
+                statusDiv.textContent = `${docIdsToDelete.length} documento(s) eliminado(s) con éxito.`;
                 fetchAndDisplayData();
             } catch (error) {
-                statusDiv.textContent = `Error de conexión: ${error.message}`;
-                console.error("Error al inicializar Firebase:", error);
+                statusDiv.textContent = `Error al eliminar los documentos: ${error.message}`;
+                console.error("Error deleting documents: ", error);
             }
-        };
+        });
+    };
+    
+    // Exportar documentos seleccionados a JSON
+    const exportSelected = () => {
+        const checkedCheckboxes = document.querySelectorAll('.doc-checkbox:checked');
+        const selectedDocs = documentsCache.filter(doc => 
+            Array.from(checkedCheckboxes).some(cb => cb.getAttribute('data-id') === doc.id)
+        );
+        
+        const exportData = selectedDocs.map(doc => ({ id: doc.id, data: doc.data }));
+        const jsonData = JSON.stringify(exportData, null, 2);
+        
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        const date = new Date().toISOString().slice(0, 10);
+        const dbLabel = dbSelector.value === 'historica' ? 'historica' : 'nueva';
+        a.download = `${currentCollectionName}_${dbLabel}_${date}.json`;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        statusDiv.textContent = `${exportData.length} documento(s) exportado(s) a ${a.download}.`;
+    };
 
-        // Obtener y mostrar datos
-        const fetchAndDisplayData = async () => {
-            if (!db || !currentCollectionName) return;
-            
-            const collectionRef = collection(db, currentCollectionName);
-            dataTableBody.innerHTML = '';
-            
+    // Eliminar documento individual
+    const deleteDocument = async (docId) => {
+        const detailsHtml = `
+            <p><strong>Base:</strong> ${dbSelector.options[dbSelector.selectedIndex].text}</p>
+            <p><strong>Colección:</strong> ${currentCollectionName}</p>
+            <p><strong>Documento a eliminar:</strong> ${docId}</p>
+        `;
+        
+        showDeleteModal(detailsHtml, async () => {
+            statusDiv.textContent = `Eliminando documento ${docId}...`;
             try {
-                const querySnapshot = await getDocs(collectionRef);
-                documentsCache = [];
-                querySnapshot.forEach((doc) => {
-                    documentsCache.push({ 
-                        id: doc.id, 
-                        data: doc.data(), 
-                        timestamp: doc.data().updatedAt || doc.data().createdAt || null 
-                    });
-                });
-
-                if (documentsCache.length === 0) {
-                   statusDiv.textContent = `La colección "${currentCollectionName}" está vacía o no existe.`;
-                   appSection.style.display = 'block';
-                   configSection.style.display = 'none';
-                   collectionTitle.textContent = `Colección: ${currentCollectionName}`;
-                } else {
-                    displayDocuments(documentsCache);
-                    configSection.style.display = 'none';
-                    appSection.style.display = 'block';
-                    collectionTitle.textContent = `Colección: ${currentCollectionName}`;
-                    statusDiv.textContent = 'Datos cargados correctamente.';
-                }
-                updateBatchButtonState();
-
+                await deleteDoc(doc(dbActual, currentCollectionName, docId));
+                statusDiv.textContent = `Documento ${docId} eliminado con éxito.`;
+                fetchAndDisplayData();
             } catch (error) {
-                statusDiv.textContent = `Error al obtener los datos: ${error.message}`;
-                console.error("Error fetching documents: ", error);
+                statusDiv.textContent = `Error al eliminar el documento: ${error.message}`;
+                console.error("Error deleting document: ", error);
             }
-        };
+        });
+    };
 
-        // Formatear fecha
-        const formatDate = (timestamp) => {
-            if (!timestamp) return 'N/A';
-            const date = timestamp instanceof Timestamp ? timestamp.toDate() : new Date(timestamp);
-            
-            const options = {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false,
-                timeZone: 'America/Argentina/Buenos_Aires'
-            };
-            
-            const formattedDate = new Intl.DateTimeFormat('es-AR', options).format(date);
-            return formattedDate.replace(',', '');
-        };
+    // Filtrar tabla en cliente
+    const filterTable = () => {
+        const filterText = filterInput.value.toLowerCase();
+        const filteredDocs = documentsCache.filter(docData => {
+            const docString = `${docData.id.toLowerCase()} ${JSON.stringify(docData.data).toLowerCase()} ${docData.timestamp ? formatDate(docData.timestamp).toLowerCase() : ''}`;
+            return docString.includes(filterText);
+        });
+        displayDocuments(filteredDocs);
+        updateBatchButtonState();
+    };
 
-        // Mostrar documentos en la tabla
-        const displayDocuments = (docs) => {
-            dataTableBody.innerHTML = '';
-            recordCount.textContent = `${docs.length} registro(s) encontrado(s).`;
-            docs.forEach(docData => {
-                const row = document.createElement('tr');
-                const jsonDataString = JSON.stringify(docData.data, null, 2);
-                const formattedDate = formatDate(docData.timestamp);
-                
-                row.innerHTML = `
-                    <td><input type="checkbox" class="doc-checkbox" data-id="${docData.id}"></td>
-                    <td>${docData.id}</td>
-                    <td>${formattedDate}</td>
-                    <td><pre>${jsonDataString}</pre></td>
-                    <td><button class="delete-btn" data-id="${docData.id}">🗑️ Eliminar</button></td>
-                `;
-                dataTableBody.appendChild(row);
-            });
-            selectAllCheckbox.checked = false;
-        };
+    // Eventos
+    connectBtn.addEventListener('click', initializeAndConnect);
+    collectionNameInput.addEventListener('keyup', (event) => {
+        if (event.key === 'Enter') {
+            initializeAndConnect();
+        }
+    });
+    filterInput.addEventListener('keyup', filterTable);
+    selectAllCheckbox.addEventListener('change', toggleSelectAll);
+    deleteSelectedBtn.addEventListener('click', deleteSelected);
+    exportSelectedBtn.addEventListener('click', exportSelected);
+    
+    // Modal eventos
+    modalCancel.addEventListener('click', hideDeleteModal);
+    modalConfirm.addEventListener('click', () => {
+        if (pendingDeleteAction) {
+            pendingDeleteAction();
+            hideDeleteModal();
+        }
+    });
+    
+    deleteModal.addEventListener('click', (event) => {
+        if (event.target === deleteModal) {
+            hideDeleteModal();
+        }
+    });
 
-        // Actualizar estado de los botones de lote
-        const updateBatchButtonState = () => {
-            const checkedCheckboxes = document.querySelectorAll('.doc-checkbox:checked');
-            const isDisabled = checkedCheckboxes.length === 0;
-            deleteSelectedBtn.disabled = isDisabled;
-            exportSelectedBtn.disabled = isDisabled;
-            
-            const allCheckboxes = document.querySelectorAll('.doc-checkbox');
-            const allChecked = allCheckboxes.length > 0 && checkedCheckboxes.length === allCheckboxes.length;
-            selectAllCheckbox.checked = allChecked;
-        };
-
-        // Seleccionar/deseleccionar todos
-        const toggleSelectAll = () => {
-            const checkboxes = document.querySelectorAll('.doc-checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = selectAllCheckbox.checked;
-            });
+    // Delegación para botones eliminar y checkboxes
+    dataTableBody.addEventListener('click', (event) => {
+        if (event.target.classList.contains('delete-btn')) {
+            const docId = event.target.getAttribute('data-id');
+            deleteDocument(docId);
+        } else if (event.target.classList.contains('doc-checkbox')) {
             updateBatchButtonState();
-        };
+        }
+    });
 
-        // Eliminar documentos seleccionados
-        const deleteSelected = async () => {
-            const checkedCheckboxes = document.querySelectorAll('.doc-checkbox:checked');
-            const docIdsToDelete = Array.from(checkedCheckboxes).map(cb => cb.getAttribute('data-id'));
-
-            if (docIdsToDelete.length === 0) return;
-
-            // Mostrar modal de confirmación
-            const detailsHtml = `
-                <p><strong>Colección:</strong> ${currentCollectionName}</p>
-                <p><strong>Documentos a eliminar:</strong> ${docIdsToDelete.length}</p>
-                <p><strong>IDs:</strong> ${docIdsToDelete.join(', ')}</p>
-            `;
-            
-            showDeleteModal(detailsHtml, async () => {
-                statusDiv.textContent = `Eliminando ${docIdsToDelete.length} documento(s)...`;
-                const promises = docIdsToDelete.map(id => deleteDoc(doc(db, currentCollectionName, id)));
-                try {
-                    await Promise.all(promises);
-                    statusDiv.textContent = `${docIdsToDelete.length} documento(s) eliminado(s) con éxito.`;
-                    fetchAndDisplayData();
-                } catch (error) {
-                    statusDiv.textContent = `Error al eliminar los documentos: ${error.message}`;
-                    console.error("Error deleting documents: ", error);
-                }
-            });
-        };
-        
-        // Exportar documentos seleccionados
-        const exportSelected = () => {
-            const checkedCheckboxes = document.querySelectorAll('.doc-checkbox:checked');
-            const selectedDocs = documentsCache.filter(doc => 
-                Array.from(checkedCheckboxes).some(cb => cb.getAttribute('data-id') === doc.id)
-            );
-            
-            const exportData = selectedDocs.map(doc => ({ id: doc.id, data: doc.data }));
-            const jsonData = JSON.stringify(exportData, null, 2);
-            
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            const date = new Date().toISOString().slice(0, 10);
-            a.download = `${currentCollectionName}_${date}.json`;
-            
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            statusDiv.textContent = `${exportData.length} documento(s) exportado(s) a ${a.download}.`;
-        };
-
-        // Eliminar documento individual
-        const deleteDocument = async (docId) => {
-            // Mostrar modal de confirmación
-            const detailsHtml = `
-                <p><strong>Colección:</strong> ${currentCollectionName}</p>
-                <p><strong>Documento a eliminar:</strong> ${docId}</p>
-            `;
-            
-            showDeleteModal(detailsHtml, async () => {
-                statusDiv.textContent = `Eliminando documento ${docId}...`;
-                try {
-                    await deleteDoc(doc(db, currentCollectionName, docId));
-                    statusDiv.textContent = `Documento ${docId} eliminado con éxito.`;
-                    fetchAndDisplayData();
-                } catch (error) {
-                    statusDiv.textContent = `Error al eliminar el documento: ${error.message}`;
-                    console.error("Error deleting document: ", error);
-                }
-            });
-        };
-
-        // Filtrar tabla
-        const filterTable = () => {
-            const filterText = filterInput.value.toLowerCase();
-            const filteredDocs = documentsCache.filter(docData => {
-                const docString = `${docData.id.toLowerCase()} ${JSON.stringify(docData.data).toLowerCase()} ${docData.timestamp ? formatDate(docData.timestamp).toLowerCase() : ''}`;
-                return docString.includes(filterText);
-            });
-            displayDocuments(filteredDocs);
-            updateBatchButtonState();
-        };
-
-        // Asignar eventos
-        connectBtn.addEventListener('click', initializeAndConnect);
-        collectionNameInput.addEventListener('keyup', (event) => {
-            if (event.key === 'Enter') {
-                initializeAndConnect();
-            }
-        });
-        filterInput.addEventListener('keyup', filterTable);
-        selectAllCheckbox.addEventListener('change', toggleSelectAll);
-        deleteSelectedBtn.addEventListener('click', deleteSelected);
-        exportSelectedBtn.addEventListener('click', exportSelected);
-        
-        // Eventos del modal
-        modalCancel.addEventListener('click', hideDeleteModal);
-        modalConfirm.addEventListener('click', () => {
-            if (pendingDeleteAction) {
-                pendingDeleteAction();
-                hideDeleteModal();
-            }
-        });
-        
-        // Cerrar modal al hacer clic fuera de él
-        deleteModal.addEventListener('click', (event) => {
-            if (event.target === deleteModal) {
-                hideDeleteModal();
-            }
-        });
-
-        // Delegación de eventos para los botones de eliminar y las casillas de verificación
-        dataTableBody.addEventListener('click', (event) => {
-            if (event.target.classList.contains('delete-btn')) {
-                const docId = event.target.getAttribute('data-id');
-                deleteDocument(docId);
-            } else if (event.target.classList.contains('doc-checkbox')) {
-                updateBatchButtonState();
-            }
-        });
-    </script>
+    // Inicializar la base activa por defecto (histórica)
+    setActiveDatabase();
+    statusDiv.textContent = `Base activa: Histórica. Ingresa nombre de colección y haz clic en "Cargar Colección".`;
+</script>
 </body>
 </html>
