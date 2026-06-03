@@ -119,7 +119,7 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6 col-sm-12">
+                        <div class="col-md-5 col-sm-12">
                             <label class="form-label">Rango de Fecha de Pase</label>
                             <div class="d-flex align-items-center">
                                 <div class="input-group me-1">
@@ -134,7 +134,7 @@
                             </div>
                         </div>
 
-                        <div class="col-md-4 col-sm-8">
+                        <div class="col-md-5 col-sm-8">
                             <label class="form-label d-block">Filtros Especiales</label>
                             <div class="d-flex flex-wrap gap-3">
                                 <div class="form-check">
@@ -154,8 +154,16 @@
                                     <label class="form-check-label" for="remisionFilter">Con Remisión</label>
                                 </div>
                                 <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="abogadoParticularFilter">
+                                    <label class="form-check-label" for="abogadoParticularFilter">Abogado Particular</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="rechazoPaseFilter">
+                                    <label class="form-check-label text-danger fw-bold" for="rechazoPaseFilter">Rechazo de Pase</label>
+                                </div>
+                                <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="archivoFilter">
-                                    <label class="form-check-label" for="archivoFilter">Archivo</label>
+                                    <label class="form-check-label text-primary fw-bold" for="archivoFilter">Archivo</label>
                                 </div>
                             </div>
                         </div>
@@ -239,6 +247,7 @@
         const itemsPerPage = 20;
         let filteredRecords = [];
         let userStatsChart = null;
+        let currentFilters = {};
 
         // Elementos del DOM
         const fileInput = document.getElementById('fileInput');
@@ -258,6 +267,8 @@
         const causaAnteriorFilter = document.getElementById('causaAnteriorFilter');
         const devolucionFilter = document.getElementById('devolucionFilter');
         const remisionFilter = document.getElementById('remisionFilter');
+        const abogadoParticularFilter = document.getElementById('abogadoParticularFilter');
+        const rechazoPaseFilter = document.getElementById('rechazoPaseFilter');
         const archivoFilter = document.getElementById('archivoFilter');
         const activeFiltersContainer = document.getElementById('activeFiltersContainer');
         const activeFilters = document.getElementById('activeFilters');
@@ -284,7 +295,7 @@
             bsToast.show();
         }
 
-        // Función para formatear fecha
+        // Función para formatar fecha
         function formatDateFromISO(isoStr, includeTime = false) {
             if (!isoStr) return 'N/A';
             
@@ -377,8 +388,11 @@
             causaAnteriorFilter.checked = false;
             devolucionFilter.checked = false;
             remisionFilter.checked = false;
+            abogadoParticularFilter.checked = false;
+            rechazoPaseFilter.checked = false;
             archivoFilter.checked = false;
             activeFiltersContainer.style.display = 'none';
+            currentFilters = {};
             
             expedientesContainer.innerHTML = `
                 <div class="text-center py-4">
@@ -450,6 +464,8 @@
             const showCausaAnterior = causaAnteriorFilter.checked;
             const showDevolucion = devolucionFilter.checked;
             const showRemision = remisionFilter.checked;
+            const showAbogadoParticular = abogadoParticularFilter.checked;
+            const showRechazoPase = rechazoPaseFilter.checked;
             const showArchivo = archivoFilter.checked;
 
             // Guardar filtros actuales
@@ -464,6 +480,8 @@
                 causaAnterior: showCausaAnterior,
                 devolucion: showDevolucion,
                 remision: showRemision,
+                abogadoParticular: showAbogadoParticular,
+                rechazoPase: showRechazoPase,
                 archivo: showArchivo
             };
             
@@ -519,10 +537,14 @@
                 const matchesSpecialReason = (!showDevolucion || (showDevolucion && d.devolucionMotivo)) &&
                                              (!showRemision || (showRemision && d.remisionMotivo));
 
+                // Filtro de abogado particular y rechazo de pase (Portados de pase)
+                const matchesAbogadoParticular = !showAbogadoParticular || (showAbogadoParticular && d.abogadoParticular === true);
+                const matchesRechazoPase = !showRechazoPase || (showRechazoPase && d.rechazoPase === true);
+
                 // Filtro por archivo
                 const matchesArchivo = !showArchivo || (showArchivo && d.archivo === true);
 
-                return matchesSearch && matchesMonth && matchesUser && matchesProceso && matchesDate && matchesEstadoCausa && matchesSpecialReason && matchesArchivo;
+                return matchesSearch && matchesMonth && matchesUser && matchesProceso && matchesDate && matchesEstadoCausa && matchesSpecialReason && matchesAbogadoParticular && matchesRechazoPase && matchesArchivo;
             }).sort((a, b) => {
                 const dateA = new Date(a.data.fechaPase || 0);
                 const dateB = new Date(b.data.fechaPase || 0);
@@ -587,6 +609,16 @@
                 activeFilters.innerHTML += `<span class="badge bg-info text-dark">Con Remisión</span>`;
             }
 
+            if (currentFilters.abogadoParticular) {
+                hasFilters = true;
+                activeFilters.innerHTML += `<span class="badge bg-dark">Abogado Particular</span>`;
+            }
+
+            if (currentFilters.rechazoPase) {
+                hasFilters = true;
+                activeFilters.innerHTML += `<span class="badge bg-danger">Rechazo de Pase</span>`;
+            }
+
             if (currentFilters.archivo) {
                 hasFilters = true;
                 activeFilters.innerHTML += `<span class="badge bg-dark">Archivo</span>`;
@@ -631,8 +663,12 @@
                 const d = record.data || {};
                 const globalIndex = startIndex + index;
                 
+                // Resaltado inteligente portado desde el archivo operador/pase
+                const isFiltered = (currentFilters.user && d.usuarioAsignado === currentFilters.user) || 
+                                   (currentFilters.proceso && d.tipoProceso === currentFilters.proceso);
+
                 tableHtml += `
-                    <tr class="expediente-row" data-id="${globalIndex}">
+                    <tr class="expediente-row ${isFiltered ? 'filter-active' : ''}" data-id="${globalIndex}">
                         <td class="fw-bold">${globalIndex + 1}</td>
                         <td>${formatDateFromISO(d.fechaPase)}</td>
                         <td>${d.tipoProceso || ''}</td>
@@ -866,8 +902,11 @@
                     <p><strong>Otros Expedientes Acumulados:</strong> ${d.otrosExpedientesAcumulados || 'N/A'}</p>
                     <hr>
                     <h6>Motivos Especiales</h6>
+                    <p><strong>Devolución a Origen:</strong> ${d.devolucionOrigen || 'N/A'}</p>
                     <p><strong>Devolución a Mesa de Entradas:</strong> ${d.devolucionMotivo || 'N/A'}</p>
                     <p><strong>Remisión a otra Defensoría:</strong> ${d.remisionMotivo || 'N/A'}</p>
+                    <p><strong>Abogado Particular:</strong> ${d.abogadoParticular ? 'Sí' : 'No'}</p>
+                    <p><strong>Rechazo de Pase:</strong> ${d.rechazoPase ? 'Sí' : 'No'}</p>
                     <p><strong>Archivo:</strong> ${d.archivo ? 'Sí' : 'No'}</p>
                 </div>
             `;
@@ -898,8 +937,11 @@
                 <p><strong>Otros Expedientes Acumulados:</strong> ${d.otrosExpedientesAcumulados || 'N/A'}</p>
                 <hr>
                 <h6>Motivos Especiales</h6>
+                <p><strong>Devolución a Origen:</strong> ${d.devolucionOrigen || 'N/A'}</p>
                 <p><strong>Devolución a Mesa de Entradas:</strong> ${d.devolucionMotivo || 'N/A'}</p>
                 <p><strong>Remisión a otra Defensoría:</strong> ${d.remisionMotivo || 'N/A'}</p>
+                <p><strong>Abogado Particular:</strong> ${d.abogadoParticular ? 'Sí' : 'No'}</p>
+                <p><strong>Rechazo de Pase:</strong> ${d.rechazoPase ? 'Sí' : 'No'}</p>
                 <p><strong>Archivo:</strong> ${d.archivo ? 'Sí' : 'No'}</p>
             `;
             
@@ -992,6 +1034,8 @@
         causaAnteriorFilter.addEventListener('change', applyFilters);
         devolucionFilter.addEventListener('change', applyFilters);
         remisionFilter.addEventListener('change', applyFilters);
+        abogadoParticularFilter.addEventListener('change', applyFilters);
+        rechazoPaseFilter.addEventListener('change', applyFilters);
         archivoFilter.addEventListener('change', applyFilters);
         
         // Asignar evento al botón de imprimir todos
