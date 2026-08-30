@@ -1,21 +1,25 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Resguardo</title>
+    <!-- Firebase SDK (Auth incluido) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <style>
-        /* Estilos generales */
+        /* ---------- Reset y base ---------- */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
             background-color: #f8f9fa;
-            color: #333;
+            color: #1e1e2f;
             min-height: 100vh;
         }
 
@@ -25,88 +29,216 @@
             padding: 20px;
         }
 
-        /* Página de inicio REFACTORIZADA */
+        /* ---------- Página de inicio – Fondo suave ---------- */
         #pagina-inicio {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             width: 100%;
-            background: url('https://github.com/sistemadigital/iconos/blob/main/azulfondo.jpg?raw=true') no-repeat center center;
-            background-size: cover;
+            background: #f2edff;
             padding: 20px;
         }
 
         .contenedor-central {
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 50px 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.92);
+            padding: 40px 35px;
+            border-radius: 24px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
             text-align: center;
-            max-width: 600px;
+            max-width: 520px;
             width: 100%;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
         .titulo-principal {
-            font-size: clamp(1.8rem, 5vw, 2.5rem);
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #0f4c75;
-            line-height: 1.2;
+            font-size: clamp(1.6rem, 4vw, 2.2rem);
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #3b2b6b;
+            letter-spacing: -0.5px;
         }
 
         .subtitulo {
-            font-size: clamp(1rem, 2vw, 1.2rem);
+            font-size: clamp(0.9rem, 1.8vw, 1.1rem);
             font-weight: 400;
-            margin-bottom: 40px;
-            color: #444;
+            margin-bottom: 32px;
+            color: #4a4a5e;
             line-height: 1.5;
         }
 
-        .btn-ingresar {
+        .btn-acceso-admin {
             width: 100%;
-            max-width: 300px;
-            padding: 15px 30px;
-            background-color: #1e7b34;
-            color: white;
+            max-width: 260px;
+            padding: 14px 28px;
+            background: #6c47b8;
+            color: #fff;
             border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(30, 123, 52, 0.3);
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(108, 71, 184, 0.25);
         }
 
-        .btn-ingresar:hover {
-            background-color: #28a745;
+        .btn-acceso-admin:hover {
+            background: #5a3a9e;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+            box-shadow: 0 8px 20px rgba(108, 71, 184, 0.3);
         }
 
-        /* Página de aplicación - PERMANECE IGUAL */
+        /* ---------- Modal ---------- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.activo {
+            display: flex;
+        }
+
+        .modal-contenido {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 28px 26px 32px;
+            max-width: 360px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            animation: modalFade 0.25s ease;
+        }
+
+        @keyframes modalFade {
+            from {
+                opacity: 0;
+                transform: scale(0.96) translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-contenido h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2d1f4a;
+            margin-bottom: 4px;
+        }
+
+        .modal-contenido p {
+            color: #5b5b70;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .modal-contenido input {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 6px;
+            border: 1.5px solid #d6d0e6;
+            border-radius: 12px;
+            outline: none;
+            background: #f8f6fc;
+            transition: border 0.2s, box-shadow 0.2s;
+            font-weight: 500;
+            color: #1e1e2f;
+        }
+
+        .modal-contenido input:focus {
+            border-color: #6c47b8;
+            box-shadow: 0 0 0 3px rgba(108, 71, 184, 0.15);
+        }
+
+        .modal-contenido input::placeholder {
+            letter-spacing: 2px;
+            color: #b0aac0;
+            font-weight: 400;
+            font-size: 0.85rem;
+        }
+
+        .error-mensaje {
+            color: #d14c4c;
+            font-size: 0.8rem;
+            min-height: 20px;
+            margin-top: 6px;
+        }
+
+        .modal-botones {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        .btn-verificar,
+        .btn-cancelar {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .btn-verificar {
+            background: #6c47b8;
+            color: #fff;
+            box-shadow: 0 3px 8px rgba(108, 71, 184, 0.2);
+        }
+
+        .btn-verificar:hover {
+            background: #5a3a9e;
+            transform: scale(1.02);
+        }
+
+        .btn-cancelar {
+            background: #eceaf2;
+            color: #2d1f4a;
+        }
+
+        .btn-cancelar:hover {
+            background: #ddd9e8;
+        }
+
+        /* ---------- Página App ---------- */
         #pagina-app {
             display: none;
             min-height: 100vh;
-            background-color: #f8f9fa;
+            background: #f8f6fc;
         }
 
-        /* Encabezado */
         .app-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 28px;
             padding: 20px 0;
-            border-bottom: 1px solid #dee2e6;
+            border-bottom: 1px solid #e8e3f0;
         }
 
         .app-title {
-            font-size: 2.2rem;
+            font-size: 2rem;
             font-weight: 300;
-            color: #0f4c75;
+            color: #2d1f4a;
         }
 
         .header-buttons {
@@ -117,147 +249,161 @@
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 5px;
+            border-radius: 40px;
             cursor: pointer;
             font-weight: 500;
-            transition: all 0.3s;
+            transition: all 0.25s;
         }
 
         .btn-primary {
-            background-color: #0f4c75;
-            color: white;
+            background: #6c47b8;
+            color: #fff;
         }
 
         .btn-primary:hover {
-            background-color: #1b6ca8;
+            background: #5a3a9e;
         }
 
-        /* Tarjetas KPI */
         .kpi-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 28px;
         }
 
         .kpi-card {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
-            padding: 30px;
-            transition: all 0.3s ease;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+            padding: 28px 24px;
+            transition: all 0.25s ease;
             display: flex;
             flex-direction: column;
             height: 100%;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, #0f4c75, #1b6ca8);
+            border: 1px solid #f0ecf7;
         }
 
         .kpi-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07);
+            border-color: #d6ccec;
         }
 
         .kpi-title {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 600;
-            color: #0f4c75;
-            margin-bottom: 15px;
+            color: #2d1f4a;
+            margin-bottom: 10px;
         }
 
         .kpi-description {
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 25px;
+            color: #5b5b70;
+            line-height: 1.5;
+            margin-bottom: 20px;
             flex-grow: 1;
+            font-size: 0.95rem;
         }
 
         .kpi-link {
             display: inline-block;
-            padding: 12px 25px;
-            background-color: #0f4c75;
-            color: white;
+            padding: 10px 22px;
+            background: #6c47b8;
+            color: #fff;
             text-decoration: none;
-            border-radius: 5px;
+            border-radius: 40px;
             font-weight: 500;
-            transition: background-color 0.3s;
+            transition: background 0.25s;
             text-align: center;
             align-self: flex-start;
+            font-size: 0.9rem;
         }
 
         .kpi-link:hover {
-            background-color: #1b6ca8;
+            background: #5a3a9e;
         }
 
-        /* Botón adicional para acceder a datos */
         .btn-datos {
             display: inline-block;
-            padding: 12px 25px;
-            background-color: #28a745;
-            color: white;
+            padding: 10px 22px;
+            background: #3d8b5e;
+            color: #fff;
             text-decoration: none;
-            border-radius: 5px;
+            border-radius: 40px;
             font-weight: 500;
-            transition: background-color 0.3s;
+            transition: background 0.25s;
             text-align: center;
             align-self: flex-start;
             margin-top: 10px;
             border: none;
             cursor: pointer;
+            font-size: 0.9rem;
         }
 
         .btn-datos:hover {
-            background-color: #218838;
+            background: #2e6f4b;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .app-header {
                 flex-direction: column;
-                gap: 15px;
                 align-items: flex-start;
+                gap: 12px;
             }
-            
             .header-buttons {
                 width: 100%;
                 justify-content: flex-start;
             }
-            
             .kpi-container {
                 grid-template-columns: 1fr;
             }
+            .modal-contenido {
+                padding: 24px 18px 26px;
+            }
         }
 
-        /* Animaciones */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .fade-in {
-            animation: fadeIn 0.5s ease forwards;
+            animation: fadeIn 0.4s ease forwards;
         }
     </style>
 </head>
 <body>
+
+    <!-- Página de inicio -->
     <div id="pagina-inicio">
         <div class="contenedor-central">
             <h1 class="titulo-principal">Resguardo Digital</h1>
-            <p class="subtitulo">Defensoría Civil y Comercial 6<br>MINISTERIO PÚBLICO DE MISIONES</p>
-            <button class="btn-ingresar" id="btn-ingresar">Ingresar a la Aplicación</button>
+            <p class="subtitulo">Defensoría Civil y Comercial 6<br />MINISTERIO PÚBLICO DE MISIONES</p>
+            <button class="btn-acceso-admin" id="btn-acceso-admin">Acceso Administrador</button>
         </div>
     </div>
 
+    <!-- Modal (sin emojis) -->
+    <div id="modal-token" class="modal-overlay">
+        <div class="modal-contenido">
+            <h2>Acceso Administrador</h2>
+            <p>Ingrese el token de 5 dígitos</p>
+            <input type="password" id="token-input" maxlength="5" inputmode="numeric" pattern="[0-9]*"
+            placeholder="• • • • •" autocomplete="off" />
+            <div id="token-error" class="error-mensaje"></div>
+            <div class="modal-botones">
+                <button class="btn-verificar" id="btn-verificar-token">Verificar</button>
+                <button class="btn-cancelar" id="btn-cerrar-modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Página de aplicación -->
     <div id="pagina-app">
         <div class="container">
             <div class="app-header">
@@ -271,42 +417,42 @@
                 <div class="kpi-card fade-in">
                     <h2 class="kpi-title">Causas</h2>
                     <p class="kpi-description">Acceder para descargar los registros.</p>
-                    <a href="https://sistemadigital.github.io/resguardo/extraer-causas" class="kpi-link" id="causas-link">Acceder a Causas</a>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-causas" class="kpi-link">Acceder a Causas</a>
                     <button class="btn-datos" id="causas-datos">Acceder a los Datos</button>
                 </div>
 
                 <div class="kpi-card fade-in">
                     <h2 class="kpi-title">Pase y Asignación</h2>
                     <p class="kpi-description">Acceder para descargar los registros.</p>
-                    <a href="https://sistemadigital.github.io/resguardo/extraer-pase" class="kpi-link" id="pase-link">Acceder a Pases</a>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-pase" class="kpi-link">Acceder a Pases</a>
                     <button class="btn-datos" id="pase-datos">Acceder a los Datos</button>
                 </div>
-                
+
                 <div class="kpi-card fade-in">
-                    <h2 class="kpi-title">Libro de Dictamenes</h2>
+                    <h2 class="kpi-title">Libro de Dictámenes</h2>
                     <p class="kpi-description">Acceder para descargar los registros.</p>
-                    <a href="https://sistemadigital.github.io/resguardo/extraer-dictamen" class="kpi-link" id="pase-link">Acceder a Pases</a>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-dictamen" class="kpi-link">Acceder a Dictámenes</a>
                     <button class="btn-datos" id="dictamenes-datos">Acceder a los Datos</button>
                 </div>
-                
+
                 <div class="kpi-card fade-in">
                     <h2 class="kpi-title">Libro de Oficios</h2>
                     <p class="kpi-description">Acceder para descargar los registros.</p>
-                    <a href="https://sistemadigital.github.io/resguardo/extraer-oficios" class="kpi-link" id="pase-link">Acceder a Pases</a>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-oficios" class="kpi-link">Acceder a Oficios</a>
                     <button class="btn-datos" id="oficios-datos">Acceder a los Datos</button>
                 </div>
-                
+
                 <div class="kpi-card fade-in">
                     <h2 class="kpi-title">Libro de Actas</h2>
                     <p class="kpi-description">Acceder para descargar los registros.</p>
-                    <a href="https://sistemadigital.github.io/resguardo/extraer-actas" class="kpi-link" id="pase-link">Acceder a Pases</a>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-actas" class="kpi-link">Acceder a Actas</a>
                     <button class="btn-datos" id="actas-datos">Acceder a los Datos</button>
                 </div>
 
                 <div class="kpi-card fade-in">
                     <h2 class="kpi-title">Atención al Público</h2>
                     <p class="kpi-description">Acceder para descargar los registros.</p>
-                    <a href="https://sistemadigital.github.io/resguardo/extraer-atencion" class="kpi-link" id="atencion-link">Acceder a Atención</a>
+                    <a href="https://sistemadigital.github.io/resguardo/extraer-atencion" class="kpi-link">Acceder a Atención</a>
                     <button class="btn-datos" id="atencion-datos">Acceder a los Datos</button>
                 </div>
             </div>
@@ -314,70 +460,140 @@
     </div>
 
     <script>
-        // Elementos DOM
+        // ---------- Firebase ----------
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDXZYAxWsvMiMGCrPRp3EBVuU0dzuWF4M",
+            authDomain: "sistemadefensoria6.firebaseapp.com",
+            databaseURL: "https://sistemadefensoria6-default-rtdb.firebaseio.com",
+            projectId: "sistemadefensoria6",
+            storageBucket: "sistemadefensoria6.firebasestorage.app",
+            messagingSenderId: "1024631392849",
+            appId: "1:1024631392849:web:1dc13292e690e2ed100670"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // ---------- DOM ----------
         const paginaInicio = document.getElementById('pagina-inicio');
         const paginaApp = document.getElementById('pagina-app');
-        const btnIngresar = document.getElementById('btn-ingresar');
+        const btnAccesoAdmin = document.getElementById('btn-acceso-admin');
+        const modalToken = document.getElementById('modal-token');
+        const tokenInput = document.getElementById('token-input');
+        const tokenError = document.getElementById('token-error');
+        const btnVerificar = document.getElementById('btn-verificar-token');
+        const btnCerrar = document.getElementById('btn-cerrar-modal');
         const volverBtn = document.getElementById('volver-btn');
-        const causasLink = document.getElementById('causas-link');
-        const paseLink = document.getElementById('pase-link');
-        const atencionLink = document.getElementById('atencion-link');
-        const causasDatos = document.getElementById('causas-datos');
-        const paseDatos = document.getElementById('pase-datos');
-        const dictamenesDatos = document.getElementById('dictamenes-datos');
-        const oficiosDatos = document.getElementById('oficios-datos');
-        const actasDatos = document.getElementById('actas-datos');
-        const atencionDatos = document.getElementById('atencion-datos');
 
-        // Función para mostrar la aplicación
+        // ---------- Funciones ----------
         function mostrarAplicacion() {
             paginaInicio.style.display = 'none';
             paginaApp.style.display = 'block';
-            
-            // Aplicar animación a las tarjetas
             const cards = document.querySelectorAll('.kpi-card');
-            cards.forEach((card, index) => {
-                card.style.animationDelay = `${index * 0.1}s`;
-            });
+            cards.forEach((card, i) => card.style.animationDelay = `${i * 0.08}s`);
         }
 
-        // Función para volver al inicio
         function volverAlInicio() {
             paginaApp.style.display = 'none';
             paginaInicio.style.display = 'flex';
         }
 
-        // Event Listeners
-        btnIngresar.addEventListener('click', mostrarAplicacion);
+        function abrirModal() {
+            modalToken.classList.add('activo');
+            tokenInput.value = '';
+            tokenError.textContent = '';
+            tokenInput.focus();
+        }
+
+        function cerrarModal() {
+            modalToken.classList.remove('activo');
+            tokenError.textContent = '';
+        }
+
+        // ---------- Verificación del token (Simple y Directa) ----------
+        async function verificarToken() {
+            const codigo = tokenInput.value.trim();
+            if (!/^\d{5}$/.test(codigo)) {
+                tokenError.textContent = 'El token debe tener exactamente 5 dígitos numéricos.';
+                return;
+            }
+
+            // Bloquear el botón mientras se verifica
+            btnVerificar.disabled = true;
+            btnVerificar.textContent = 'Verificando...';
+            tokenError.textContent = '';
+
+            try {
+                // Leer directamente el documento token (ya permitido por la nueva regla allow get: if true;)
+                const docRef = db.collection('config').doc('token');
+                const docSnap = await docRef.get();
+
+                if (!docSnap.exists) {
+                    tokenError.textContent = 'No se encontró la configuración de token.';
+                    btnVerificar.disabled = false;
+                    btnVerificar.textContent = 'Verificar';
+                    return;
+                }
+
+                const tokenCorrecto = docSnap.data().token;
+                
+                // Aseguramos que la validación ocurra como string
+                if (String(tokenCorrecto) === codigo) {
+                    tokenError.textContent = 'Acceso concedido.';
+                    cerrarModal();
+                    mostrarAplicacion();
+                } else {
+                    tokenError.textContent = 'Token incorrecto. Intente nuevamente.';
+                    tokenInput.value = '';
+                    tokenInput.focus();
+                }
+            } catch (error) {
+                console.error('Error al verificar token:', error);
+                tokenError.textContent = `Error: ${error.message}`;
+            } finally {
+                // Restaurar el botón independientemente de si hay error o éxito
+                btnVerificar.disabled = false;
+                btnVerificar.textContent = 'Verificar';
+            }
+        }
+
+        // ---------- Event listeners ----------
+        btnAccesoAdmin.addEventListener('click', abrirModal);
+        btnCerrar.addEventListener('click', cerrarModal);
+        modalToken.addEventListener('click', (e) => {
+            if (e.target === modalToken) cerrarModal();
+        });
+        btnVerificar.addEventListener('click', verificarToken);
+        tokenInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                verificarToken();
+            }
+        });
         volverBtn.addEventListener('click', volverAlInicio);
-        
-        // Event Listeners para los botones de datos
-        causasDatos.addEventListener('click', (e) => {
+
+        // ---------- Botones de datos ----------
+        document.getElementById('causas-datos').addEventListener('click', (e) => {
             e.preventDefault();
             window.location.href = "https://sistemadigital.github.io/resguardo/resguardo-causas";
         });
-        
-        paseDatos.addEventListener('click', (e) => {
+        document.getElementById('pase-datos').addEventListener('click', (e) => {
             e.preventDefault();
             window.location.href = "https://sistemadigital.github.io/resguardo/resguardo-pase";
         });
-        
-        dictamenesDatos.addEventListener('click', (e) => {
+        document.getElementById('dictamenes-datos').addEventListener('click', (e) => {
             e.preventDefault();
             window.location.href = "https://sistemadigital.github.io/resguardo/dictamen-resguardo";
         });
-        
-        oficiosDatos.addEventListener('click', (e) => {
+        document.getElementById('oficios-datos').addEventListener('click', (e) => {
             e.preventDefault();
             window.location.href = "https://sistemadigital.github.io/resguardo/oficios-resguardo";
         });
-        
-        actasDatos.addEventListener('click', (e) => {
+        document.getElementById('actas-datos').addEventListener('click', (e) => {
             e.preventDefault();
             window.location.href = "https://sistemadigital.github.io/resguardo/actas-resguardo";
         });
-        
-        atencionDatos.addEventListener('click', (e) => {
+        document.getElementById('atencion-datos').addEventListener('click', (e) => {
             e.preventDefault();
             window.location.href = "https://sistemadigital.github.io/resguardo/resguardo-atencion";
         });
