@@ -455,6 +455,26 @@
                     <a href="https://sistemadigital.github.io/resguardo/extraer-atencion" class="kpi-link">Acceder a Atención</a>
                     <button class="btn-datos" id="atencion-datos">Acceder a los Datos</button>
                 </div>
+
+                <!-- NUEVAS TARJETAS (solo con botón "Acceder a los Datos") -->
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Partes</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="https://sistemadigital.github.io/resguardo/parte-exportar" class="btn-datos">Acceder a los Datos</a>
+                </div>
+
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Pase Digital (versión nueva)</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="https://defensoria6.github.io/pase-digital/exportar" class="btn-datos">Acceder a los Datos</a>
+                </div>
+
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Organismos</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="https://sistemadigital.github.io/resguardo/organis-exportar" class="btn-datos">Acceder a los Datos</a>
+                </div>
+                <!-- FIN NUEVAS TARJETAS -->
             </div>
         </div>
     </div>
@@ -572,7 +592,7 @@
         });
         volverBtn.addEventListener('click', volverAlInicio);
 
-        // ---------- Botones de datos ----------
+        // ---------- Botones de datos existentes (se mantienen) ----------
         document.getElementById('causas-datos').addEventListener('click', (e) => {
             e.preventDefault();
             window.location.href = "https://sistemadigital.github.io/resguardo/resguardo-causas";
@@ -597,6 +617,9 @@
             e.preventDefault();
             window.location.href = "https://sistemadigital.github.io/resguardo/resguardo-atencion";
         });
+
+        // NOTA: Las nuevas tarjetas usan <a> con clase "btn-datos" y href directo,
+        // por lo que no necesitan event listeners adicionales.
     </script>
 </body>
 </html>
