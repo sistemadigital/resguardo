@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Art 583 CCyC – Defensoría Civil y Comercial 6</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-dark: #0a2a4a;
+            --primary-mid: #1a3a6a;
+            --primary-blue: #2a5a8a;
+            --primary-light: #4a8aba;
+            --primary-lighter: #e8f0fe;
+            --secondary-gray: #f0f4f8;
+            --border-light: #d0dce8;
+            --text-primary: #0a1a2a;
+            --text-secondary: #2a4a6a;
+            --text-light: #ffffff;
+            --status-success: #1a8a4a;
+            --status-warning: #c47a1a;
+            --status-danger: #b03a3a;
+            --shadow: 0 8px 24px rgba(10, 42, 74, 0.12);
+            --radius: 16px;
+            --transition: 0.25s ease;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            font-family: var(--font);
+            background: #f8fafc;
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-mid) 100%);
+            color: var(--text-light);
+            padding: 14px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1800px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo i { font-size: 24px; color: var(--primary-light); }
+        .header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 40px;
+            font-family: var(--font);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: var(--primary-light);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-success { background: #1a8a4a; }
+        .btn-warning { background: #c47a1a; color: #fff; }
+        .btn-cyan { background: #0e7490; }
+        .btn-purple { background: #6d28d9; }
+        .btn-danger { background: #b03a3a; }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: #fff;
+        }
+        .btn-outline:hover { background: rgba(255, 255, 255, 0.1); }
+        .btn-sm { padding: 6px 14px; font-size: 12px; border-radius: 30px; }
+
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px 24px; }
+
+        /* Status pill */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+        .status-pill.connected { background: rgba(26, 138, 74, 0.35); border-color: rgba(74, 222, 128, 0.5); }
+        .status-pill.imported { background: rgba(196, 122, 26, 0.35); border-color: rgba(251, 191, 36, 0.5); }
+        .status-pill i { font-size: 8px; }
+
+        /* KPIs */
+        .kpi-section { margin-bottom: 32px; }
+        .kpi-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary); }
+        .kpi-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+        .kpi-card {
+            background: #fff;
+            padding: 20px 18px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all var(--transition);
+            border: 1px solid transparent;
+        }
+        .kpi-card:hover { transform: translateY(-4px); border-color: var(--primary-light); box-shadow: 0 12px 28px rgba(10, 42, 74, 0.15); }
+        .kpi-icon {
+            width: 48px; height: 48px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .kpi-icon.total { background: var(--primary-dark); color: #fff; }
+        .kpi-icon.pendiente { background: #fef3d7; color: #b07a1a; }
+        .kpi-icon.proceso { background: #d7eafc; color: var(--primary-blue); }
+        .kpi-icon.resuelto { background: #d4f0e0; color: var(--status-success); }
+        .kpi-info { flex: 1; }
+        .kpi-number { font-size: 28px; font-weight: 700; line-height: 1.2; color: var(--text-primary); }
+        .kpi-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; }
+
+        /* Controls */
+        .controls-section {
+            background: #fff;
+            padding: 20px 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 28px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+        }
+        .controls-section .search-box {
+            flex: 1;
+            min-width: 220px;
+            padding: 10px 16px;
+            border: 2px solid var(--border-light);
+            border-radius: 40px;
+            font-family: var(--font);
+            font-size: 14px;
+            transition: border var(--transition);
+            background: var(--secondary-gray);
+        }
+        .controls-section .search-box:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(42, 90, 138, 0.1);
+        }
+
+        /* Tabla */
+        .table-section {
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .table-title {
+            padding: 16px 24px;
+            background: var(--secondary-gray);
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .table-wrap { overflow-x: auto; padding: 0 4px; }
+        .data-table { width: 100%; border-collapse: collapse; min-width: 900px; font-size: 14px; }
+        .data-table th {
+            text-align: left;
+            padding: 14px 16px;
+            background: var(--secondary-gray);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-light);
+            white-space: nowrap;
+        }
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
+        }
+        .data-table tr:hover td { background: var(--primary-lighter); }
+        .data-table tr:last-child td { border-bottom: none; }
+
+        .status-pill-row, .priority-pill {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .status-pendiente { background: #fef3d7; color: #7a5a1a; }
+        .status-en-proceso { background: #d7eafc; color: var(--primary-blue); }
+        .status-resuelto { background: #d4f0e0; color: var(--status-success); }
+        .priority-normal { background: #e9ecef; color: #4a5a6a; }
+        .priority-alta { background: #fef3d7; color: #7a5a1a; }
+        .priority-urgente { background: #fce8e8; color: var(--status-danger); }
+
+        .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+        .actions-cell .btn {
+            padding: 4px 12px;
+            font-size: 12px;
+            border-radius: 30px;
+            background: var(--secondary-gray);
+            color: var(--text-primary);
+            box-shadow: none;
+            border: 1px solid var(--border-light);
+        }
+        .actions-cell .btn:hover { background: var(--primary-lighter); border-color: var(--primary-light); transform: none; }
+        .actions-cell .btn-view { background: var(--primary-lighter); border-color: var(--primary-light); color: var(--primary-blue); }
+        .actions-cell .btn-view:hover { background: var(--primary-blue); color: #fff; }
+        .actions-cell .btn-edit { background: #fff3d7; border-color: #e0c080; color: #7a5a1a; }
+        .actions-cell .btn-edit:hover { background: #c47a1a; color: #fff; }
+        .actions-cell .btn-del { background: #fce8e8; border-color: #f0c0c0; color: var(--status-danger); }
+        .actions-cell .btn-del:hover { background: var(--status-danger); color: #fff; }
+
+        /* Paginación */
+        #paginacion-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            margin-top: 8px;
+        }
+        .pagination-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .pagination-controls select {
+            padding: 6px 12px;
+            border-radius: 30px;
+            border: 1px solid var(--border-light);
+            font-family: var(--font);
+            font-size: 13px;
+            background: #fff;
+        }
+        .page-info { font-weight: 500; color: var(--text-secondary); font-size: 14px; }
+        .nav-buttons { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .nav-buttons .btn {
+            padding: 6px 14px;
+            font-size: 13px;
+            border-radius: 30px;
+            background: #fff;
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+            box-shadow: none;
+            min-width: 36px;
+            justify-content: center;
+        }
+        .nav-buttons .btn.active { background: var(--primary-dark); color: #fff; border-color: var(--primary-dark); }
+        .nav-buttons .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .pagination-goto { display: flex; align-items: center; gap: 6px; }
+        .pagination-goto input {
+            width: 60px; padding: 6px 8px; border-radius: 30px;
+            border: 1px solid var(--border-light);
+            font-family: var(--font); text-align: center;
+        }
+
+        /* Modales */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(10, 42, 74, 0.5);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: var(--radius);
+            max-width: 960px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: fadeUp 0.3s ease;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-header {
+            background: var(--primary-dark);
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: var(--radius) var(--radius) 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .modal-header h2 { font-size: 18px; font-weight: 600; }
+        .modal-header .close {
+            font-size: 28px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity var(--transition);
+            background: none;
+            border: none;
+            color: #fff;
+            line-height: 1;
+        }
+        .modal-header .close:hover { opacity: 1; }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .modal-actions {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: flex-end;
+            background: var(--secondary-gray);
+            border-radius: 0 0 var(--radius) var(--radius);
+        }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            font-family: var(--font);
+            font-size: 14px;
+            transition: border var(--transition);
+            background: #fafcfe;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            background: #fff;
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .detail-section {
+            background: var(--secondary-gray);
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+        }
+        .detail-section h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 6px;
+        }
+
+        .view-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .view-item { padding: 8px 0; border-bottom: 1px solid var(--border-light); }
+        .view-item .label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .view-item .value { font-size: 15px; font-weight: 500; margin-top: 2px; color: var(--text-primary); }
+        .view-full { grid-column: 1 / -1; }
+
+        @media (max-width: 768px) {
+            .header-content { flex-direction: column; align-items: stretch; text-align: center; }
+            .header-actions { justify-content: center; }
+            .kpi-cards { grid-template-columns: 1fr 1fr; }
+            .controls-section { flex-direction: column; align-items: stretch; }
+            .form-row { grid-template-columns: 1fr; }
+            .view-grid { grid-template-columns: 1fr; }
+            .data-table { min-width: 700px; font-size: 13px; }
+            .modal-content { max-width: 100%; margin: 10px; border-radius: 12px; }
+            #paginacion-container { flex-direction: column; align-items: stretch; }
+            .pagination-controls, .nav-buttons, .pagination-goto { justify-content: center; }
+        }
+        @media (max-width: 480px) {
+            .kpi-cards { grid-template-columns: 1fr; }
+            .container { padding: 12px; }
+            .modal-body { padding: 16px; }
+        }
+
+        .text-center { text-align: center; }
+        .no-cases { padding: 48px 16px; color: var(--text-secondary); }
+        .no-cases i { font-size: 48px; color: var(--border-light); margin-bottom: 12px; display: block; }
+
+        .floating-alert {
+            position: fixed;
+            top: -100px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(176, 58, 58, 0.96);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 60px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            z-index: 2000;
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 90vw;
+        }
+        .floating-alert.success { background: rgba(26, 138, 74, 0.96); }
+        .floating-alert.show { top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="floating-alert" id="floatingAlert">
+        <i class="fas fa-info-circle"></i>
+        <span id="floatingAlertText"></span>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo"><i class="fas fa-gavel"></i> Art 583 CCyC – Defensoría Civil y Comercial 6</div>
+            <div class="header-actions">
+                <span id="statusConexion" class="status-pill"><i class="fas fa-circle"></i> Sin conexión</span>
+                <button id="btnConectar" class="btn btn-cyan"><i class="fas fa-plug"></i> Conectar a Firestore</button>
+                <button id="btnExportarJSON" class="btn btn-purple"><i class="fas fa-download"></i> Exportar JSON</button>
+                <button id="btnImportarJSON" class="btn btn-warning"><i class="fas fa-upload"></i> Importar JSON</button>
+                <input type="file" id="importJsonInput" accept=".json,application/json" style="display: none;" />
+                <button class="btn btn-success" onclick="openModal('add')"><i class="fas fa-plus-circle"></i> Nuevo Caso</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div style="background:#e8f0fe; border-left:4px solid var(--primary-dark); padding:16px 20px; border-radius:12px; margin-bottom:28px; font-size:14px; line-height:1.6;">
+            <strong style="color:var(--primary-dark);">ARTÍCULO 583.</strong> Reclamación en supuestos de filiación con sola maternidad. El Registro Civil debe comunicar al Ministerio Público cuando un niño/a figure sólo con filiación materna, procurando la determinación de paternidad y reconocimiento. Debe instarse a la madre a suministrar el nombre del presunto padre y datos para su individualización, bajo juramento previo aviso de consecuencias legales. Antes de remitir la comunicación, el Registro cita e informa a la madre sobre derechos y deberes.
+        </div>
+
+        <section class="kpi-section">
+            <h2 class="kpi-title">📊 Resumen de Casos</h2>
+            <div class="kpi-cards" id="kpiCards">
+                <div class="kpi-card">
+                    <div class="kpi-icon total"><i class="fas fa-folder-open"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-number" id="totalCasos">0</div>
+                        <div class="kpi-label">Total</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon pendiente"><i class="fas fa-clock"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-number" id="casosPendientes">0</div>
+                        <div class="kpi-label">Pendientes</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon proceso"><i class="fas fa-spinner"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-number" id="casosEnProceso">0</div>
+                        <div class="kpi-label">En Proceso</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon resuelto"><i class="fas fa-check-circle"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-number" id="casosResueltos">0</div>
+                        <div class="kpi-label">Resueltos</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="controls-section">
+            <input type="text" class="search-box" id="searchInput" placeholder="🔍 Buscar casos por cualquier campo..." onkeyup="filterCases()" />
+            <button class="btn btn-warning" onclick="printAllCases()"><i class="fas fa-print"></i> Imprimir Todo</button>
+        </section>
+
+        <section class="table-section">
+            <div class="table-title">
+                <span>📋 Registro de Casos</span>
+                <span id="registrosInfo" style="font-size:13px; font-weight:400; color:var(--text-secondary);"></span>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>N° Expediente</th>
+                            <th>Menor</th>
+                            <th>Madre</th>
+                            <th>Fecha Ingreso</th>
+                            <th>Estado</th>
+                            <th>Prioridad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="casesContainer">
+                        <tr><td colspan="7" class="text-center"><div class="no-cases"><i class="fas fa-folder-open"></i><p>No hay casos registrados</p><p style="font-size:13px;">Haga clic en "Conectar a Firestore" para cargar datos, o "Nuevo Caso" para comenzar.</p></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div id="paginacion-container">
+            <div class="pagination-controls">
+                <label for="recordsPerPage" style="font-size:13px;">Mostrar:</label>
+                <select id="recordsPerPage" onchange="cambiarRegistrosPorPagina()">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <span style="font-size:13px;">por página</span>
+            </div>
+            <div class="page-info" id="pageInfo">Página 1 de 1</div>
+            <div class="nav-buttons" id="navButtons"></div>
+            <div class="pagination-goto">
+                <span style="font-size:13px;">Ir a:</span>
+                <input type="number" id="goToPage" min="1" value="1" onchange="irAPagina(this.value)" />
+                <button class="btn btn-sm" onclick="irAPagina(document.getElementById('goToPage').value)">Ir</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL REGISTRO -->
+    <div id="caseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nuevo Caso</h2>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="btn btn-sm btn-outline" onclick="printCaseFromForm()"><i class="fas fa-print"></i> Imprimir</button>
+                    <button class="close" onclick="closeModal()">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <form id="caseForm">
+                    <div class="detail-section">
+                        <h3>📌 Información General</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="numeroExpediente">Número de Expediente *</label>
+                                <input type="text" id="numeroExpediente" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="fechaIngreso">Fecha de Ingreso *</label>
+                                <input type="date" id="fechaIngreso" required />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="estado">Estado *</label>
+                                <select id="estado" required>
+                                    <option value="">Seleccionar</option>
+                                    <option value="pendiente">Pendiente</option>
+                                    <option value="en-proceso">En Proceso</option>
+                                    <option value="resuelto">Resuelto</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="prioridad">Prioridad</label>
+                                <select id="prioridad">
+                                    <option value="normal">Normal</option>
+                                    <option value="alta">Alta</option>
+                                    <option value="urgente">Urgente</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>👶 Menor</h3>
+                        <div class="form-row">
+                            <div class="form-group"><label>Nombre *</label><input type="text" id="nombreMenor" required /></div>
+                            <div class="form-group"><label>Apellido *</label><input type="text" id="apellidoMenor" required /></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Fecha Nac.</label><input type="date" id="fechaNacimiento" /></div>
+                            <div class="form-group"><label>DNI</label><input type="text" id="dniMenor" /></div>
+                        </div>
+                        <div class="form-group"><label>Lugar Nacimiento</label><input type="text" id="lugarNacimiento" /></div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>👩 Madre</h3>
+                        <div class="form-row">
+                            <div class="form-group"><label>Nombre *</label><input type="text" id="nombreMadre" required /></div>
+                            <div class="form-group"><label>Apellido *</label><input type="text" id="apellidoMadre" required /></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>DNI</label><input type="text" id="dniMadre" /></div>
+                            <div class="form-group"><label>Teléfono</label><input type="text" id="telefonoMadre" /></div>
+                        </div>
+                        <div class="form-group"><label>Domicilio</label><input type="text" id="domicilioMadre" /></div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>👨 Presunto Padre</h3>
+                        <div class="form-row">
+                            <div class="form-group"><label>Nombre</label><input type="text" id="nombrePadre" /></div>
+                            <div class="form-group"><label>Apellido</label><input type="text" id="apellidoPadre" /></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>DNI</label><input type="text" id="dniPadre" /></div>
+                            <div class="form-group"><label>Teléfono</label><input type="text" id="telefonoPadre" /></div>
+                        </div>
+                        <div class="form-group"><label>Domicilio</label><input type="text" id="domicilioPadre" /></div>
+                        <div class="form-group"><label>Información Adicional</label><textarea id="informacionAdicionalPadre" rows="2"></textarea></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button type="submit" class="btn btn-success" form="caseForm"><i class="fas fa-save"></i> Guardar Caso</button>
+                <button type="button" class="btn" onclick="closeModal()" style="background:#e9ecef; color:#333;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VISTA -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content" style="max-width:720px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-eye"></i> Detalle del Caso</h2>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="btn btn-sm btn-outline" onclick="printSingleCase()"><i class="fas fa-print"></i> Imprimir</button>
+                    <button class="close" onclick="closeViewModal()">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body" id="viewBody"></div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeViewModal()" style="background:#e9ecef; color:#333;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+    <script>
+        // ============================================================
+        //  CONFIG FIREBASE (mismo proyecto que 583.html)
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDaMuUaVI_61xHMQoRSsIkHi9fqvZgkj6s",
+            authDomain: "articulo583.firebaseapp.com",
+            databaseURL: "https://articulo583-default-rtdb.firebaseio.com",
+            projectId: "articulo583",
+            storageBucket: "articulo583.firebasestorage.app",
+            messagingSenderId: "972837111055",
+            appId: "1:972837111055:web:aa37d0d28d8b0d0a0f6a7a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const casosCollection = db.collection('casos');
+
+        // ============================================================
+        //  ESTADO GLOBAL
+        // ============================================================
+        let casos = [];                  // Todos los casos en memoria
+        let currentEditingId = null;
+        let recordsPerPage = 25;
+        let paginaActual = 1;
+        let datosFiltrados = [];
+
+        // Estado de conexión: null | 'firestore' | 'importado'
+        let conectadoFirestore = false;
+        let estadoDatos = null;
+        let unsubscribe = null;
+
+        // ============================================================
+        //  UTILIDADES
+        // ============================================================
+        const $ = (id) => document.getElementById(id);
+
+        function mostrarAlerta(mensaje, tipo = 'danger') {
+            const el = $('floatingAlert');
+            const txt = $('floatingAlertText');
+            txt.textContent = mensaje;
+            el.classList.remove('success');
+            if (tipo === 'success') el.classList.add('success');
+            el.classList.add('show');
+            clearTimeout(el._timer);
+            el._timer = setTimeout(() => el.classList.remove('show'), 4000);
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatDateLocal(dateStr) {
+            if (!dateStr) return '—';
+            const d = new Date(dateStr);
+            if (isNaN(d)) return '—';
+            return d.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+        }
+
+        function getStatusText(status) {
+            const map = { 'pendiente': 'Pendiente', 'en-proceso': 'En Proceso', 'resuelto': 'Resuelto' };
+            return map[status] || 'Sin estado';
+        }
+        function getPriorityText(priority) {
+            const map = { 'normal': 'Normal', 'alta': 'Alta', 'urgente': 'Urgente' };
+            return map[priority] || 'Normal';
+        }
+
+        // ============================================================
+        //  CONECTAR / DESCONECTAR FIRESTORE
+        // ============================================================
+        async function conectarFirestore() {
+            if (conectadoFirestore) {
+                // DESCONECTAR: detener listener, mantener datos en memoria
+                if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+                conectadoFirestore = false;
+                estadoDatos = casos.length > 0 ? 'importado' : null;
+                actualizarBotonConectar();
+                actualizarEstadoConexionUI();
+                mostrarAlerta('Desconectado de Firestore. Datos conservados en memoria.', 'success');
+                return;
+            }
+
+            const btn = $('btnConectar');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+
+            try {
+                // Carga inicial desde Firestore
+                const snap = await casosCollection.get();
+                casos = [];
+                snap.forEach(doc => {
+                    casos.push({ id: doc.id, ...doc.data() });
+                });
+                casos.sort((a, b) => (b.fechaIngreso || '').localeCompare(a.fechaIngreso || ''));
+
+                conectadoFirestore = true;
+                estadoDatos = 'firestore';
+
+                // Suscripción en tiempo real
+                unsubscribe = casosCollection.onSnapshot(snapshot => {
+                    const remote = [];
+                    snapshot.forEach(doc => {
+                        remote.push({ id: doc.id, ...doc.data() });
+                    });
+                    remote.sort((a, b) => (b.fechaIngreso || '').localeCompare(a.fechaIngreso || ''));
+                    casos = remote;
+                    filterCases();
+                    actualizarKPIs();
+                }, err => {
+                    console.error('onSnapshot error:', err);
+                });
+
+                filterCases();
+                actualizarKPIs();
+                actualizarBotonConectar();
+                actualizarEstadoConexionUI();
+                mostrarAlerta(`Conectado. ${casos.length} casos cargados desde Firestore.`, 'success');
+            } catch (e) {
+                console.error(e);
+                mostrarAlerta('Error al conectar: ' + e.message, 'danger');
+            } finally {
+                btn.disabled = false;
+                actualizarBotonConectar();
+            }
+        }
+
+        function actualizarBotonConectar() {
+            const btn = $('btnConectar');
+            if (conectadoFirestore) {
+                btn.innerHTML = '<i class="fas fa-plug"></i> Desconectar';
+                btn.classList.remove('btn-cyan');
+                btn.classList.add('btn-danger');
+            } else {
+                btn.innerHTML = '<i class="fas fa-plug"></i> Conectar a Firestore';
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-cyan');
+            }
+        }
+
+        function actualizarEstadoConexionUI() {
+            const pill = $('statusConexion');
+            if (conectadoFirestore) {
+                pill.className = 'status-pill connected';
+                pill.innerHTML = `<i class="fas fa-circle"></i> Firestore · ${casos.length}`;
+            } else if (estadoDatos === 'importado') {
+                pill.className = 'status-pill imported';
+                pill.innerHTML = `<i class="fas fa-circle"></i> Datos locales · ${casos.length}`;
+            } else {
+                pill.className = 'status-pill';
+                pill.innerHTML = `<i class="fas fa-circle"></i> Sin conexión`;
+            }
+        }
+
+        // ============================================================
+        //  EXPORTAR JSON (NO elimina nada en Firestore)
+        //  Formato: [{ id, data: {...} }, ...]
+        // ============================================================
+        async function exportarJSON() {
+            const btn = $('btnExportarJSON');
+            const textoOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exportando...';
+
+            try {
+                // Si estamos conectados a Firestore, forzamos lectura directa
+                // del servidor. Si no, exportamos lo que hay en memoria.
+                let registrosExport = [];
+
+                if (conectadoFirestore) {
+                    const snap = await casosCollection.get();
+                    snap.forEach(doc => {
+                        registrosExport.push({ id: doc.id, data: doc.data() });
+                    });
+                } else {
+                    // Exportamos la memoria actual
+                    registrosExport = casos.map(c => {
+                        const { id, ...rest } = c;
+                        return { id: id || null, data: rest };
+                    });
+                }
+
+                if (registrosExport.length === 0) {
+                    mostrarAlerta('No hay registros para exportar.', 'danger');
+                    return;
+                }
+
+                const jsonString = JSON.stringify(registrosExport, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const fechaStr = new Date().toISOString().slice(0, 10);
+                const baseLabel = estadoDatos || 'memoria';
+                a.download = `articulo583_${baseLabel}_${fechaStr}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                mostrarAlerta(`Exportación exitosa: ${registrosExport.length} registros. La base original en Firestore permanece intacta.`, 'success');
+            } catch (e) {
+                console.error(e);
+                mostrarAlerta('Error al exportar: ' + e.message, 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }
+        }
+
+        // ============================================================
+        //  IMPORTAR JSON (soporta 3 formatos)
+        // ============================================================
+        function normalizarRegistro(r, index) {
+            if (!r || typeof r !== 'object') return null;
+            // Formato Firestore: { id, data: {...} }
+            if (r.data && typeof r.data === 'object' && !Array.isArray(r.data)) {
+                const id = r.id || ('import_' + Date.now() + '_' + index);
+                return { id, ...r.data };
+            }
+            // Formato plano: { id, ...campos }
+            const copia = { ...r };
+            if (!copia.id) copia.id = 'import_' + Date.now() + '_' + index;
+            return copia;
+        }
+
+        function importarJSON(archivo) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const contenido = JSON.parse(e.target.result);
+                    let registros = [];
+                    if (contenido && Array.isArray(contenido.datos)) {
+                        registros = contenido.datos;
+                    } else if (Array.isArray(contenido)) {
+                        registros = contenido;
+                    } else {
+                        throw new Error("Formato JSON inválido. Se esperaba un array o { datos: [...] }.");
+                    }
+
+                    registros = registros
+                        .map((r, i) => normalizarRegistro(r, i))
+                        .filter(r => r !== null);
+
+                    if (registros.length === 0) {
+                        mostrarAlerta('El archivo JSON no contiene registros válidos.', 'danger');
+                        return;
+                    }
+
+                    // Si estábamos conectados a Firestore, desconectar listener
+                    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+                    conectadoFirestore = false;
+                    estadoDatos = 'importado';
+
+                    // Reemplazamos la memoria con los datos importados
+                    casos = registros;
+                    casos.sort((a, b) => (b.fechaIngreso || '').localeCompare(a.fechaIngreso || ''));
+
+                    filterCases();
+                    actualizarKPIs();
+                    actualizarBotonConectar();
+                    actualizarEstadoConexionUI();
+                    mostrarAlerta(`Importación exitosa: ${registros.length} registros cargados en memoria. Firestore NO fue modificado.`, 'success');
+                } catch (err) {
+                    console.error(err);
+                    mostrarAlerta('Error al importar JSON: ' + err.message, 'danger');
+                }
+            };
+            reader.onerror = () => mostrarAlerta('Error al leer el archivo.', 'danger');
+            reader.readAsText(archivo);
+        }
+
+        // ============================================================
+        //  CRUD
+        // ============================================================
+        window.openModal = function(mode, caseId = null) {
+            const modal = $('caseModal');
+            const modalTitle = $('modalTitle');
+            const form = $('caseForm');
+            form.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+            const saveBtn = form.querySelector('button[type="submit"]');
+            if (saveBtn) saveBtn.style.display = '';
+
+            if (mode === 'add') {
+                modalTitle.textContent = 'Nuevo Caso';
+                form.reset();
+                currentEditingId = null;
+            } else if (mode === 'edit') {
+                modalTitle.textContent = 'Editar Caso';
+                currentEditingId = caseId;
+                loadCaseData(caseId);
+            }
+            modal.style.display = 'flex';
+        };
+
+        window.closeModal = function() {
+            $('caseModal').style.display = 'none';
+            currentEditingId = null;
+        };
+
+        function loadCaseData(caseId) {
+            const caseData = casos.find(c => c.id === caseId);
+            if (!caseData) return;
+            const fields = [
+                'numeroExpediente', 'fechaIngreso', 'estado', 'prioridad', 'nombreMenor', 'apellidoMenor',
+                'fechaNacimiento', 'dniMenor', 'lugarNacimiento', 'nombreMadre', 'apellidoMadre', 'dniMadre',
+                'telefonoMadre', 'domicilioMadre', 'nombrePadre', 'apellidoPadre', 'dniPadre', 'telefonoPadre',
+                'domicilioPadre', 'informacionAdicionalPadre'
+            ];
+            for (const key of fields) {
+                const el = $(key);
+                if (el) el.value = caseData[key] || '';
+            }
+        }
+
+        async function saveCaseData() {
+            const caseData = {
+                numeroExpediente: $('numeroExpediente').value.trim(),
+                fechaIngreso: $('fechaIngreso').value,
+                estado: $('estado').value,
+                prioridad: $('prioridad').value,
+                nombreMenor: $('nombreMenor').value.trim(),
+                apellidoMenor: $('apellidoMenor').value.trim(),
+                fechaNacimiento: $('fechaNacimiento').value,
+                dniMenor: $('dniMenor').value.trim(),
+                lugarNacimiento: $('lugarNacimiento').value.trim(),
+                nombreMadre: $('nombreMadre').value.trim(),
+                apellidoMadre: $('apellidoMadre').value.trim(),
+                dniMadre: $('dniMadre').value.trim(),
+                telefonoMadre: $('telefonoMadre').value.trim(),
+                domicilioMadre: $('domicilioMadre').value.trim(),
+                nombrePadre: $('nombrePadre').value.trim(),
+                apellidoPadre: $('apellidoPadre').value.trim(),
+                dniPadre: $('dniPadre').value.trim(),
+                telefonoPadre: $('telefonoPadre').value.trim(),
+                domicilioPadre: $('domicilioPadre').value.trim(),
+                informacionAdicionalPadre: $('informacionAdicionalPadre').value.trim(),
+                fechaModificacion: new Date().toISOString().split('T')[0]
+            };
+
+            if (!caseData.numeroExpediente || !caseData.fechaIngreso || !caseData.estado ||
+                !caseData.nombreMenor || !caseData.apellidoMenor || !caseData.nombreMadre || !caseData.apellidoMadre) {
+                mostrarAlerta('Por favor, complete todos los campos obligatorios (*)', 'danger');
+                return;
+            }
+
+            try {
+                if (conectadoFirestore) {
+                    // Guardar en Firestore
+                    if (currentEditingId) {
+                        await casosCollection.doc(currentEditingId).update(caseData);
+                    } else {
+                        const id = Date.now().toString();
+                        caseData.fechaCreacion = new Date().toISOString().split('T')[0];
+                        await casosCollection.doc(id).set(caseData);
+                    }
+                    // onSnapshot refresca la tabla automáticamente
+                } else {
+                    // Guardar solo en memoria
+                    if (currentEditingId) {
+                        const idx = casos.findIndex(c => c.id === currentEditingId);
+                        if (idx !== -1) casos[idx] = { ...casos[idx], ...caseData };
+                    } else {
+                        const id = 'local_' + Date.now();
+                        caseData.fechaCreacion = new Date().toISOString().split('T')[0];
+                        casos.push({ id, ...caseData });
+                        casos.sort((a, b) => (b.fechaIngreso || '').localeCompare(a.fechaIngreso || ''));
+                    }
+                    filterCases();
+                    actualizarKPIs();
+                    actualizarEstadoConexionUI();
+                }
+                closeModal();
+                mostrarAlerta('Caso guardado correctamente.', 'success');
+            } catch (e) {
+                console.error('Error al guardar:', e);
+                mostrarAlerta('Error al guardar el caso: ' + e.message, 'danger');
+            }
+        }
+
+        window.viewCase = function(caseId) {
+            const caseData = casos.find(c => c.id === caseId);
+            if (!caseData) return;
+            const body = $('viewBody');
+            const fechaIngreso = caseData.fechaIngreso ? formatDateLocal(caseData.fechaIngreso) : '—';
+            const fechaNac = caseData.fechaNacimiento ? formatDateLocal(caseData.fechaNacimiento) : '—';
+            body.innerHTML = `
+                <div class="view-grid">
+                    <div class="view-item"><div class="label">Expediente</div><div class="value">${escapeHtml(caseData.numeroExpediente || '—')}</div></div>
+                    <div class="view-item"><div class="label">Fecha Ingreso</div><div class="value">${fechaIngreso}</div></div>
+                    <div class="view-item"><div class="label">Estado</div><div class="value"><span class="status-pill-row status-${caseData.estado}">${getStatusText(caseData.estado)}</span></div></div>
+                    <div class="view-item"><div class="label">Prioridad</div><div class="value"><span class="priority-pill priority-${caseData.prioridad}">${getPriorityText(caseData.prioridad)}</span></div></div>
+                    <div class="view-item view-full"><div class="label">Menor</div><div class="value">${escapeHtml(caseData.nombreMenor || '')} ${escapeHtml(caseData.apellidoMenor || '')}</div></div>
+                    <div class="view-item"><div class="label">Fecha Nac. Menor</div><div class="value">${fechaNac}</div></div>
+                    <div class="view-item"><div class="label">DNI Menor</div><div class="value">${escapeHtml(caseData.dniMenor || '—')}</div></div>
+                    <div class="view-item"><div class="label">Lugar Nacimiento</div><div class="value">${escapeHtml(caseData.lugarNacimiento || '—')}</div></div>
+                    <div class="view-item view-full"><div class="label">Madre</div><div class="value">${escapeHtml(caseData.nombreMadre || '')} ${escapeHtml(caseData.apellidoMadre || '')}</div></div>
+                    <div class="view-item"><div class="label">DNI Madre</div><div class="value">${escapeHtml(caseData.dniMadre || '—')}</div></div>
+                    <div class="view-item"><div class="label">Teléfono Madre</div><div class="value">${escapeHtml(caseData.telefonoMadre || '—')}</div></div>
+                    <div class="view-item view-full"><div class="label">Domicilio Madre</div><div class="value">${escapeHtml(caseData.domicilioMadre || '—')}</div></div>
+                    <div class="view-item view-full"><div class="label">Presunto Padre</div><div class="value">${escapeHtml(caseData.nombrePadre || '')} ${escapeHtml(caseData.apellidoPadre || '')}</div></div>
+                    <div class="view-item"><div class="label">DNI Padre</div><div class="value">${escapeHtml(caseData.dniPadre || '—')}</div></div>
+                    <div class="view-item"><div class="label">Teléfono Padre</div><div class="value">${escapeHtml(caseData.telefonoPadre || '—')}</div></div>
+                    <div class="view-item view-full"><div class="label">Domicilio Padre</div><div class="value">${escapeHtml(caseData.domicilioPadre || '—')}</div></div>
+                    <div class="view-item view-full"><div class="label">Información Adicional</div><div class="value">${escapeHtml(caseData.informacionAdicionalPadre || '—')}</div></div>
+                </div>
+            `;
+            body.dataset.caseId = caseId;
+            $('viewModal').style.display = 'flex';
+        };
+
+        window.closeViewModal = function() {
+            $('viewModal').style.display = 'none';
+        };
+
+        // ============================================================
+        //  FILTRADO Y PAGINACIÓN
+        // ============================================================
+        window.filterCases = function() {
+            const searchTerm = $('searchInput').value.toLowerCase().trim();
+            if (!searchTerm) {
+                datosFiltrados = casos;
+            } else {
+                datosFiltrados = casos.filter(c =>
+                    Object.values(c).some(v => v && v.toString().toLowerCase().includes(searchTerm))
+                );
+            }
+            paginaActual = 1;
+            renderTablaPaginada();
+        };
+
+        function renderTablaPaginada() {
+            const startIndex = (paginaActual - 1) * recordsPerPage;
+            const endIndex = Math.min(startIndex + recordsPerPage, datosFiltrados.length);
+            const dataToRender = datosFiltrados.slice(startIndex, endIndex);
+            renderTablas(dataToRender);
+            renderPaginacion(datosFiltrados.length, startIndex, endIndex);
+        }
+
+        function renderTablas(data) {
+            const container = $('casesContainer');
+            if (data.length === 0) {
+                container.innerHTML = `<tr><td colspan="7" class="text-center"><div class="no-cases"><i class="fas fa-folder-open"></i><p>No hay casos coincidentes</p></div></td></tr>`;
+                return;
+            }
+            container.innerHTML = data.map(c => `
+                <tr>
+                    <td><strong>${escapeHtml(c.numeroExpediente || '')}</strong></td>
+                    <td>${escapeHtml(c.nombreMenor || '')} ${escapeHtml(c.apellidoMenor || '')}</td>
+                    <td>${escapeHtml(c.nombreMadre || '')} ${escapeHtml(c.apellidoMadre || '')}</td>
+                    <td>${formatDateLocal(c.fechaIngreso)}</td>
+                    <td><span class="status-pill-row status-${c.estado}">${getStatusText(c.estado)}</span></td>
+                    <td><span class="priority-pill priority-${c.prioridad}">${getPriorityText(c.prioridad)}</span></td>
+                    <td>
+                        <div class="actions-cell">
+                            <button class="btn btn-view" onclick="viewCase('${c.id}')"><i class="fas fa-eye"></i> Ver</button>
+                            <button class="btn btn-edit" onclick="openModal('edit', '${c.id}')"><i class="fas fa-edit"></i> Editar</button>
+                            <button class="btn btn-del" onclick="deleteCase('${c.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.deleteCase = async function(caseId) {
+            if (!confirm('¿Está seguro de eliminar este caso?')) return;
+            try {
+                if (conectadoFirestore) {
+                    await casosCollection.doc(caseId).delete();
+                    mostrarAlerta('Caso eliminado de Firestore.', 'success');
+                } else {
+                    casos = casos.filter(c => c.id !== caseId);
+                    filterCases();
+                    actualizarKPIs();
+                    actualizarEstadoConexionUI();
+                    mostrarAlerta('Caso eliminado de la memoria.', 'success');
+                }
+            } catch (e) {
+                console.error(e);
+                mostrarAlerta('Error al eliminar: ' + e.message, 'danger');
+            }
+        };
+
+        function renderPaginacion(totalRecords, startIndex, endIndex) {
+            const totalPages = Math.ceil(totalRecords / recordsPerPage) || 1;
+            const pageInfo = $('pageInfo');
+            if (totalRecords === 0) {
+                pageInfo.textContent = 'No hay registros';
+            } else {
+                pageInfo.textContent = `Mostrando ${startIndex + 1}-${Math.min(endIndex, totalRecords)} de ${totalRecords} casos`;
+            }
+            $('registrosInfo').textContent = `${totalRecords} casos`;
+
+            const nav = $('navButtons');
+            let html = '';
+            html += `<button class="btn" ${paginaActual <= 1 ? 'disabled' : ''} onclick="cambiarPagina(${paginaActual - 1})">◀</button>`;
+
+            const maxVisible = 7;
+            let startPage = Math.max(1, paginaActual - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+            if (endPage - startPage < maxVisible - 1) startPage = Math.max(1, endPage - maxVisible + 1);
+
+            if (startPage > 1) {
+                html += `<button class="btn" onclick="cambiarPagina(1)">1</button>`;
+                if (startPage > 2) html += `<span style="padding:0 4px;">…</span>`;
+            }
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="btn ${i === paginaActual ? 'active' : ''}" onclick="cambiarPagina(${i})">${i}</button>`;
+            }
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += `<span style="padding:0 4px;">…</span>`;
+                html += `<button class="btn" onclick="cambiarPagina(${totalPages})">${totalPages}</button>`;
+            }
+            html += `<button class="btn" ${paginaActual >= totalPages ? 'disabled' : ''} onclick="cambiarPagina(${paginaActual + 1})">▶</button>`;
+            nav.innerHTML = html;
+            $('goToPage').value = paginaActual;
+            $('goToPage').max = totalPages;
+        }
+
+        window.cambiarPagina = function(page) {
+            const totalPages = Math.ceil(datosFiltrados.length / recordsPerPage) || 1;
+            if (page < 1 || page > totalPages) return;
+            paginaActual = page;
+            renderTablaPaginada();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.cambiarRegistrosPorPagina = function() {
+            recordsPerPage = parseInt($('recordsPerPage').value);
+            paginaActual = 1;
+            renderTablaPaginada();
+        };
+
+        window.irAPagina = function(val) {
+            let page = parseInt(val);
+            if (isNaN(page) || page < 1) page = 1;
+            const totalPages = Math.ceil(datosFiltrados.length / recordsPerPage) || 1;
+            if (page > totalPages) page = totalPages;
+            paginaActual = page;
+            renderTablaPaginada();
+            $('goToPage').value = page;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // ============================================================
+        //  KPIs
+        // ============================================================
+        function actualizarKPIs() {
+            const total = casos.length;
+            const pendientes = casos.filter(c => c.estado === 'pendiente').length;
+            const enProceso = casos.filter(c => c.estado === 'en-proceso').length;
+            const resueltos = casos.filter(c => c.estado === 'resuelto').length;
+            $('totalCasos').textContent = total;
+            $('casosPendientes').textContent = pendientes;
+            $('casosEnProceso').textContent = enProceso;
+            $('casosResueltos').textContent = resueltos;
+        }
+
+        // ============================================================
+        //  IMPRESIÓN
+        // ============================================================
+        window.printSingleCase = function() {
+            const body = $('viewBody');
+            const caseId = body.dataset.caseId;
+            const caseData = casos.find(c => c.id === caseId);
+            if (!caseData) return;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+            <!DOCTYPE html>
+            <html><head><title>Detalle Caso ${escapeHtml(caseData.numeroExpediente || '')}</title>
+            <style>body{font-family:'Inter',sans-serif;padding:30px;} h1{color:#0a2a4a;} h3{color:#1a3a6a;margin-top:20px;} .label{font-weight:600;color:#2a4a6a;}</style>
+            </head><body>
+            <h1>Detalle del Caso</h1>
+            <p><strong>Expediente:</strong> ${escapeHtml(caseData.numeroExpediente || '—')}</p>
+            <p><strong>Fecha Ingreso:</strong> ${formatDateLocal(caseData.fechaIngreso)}</p>
+            <p><strong>Estado:</strong> ${getStatusText(caseData.estado)}</p>
+            <p><strong>Prioridad:</strong> ${getPriorityText(caseData.prioridad)}</p>
+            <hr>
+            <h3>Menor</h3>
+            <p>${escapeHtml(caseData.nombreMenor || '')} ${escapeHtml(caseData.apellidoMenor || '')}</p>
+            <p><strong>DNI:</strong> ${escapeHtml(caseData.dniMenor || '—')} | <strong>Nac.:</strong> ${formatDateLocal(caseData.fechaNacimiento)}</p>
+            <h3>Madre</h3>
+            <p>${escapeHtml(caseData.nombreMadre || '')} ${escapeHtml(caseData.apellidoMadre || '')}</p>
+            <p><strong>DNI:</strong> ${escapeHtml(caseData.dniMadre || '—')} | <strong>Tel.:</strong> ${escapeHtml(caseData.telefonoMadre || '—')}</p>
+            <p><strong>Domicilio:</strong> ${escapeHtml(caseData.domicilioMadre || '—')}</p>
+            <h3>Presunto Padre</h3>
+            <p>${escapeHtml(caseData.nombrePadre || '')} ${escapeHtml(caseData.apellidoPadre || '')}</p>
+            <p><strong>DNI:</strong> ${escapeHtml(caseData.dniPadre || '—')} | <strong>Tel.:</strong> ${escapeHtml(caseData.telefonoPadre || '—')}</p>
+            <p><strong>Domicilio:</strong> ${escapeHtml(caseData.domicilioPadre || '—')}</p>
+            <p><strong>Info Adicional:</strong> ${escapeHtml(caseData.informacionAdicionalPadre || '—')}</p>
+            <hr>
+            <p style="color:#6c757d; font-size:12px;">Impreso el ${new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })}</p>
+            </body></html>`);
+            printWindow.document.close();
+            printWindow.print();
+        };
+
+        window.printCaseFromForm = function() {
+            const form = $('caseForm');
+            const data = new FormData(form);
+            const obj = {};
+            for (let [key, val] of data.entries()) obj[key] = val;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+            <!DOCTYPE html>
+            <html><head><title>Impresión Caso</title>
+            <style>body{font-family:'Inter',sans-serif;padding:30px;} h1{color:#0a2a4a;} .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}</style>
+            </head><body>
+            <h1>Datos del Caso</h1>
+            <div class="grid">
+                <div><strong>Expediente:</strong> ${escapeHtml(obj.numeroExpediente || '')}</div>
+                <div><strong>Fecha Ingreso:</strong> ${escapeHtml(obj.fechaIngreso || '')}</div>
+                <div><strong>Estado:</strong> ${escapeHtml(obj.estado || '')}</div>
+                <div><strong>Prioridad:</strong> ${escapeHtml(obj.prioridad || '')}</div>
+                <div><strong>Menor:</strong> ${escapeHtml(obj.nombreMenor || '')} ${escapeHtml(obj.apellidoMenor || '')}</div>
+                <div><strong>DNI Menor:</strong> ${escapeHtml(obj.dniMenor || '')}</div>
+                <div><strong>Madre:</strong> ${escapeHtml(obj.nombreMadre || '')} ${escapeHtml(obj.apellidoMadre || '')}</div>
+                <div><strong>DNI Madre:</strong> ${escapeHtml(obj.dniMadre || '')}</div>
+                <div><strong>Presunto Padre:</strong> ${escapeHtml(obj.nombrePadre || '')} ${escapeHtml(obj.apellidoPadre || '')}</div>
+                <div><strong>DNI Padre:</strong> ${escapeHtml(obj.dniPadre || '')}</div>
+            </div>
+            <p style="margin-top:20px;color:#6c757d;font-size:12px;">Impreso el ${new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })}</p>
+            </body></html>`);
+            printWindow.document.close();
+            printWindow.print();
+        };
+
+        window.printAllCases = function() {
+            if (casos.length === 0) {
+                mostrarAlerta('No hay casos para imprimir.', 'danger');
+                return;
+            }
+            const printWindow = window.open('', '_blank');
+            const content = `
+            <!DOCTYPE html>
+            <html><head><title>Listado Completo de Casos</title>
+            <style>body{font-family:'Inter',sans-serif;padding:30px;} h1{color:#0a2a4a;} .case{border:1px solid #ddd;padding:16px;margin-bottom:16px;border-radius:8px;} .case-header{font-weight:bold;font-size:1.1em;color:#0a2a4a;}</style>
+            </head><body>
+            <h1>Listado Completo de Casos</h1>
+            <p>Fecha: ${new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })}</p>
+            ${casos.map(c => `
+                <div class="case">
+                    <div class="case-header">${escapeHtml(c.numeroExpediente || 'Sin expediente')}</div>
+                    <p><strong>Menor:</strong> ${escapeHtml(c.nombreMenor || '')} ${escapeHtml(c.apellidoMenor || '')}</p>
+                    <p><strong>Madre:</strong> ${escapeHtml(c.nombreMadre || '')} ${escapeHtml(c.apellidoMadre || '')}</p>
+                    <p><strong>Fecha Ingreso:</strong> ${formatDateLocal(c.fechaIngreso)}</p>
+                    <p><strong>Estado:</strong> ${getStatusText(c.estado)}</p>
+                </div>`).join('')}
+            </body></html>`;
+            printWindow.document.write(content);
+            printWindow.document.close();
+            printWindow.print();
+        };
+
+        // ============================================================
+        //  EVENTOS
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            $('btnConectar').addEventListener('click', conectarFirestore);
+            $('btnExportarJSON').addEventListener('click', exportarJSON);
+            $('btnImportarJSON').addEventListener('click', () => $('importJsonInput').click());
+            $('importJsonInput').addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    importarJSON(e.target.files[0]);
+                    e.target.value = '';
+                }
+            });
+
+            $('caseForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveCaseData();
+            });
+
+            window.addEventListener('click', function(e) {
+                if (e.target === $('caseModal')) closeModal();
+                if (e.target === $('viewModal')) closeViewModal();
+            });
+
+            // Estado inicial
+            actualizarBotonConectar();
+            actualizarEstadoConexionUI();
+            filterCases();
+            actualizarKPIs();
+        });
+    </script>
+</body>
+</html>
