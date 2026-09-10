@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CEJUME · Defensoría Civil 6</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Roboto',sans-serif; background:#e8edf5; padding:1.5rem; color:#1e2a3a; }
+    .container { max-width:1280px; margin:0 auto; background:#fff; border-radius:28px; box-shadow:0 12px 35px rgba(10,47,90,0.15); padding:2rem 1.8rem 2.5rem; }
+    .header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:4px solid #0a2f5a; padding-bottom:1rem; gap:0.8rem; }
+    .header h1 { font-weight:500; font-size:1.7rem; color:#0a2f5a; letter-spacing:-0.3px; line-height:1.3; }
+    .header h1 i { color:#0a2f5a; margin-right:0.5rem; }
+    .header-actions { display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center; }
+    .btn { font-family:'Roboto',sans-serif; font-weight:500; padding:0.6rem 1.4rem; border:none; border-radius:60px; font-size:0.95rem; cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem; transition:background 0.2s, transform 0.1s; background:#e9edf4; color:#0a2f5a; }
+    .btn-primary { background:#0a2f5a; color:#fff; }
+    .btn-primary:hover { background:#0d3d70; }
+    .btn-secondary { background:#e9edf4; color:#0a2f5a; }
+    .btn-secondary:hover { background:#d0d9e6; }
+    .btn-success { background:#1a5a3a; color:#fff; }
+    .btn-success:hover { background:#1f6e47; }
+    .btn-calendar { background:#6f42c1; color:#fff; }
+    .btn-calendar:hover { background:#5a32a3; }
+    .btn-report { background:#e6852b; color:#fff; }
+    .btn-report:hover { background:#d0741e; }
+    .btn-edit { background:#ffc107; color:#1e2a3a; }
+    .btn-edit:hover { background:#e0a800; }
+    .btn-cyan { background:#0e7490; color:#fff; }
+    .btn-cyan:hover { background:#0b5c73; }
+    .btn-purple { background:#6d28d9; color:#fff; }
+    .btn-purple:hover { background:#5a1fb0; }
+    .btn-warning { background:#c47a1a; color:#fff; }
+    .btn-warning:hover { background:#a26314; }
+    .btn-danger { background:#b03a3a; color:#fff; }
+    .btn-danger:hover { background:#8f2e2e; }
+    .btn:active { transform:scale(0.97); }
+    .btn:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+    .status-pill { display:inline-flex; align-items:center; gap:0.4rem; padding:0.4rem 0.9rem; border-radius:60px; font-size:0.8rem; font-weight:500; background:#e9edf4; color:#0a2f5a; border:1px solid #d0d9e6; }
+    .status-pill.connected { background:#d4edda; color:#155724; border-color:#a7d8b5; }
+    .status-pill.imported { background:#fef3d7; color:#7a5a1a; border-color:#e8d09a; }
+    .status-pill i { font-size:0.5rem; }
+    .filters-container { display:flex; flex-wrap:wrap; align-items:flex-end; gap:1.2rem; margin-bottom:1.5rem; padding:1rem 1.2rem; background:#f1f5f9; border-radius:18px; border:1px solid #d0d9e6; }
+    .filter-group { display:flex; flex-direction:column; gap:0.3rem; }
+    .filter-group label { font-weight:500; font-size:0.85rem; color:#1e2a3a; }
+    .filter-group select, .filter-group input { padding:0.4rem 0.8rem; border:1px solid #bcc9db; border-radius:30px; font-family:'Roboto',sans-serif; font-size:0.9rem; background:#fafcff; transition:border 0.2s; min-width:160px; }
+    .filter-group select:focus, .filter-group input:focus { outline:none; border-color:#0a2f5a; box-shadow:0 0 0 3px rgba(10,47,90,0.15); }
+    .filter-actions { display:flex; gap:0.6rem; align-items:center; margin-left:auto; }
+    .table-responsive { overflow-x:auto; margin-top:0.5rem; border-radius:18px; border:1px solid #cbd5e0; }
+    table { width:100%; border-collapse:collapse; font-size:0.95rem; min-width:1000px; }
+    thead { background:#0a2f5a; color:#fff; }
+    th { padding:1rem 0.9rem; text-align:left; font-weight:500; letter-spacing:0.3px; white-space:nowrap; }
+    td { padding:0.8rem 0.9rem; border-bottom:1px solid #e2e8f0; vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    tbody tr:hover { background:#f1f5f9; }
+    .estado-cumplido { color:#198754; font-weight:700; }
+    .estado-reprogramado { color:#6f42c1; font-weight:500; }
+    .estado-suspendido { color:#dc3545; font-weight:500; }
+    .estado-finalizado { color:#0d6efd; font-weight:500; }
+    .estado-pendiente { color:#6c757d; font-weight:400; }
+    .acuerdo-total { color:#198754; font-weight:700; }
+    .acuerdo-parcial { color:#e6852b; font-weight:700; }
+    .acuerdo-vacio { color:#6c757d; font-weight:400; }
+    .table-footer { display:flex; justify-content:space-between; align-items:center; margin-top:1rem; font-size:0.9rem; color:#3a4a5a; flex-wrap:wrap; gap:0.5rem; }
+    .badge-count { background:#0a2f5a; color:#fff; padding:0.2rem 0.8rem; border-radius:60px; font-weight:500; }
+    .pagination-wrapper { display:flex; justify-content:center; align-items:center; gap:0.8rem; margin-top:1.5rem; flex-wrap:wrap; }
+    .pagination-wrapper .page-info { font-size:0.9rem; color:#1e2a3a; font-weight:500; }
+    .pagination-wrapper .btn-pagination { background:#e9edf4; border:none; border-radius:30px; padding:0.4rem 1rem; font-weight:500; color:#0a2f5a; cursor:pointer; transition:background 0.2s; font-size:0.9rem; }
+    .pagination-wrapper .btn-pagination:hover:not(:disabled) { background:#d0d9e6; }
+    .pagination-wrapper .btn-pagination:disabled { opacity:0.5; cursor:not-allowed; }
+    .pagination-wrapper .page-numbers { display:flex; gap:0.3rem; }
+    .pagination-wrapper .page-numbers .page-num { background:#e9edf4; border:none; border-radius:30px; padding:0.4rem 0.8rem; font-weight:500; color:#0a2f5a; cursor:pointer; transition:background 0.2s; font-size:0.9rem; min-width:2.2rem; text-align:center; }
+    .pagination-wrapper .page-numbers .page-num.active { background:#0a2f5a; color:#fff; }
+    .pagination-wrapper .page-numbers .page-num:hover:not(.active) { background:#d0d9e6; }
+    .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,47,90,0.5); z-index:1000; justify-content:center; align-items:center; padding:1rem; }
+    .modal-overlay.active { display:flex; }
+    .modal-box { background:#fff; border-radius:24px; max-width:800px; width:100%; max-height:90vh; padding:2rem 2rem 1.8rem; box-shadow:0 20px 60px rgba(0,0,0,0.3); overflow-y:auto; position:relative; }
+    .modal-box h2 { font-weight:500; color:#0a2f5a; margin-bottom:1.2rem; display:flex; align-items:center; gap:0.5rem; border-bottom:2px solid #e9edf4; padding-bottom:0.7rem; }
+    .modal-close { position:absolute; top:1rem; right:1.5rem; font-size:1.8rem; cursor:pointer; color:#6c8db0; transition:color 0.2s; background:none; border:none; }
+    .modal-close:hover { color:#0a2f5a; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem 1.5rem; }
+    .form-group { display:flex; flex-direction:column; gap:0.3rem; }
+    .form-group label { font-weight:500; font-size:0.9rem; color:#1e2a3a; }
+    .form-group input, .form-group select, .form-group textarea { padding:0.6rem 0.8rem; border:1px solid #bcc9db; border-radius:30px; font-family:'Roboto',sans-serif; font-size:0.95rem; background:#fafcff; transition:border 0.2s; }
+    .form-group textarea { border-radius:18px; resize:vertical; min-height:60px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:#0a2f5a; box-shadow:0 0 0 3px rgba(10,47,90,0.15); }
+    .form-actions { grid-column:1/-1; display:flex; justify-content:flex-end; gap:0.8rem; margin-top:0.5rem; }
+    .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:0.5rem; margin:1rem 0; }
+    .calendar-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; }
+    .calendar-header .month-year { font-size:1.2rem; font-weight:500; color:#0a2f5a; }
+    .calendar-header .btn-nav { background:none; border:none; font-size:1.2rem; cursor:pointer; color:#0a2f5a; padding:0.2rem 0.8rem; border-radius:30px; transition:background 0.2s; }
+    .calendar-header .btn-nav:hover { background:#e9edf4; }
+    .calendar-weekday { font-weight:500; text-align:center; color:#3a4a5a; padding:0.3rem 0; }
+    .calendar-day { background:#f8fafc; border-radius:12px; padding:0.5rem 0.3rem; text-align:center; cursor:pointer; transition:background 0.2s; border:1px solid #e2e8f0; min-height:60px; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+    .calendar-day:hover { background:#e9edf4; }
+    .calendar-day .day-number { font-weight:500; font-size:1.1rem; color:#1e2a3a; }
+    .calendar-day .day-badge { background:#0a2f5a; color:#fff; border-radius:30px; padding:0.05rem 0.5rem; font-size:0.7rem; font-weight:500; margin-top:0.2rem; }
+    .calendar-day.empty { background:transparent; border:none; cursor:default; }
+    .calendar-day.has-audiencias { border-color:#0a2f5a; border-width:2px; }
+    .calendar-detail-panel { margin-top:1rem; border-top:1px solid #e2e8f0; padding-top:1rem; max-height:200px; overflow-y:auto; }
+    .calendar-detail-panel h4 { color:#0a2f5a; margin-bottom:0.5rem; }
+    .calendar-detail-panel ul { list-style:none; padding:0; }
+    .calendar-detail-panel ul li { padding:0.3rem 0; border-bottom:1px solid #f0f0f0; display:flex; justify-content:space-between; font-size:0.9rem; }
+    .calendar-detail-panel ul li .detalle-estado { font-weight:500; }
+    .report-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem; margin-top:0.5rem; }
+    .report-stats h4 { color:#0a2f5a; margin-bottom:0.5rem; border-bottom:1px solid #e9edf4; padding-bottom:0.3rem; }
+    .report-stats ul { list-style:none; padding:0; }
+    .report-stats ul li { display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid #f0f0f0; font-size:0.9rem; }
+    .report-stats ul li .badge-estado { display:inline-block; padding:0.1rem 0.6rem; border-radius:30px; font-weight:500; font-size:0.8rem; }
+    .badge-estado.suspendido { background:#f8d7da; color:#721c24; }
+    .badge-estado.finalizado { background:#cce5ff; color:#004085; }
+    .badge-estado.cumplido { background:#d4edda; color:#155724; }
+    .badge-estado.reprogramado { background:#e8d4f5; color:#4a148c; }
+    .badge-estado.pendiente { background:#e2e3e5; color:#383d41; }
+    .badge-estado.acuerdo-total { background:#d4edda; color:#155724; }
+    .badge-estado.acuerdo-parcial { background:#fff3cd; color:#856404; }
+    .report-month-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; }
+    .print-container { display:none; }
+
+    /* Floating alert */
+    .floating-alert {
+      position:fixed; top:-100px; left:50%; transform:translateX(-50%);
+      background:rgba(176,58,58,0.96); color:#fff; padding:12px 24px; border-radius:60px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.2); z-index:2000;
+      transition:all 0.3s cubic-bezier(0.2,0.9,0.4,1.1);
+      font-size:14px; font-weight:500; display:flex; align-items:center; gap:8px; max-width:90vw;
+    }
+    .floating-alert.success { background:rgba(26,90,58,0.96); }
+    .floating-alert.show { top:20px; }
+
+    @media (max-width:700px) {
+      .container { padding:1.2rem; }
+      .header { flex-direction:column; align-items:stretch; gap:1rem; }
+      .header-actions { justify-content:stretch; }
+      .btn { justify-content:center; flex:1; }
+      .filters-container { flex-direction:column; align-items:stretch; }
+      .filter-group select, .filter-group input { min-width:100%; }
+      .filter-actions { margin-left:0; }
+      th, td { padding:0.5rem 0.4rem; font-size:0.85rem; }
+      .form-grid { grid-template-columns:1fr; }
+      .modal-box { padding:1.5rem; }
+      .pagination-wrapper { gap:0.4rem; }
+      .pagination-wrapper .page-numbers .page-num { padding:0.2rem 0.5rem; min-width:1.8rem; font-size:0.8rem; }
+      .calendar-grid { gap:0.3rem; }
+      .calendar-day { min-height:45px; padding:0.2rem; }
+      .calendar-day .day-number { font-size:0.9rem; }
+      .report-stats { grid-template-columns:1fr; }
+    }
+    @media print {
+      body * { visibility:hidden; }
+      .print-container, .print-container * { visibility:visible; }
+      .print-container { display:block !important; position:absolute; top:0; left:0; width:100%; padding:0.5in 0.3in; background:#fff; font-family:'Roboto',sans-serif; }
+      .print-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.8rem; flex-wrap:wrap; border-bottom:2px solid #0a2f5a; padding-bottom:0.5rem; }
+      .print-header h2 { font-weight:500; color:#0a2f5a; margin:0; font-size:1.2rem; }
+      .print-header .print-datetime { color:#3a4a5a; font-weight:400; font-size:0.85rem; }
+      .print-table-wrap { border:1px solid #000; border-radius:0; overflow:visible !important; width:100%; }
+      .print-table-wrap table { width:100%; border-collapse:collapse; font-size:0.75rem; min-width:0; }
+      .print-table-wrap th, .print-table-wrap td { padding:0.3rem 0.4rem; border:1px solid #000; text-align:left; vertical-align:middle; }
+      .print-table-wrap thead { background:#0a2f5a !important; color:#fff !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+      .print-table-wrap th { background:#0a2f5a !important; color:#fff !important; font-weight:500; }
+      .print-table-wrap td { background:#fff !important; color:#000 !important; }
+      .print-table-wrap table { font-size:0.7rem; }
+      .print-table-wrap th, .print-table-wrap td { padding:0.2rem 0.3rem; }
+      .no-print, .no-print * { display:none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="floating-alert" id="floatingAlert">
+  <i class="fas fa-info-circle"></i>
+  <span id="floatingAlertText"></span>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1><i class="fas fa-gavel"></i> CEJUME Audiencias-Defensoria Civil y Comercial 6<br /><span style="font-size:0.9rem;font-weight:400;color:#4a5a6a;">Ministerio Público de Misiones</span></h1>
+    <div class="header-actions">
+      <span id="statusConexion" class="status-pill"><i class="fas fa-circle"></i> Sin conexión</span>
+      <button class="btn btn-cyan" id="btnConectar"><i class="fas fa-plug"></i> Conectar a Firestore</button>
+      <button class="btn btn-purple" id="btnExportarJSON"><i class="fas fa-download"></i> Exportar JSON</button>
+      <button class="btn btn-warning" id="btnImportarJSON"><i class="fas fa-upload"></i> Importar JSON</button>
+      <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none;" />
+      <button class="btn btn-calendar" id="calendarBtn"><i class="fas fa-calendar-alt"></i> Calendario</button>
+      <button class="btn btn-report" id="reportBtn"><i class="fas fa-chart-pie"></i> Reporte Mensual</button>
+      <button class="btn btn-success" id="newRegBtn"><i class="fas fa-plus-circle"></i> Nuevo Registro</button>
+      <button class="btn btn-primary" id="printBtn"><i class="fas fa-print"></i> Imprimir</button>
+    </div>
+  </div>
+
+  <div class="filters-container no-print">
+    <div class="filter-group">
+      <label for="filterAbogado"><i class="fas fa-user"></i> Abogado</label>
+      <select id="filterAbogado"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterFecha"><i class="fas fa-calendar-day"></i> Fecha</label>
+      <input type="date" id="filterFecha" />
+    </div>
+    <div class="filter-actions">
+      <button class="btn btn-secondary" id="clearFilters"><i class="fas fa-times"></i> Limpiar</button>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table id="tablaAudiencias">
+      <thead><tr><th>Día</th><th>Fecha</th><th>Hora</th><th>Legajo</th><th>Representado/a</th><th>Abogado</th><th>Estado</th><th>Acuerdo</th><th>Observaciones</th><th>Acciones</th></tr></thead>
+      <tbody id="tbodyAudiencias"></tbody>
+    </table>
+  </div>
+
+  <div class="pagination-wrapper no-print" id="paginationWrapper">
+    <button class="btn-pagination" id="prevPage" disabled><i class="fas fa-chevron-left"></i> Anterior</button>
+    <div class="page-numbers" id="pageNumbers"></div>
+    <button class="btn-pagination" id="nextPage">Siguiente <i class="fas fa-chevron-right"></i></button>
+    <span class="page-info" id="pageInfo">Mostrando 0-0 de 0</span>
+  </div>
+
+  <div class="table-footer">
+    <span><i class="fas fa-list-ul"></i> Total: <span class="badge-count" id="totalCount">0</span> audiencias</span>
+    <span class="no-print" style="color:#6c8db0;"><i class="fas fa-info-circle"></i> Los datos se muestran en modo lectura. Use el lápiz para editar.</span>
+  </div>
+</div>
+
+<!-- Impresión -->
+<div class="print-container" id="printContainer">
+  <div class="print-header"><h2><i class="fas fa-gavel"></i> CEJUME · Defensoría Civil 6</h2><span class="print-datetime" id="printDatetime"></span></div>
+  <div class="print-table-wrap">
+    <table><thead><tr><th>Día</th><th>Fecha</th><th>Hora</th><th>Legajo</th><th>Representado/a</th><th>Abogado</th><th>Estado</th><th>Acuerdo</th><th>Observaciones</th></tr></thead><tbody id="printTableBody"></tbody></table>
+  </div>
+</div>
+
+<!-- MODAL NUEVO REGISTRO -->
+<div class="modal-overlay" id="newRegModal">
+  <div class="modal-box">
+    <button class="modal-close" id="newRegClose">&times;</button>
+    <h2><i class="fas fa-plus-circle"></i> Nueva Audiencia</h2>
+    <form id="newRegForm" class="form-grid">
+      <div class="form-group"><label for="newFecha">Fecha</label><input type="date" id="newFecha" required /></div>
+      <div class="form-group"><label for="newHora">Hora</label><input type="time" id="newHora" required /></div>
+      <div class="form-group"><label for="newLegajo">Legajo</label><input type="text" id="newLegajo" placeholder="Ej. 123456/2026" required /></div>
+      <div class="form-group"><label for="newRepresentado">Representado/a</label><input type="text" id="newRepresentado" placeholder="Nombre completo" required /></div>
+      <div class="form-group"><label for="newAbogado">Abogado Asignado</label><select id="newAbogado" required></select></div>
+      <div class="form-group"><label for="newEstado">Estado de Mediación</label>
+        <select id="newEstado" required>
+          <option value="">Seleccionar</option>
+          <option value="suspendido">Suspendido</option>
+          <option value="finalizado">Finalizado</option>
+          <option value="cumplido">Cumplido</option>
+          <option value="reprogramado">Reprogramado</option>
+          <option value="pendiente">Pendiente</option>
+        </select>
+      </div>
+      <div class="form-group"><label for="newAcuerdo">Acuerdo Arribado</label>
+        <select id="newAcuerdo">
+          <option value="">Seleccionar</option>
+          <option value="total">Total</option>
+          <option value="parcial">Parcial</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1;"><label for="newObservaciones">Observaciones</label>
+        <textarea id="newObservaciones" rows="2" placeholder="Notas adicionales..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="newRegCancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL EDITAR REGISTRO -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <button class="modal-close" id="editClose">&times;</button>
+    <h2><i class="fas fa-edit"></i> Editar Audiencia</h2>
+    <form id="editForm" class="form-grid">
+      <input type="hidden" id="editId" />
+      <div class="form-group"><label for="editFecha">Fecha</label><input type="date" id="editFecha" required /></div>
+      <div class="form-group"><label for="editHora">Hora</label><input type="time" id="editHora" required /></div>
+      <div class="form-group"><label for="editLegajo">Legajo</label><input type="text" id="editLegajo" placeholder="Ej. 123456/2026" required /></div>
+      <div class="form-group"><label for="editRepresentado">Representado/a</label><input type="text" id="editRepresentado" placeholder="Nombre completo" required /></div>
+      <div class="form-group"><label for="editAbogado">Abogado Asignado</label><select id="editAbogado" required></select></div>
+      <div class="form-group"><label for="editEstado">Estado de Mediación</label>
+        <select id="editEstado" required>
+          <option value="">Seleccionar</option>
+          <option value="suspendido">Suspendido</option>
+          <option value="finalizado">Finalizado</option>
+          <option value="cumplido">Cumplido</option>
+          <option value="reprogramado">Reprogramado</option>
+          <option value="pendiente">Pendiente</option>
+        </select>
+      </div>
+      <div class="form-group"><label for="editAcuerdo">Acuerdo Arribado</label>
+        <select id="editAcuerdo">
+          <option value="">Seleccionar</option>
+          <option value="total">Total</option>
+          <option value="parcial">Parcial</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1;"><label for="editObservaciones">Observaciones</label>
+        <textarea id="editObservaciones" rows="2" placeholder="Notas adicionales..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="editCancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Actualizar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL CALENDARIO -->
+<div class="modal-overlay" id="calendarModal">
+  <div class="modal-box" style="max-width:850px;">
+    <button class="modal-close" id="calendarClose">&times;</button>
+    <h2><i class="fas fa-calendar-alt"></i> Calendario de Audiencias</h2>
+    <div class="calendar-header">
+      <button class="btn-nav" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+      <span class="month-year" id="monthYear">Mes Año</span>
+      <button class="btn-nav" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+    <div class="calendar-detail-panel"><h4>Detalles del día</h4><div id="calendarDetailList">Seleccione una fecha para ver los detalles.</div></div>
+  </div>
+</div>
+
+<!-- MODAL REPORTE MENSUAL -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal-box" style="max-width:750px;">
+    <button class="modal-close" id="reportClose">&times;</button>
+    <h2><i class="fas fa-chart-pie"></i> Reporte Mensual</h2>
+    <div class="report-month-nav">
+      <button class="btn-nav" id="prevReportMonth"><i class="fas fa-chevron-left"></i></button>
+      <span class="month-year" id="reportMonthYear">Mes Año</span>
+      <button class="btn-nav" id="nextReportMonth"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="report-stats" id="reportStats">
+      <div><h4>Estados de Mediación</h4><ul id="reportEstadoList"></ul></div>
+      <div><h4>Audiencias por Abogado</h4><ul id="reportAbogadoList"></ul></div>
+      <div><h4>Acuerdos Arribados</h4><ul id="reportAcuerdoList"></ul></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ===== CONFIGURACIÓN FIREBASE =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyDSev2t20rZzjQMlX9WZKYYqNSk-B66wEU",
+      authDomain: "cejume.firebaseapp.com",
+      projectId: "cejume",
+      storageBucket: "cejume.firebasestorage.app",
+      messagingSenderId: "372396137836",
+      appId: "1:372396137836:web:9122e0e6d129d9beb5e749"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const coleccionRef = db.collection('audiencia-cejume');
+
+    // ===== CONSTANTES =====
+    const ABOGADOS = [
+      'Gonzalez Juan Jose',
+      'Gonzalez Alberto Misael',
+      'Corrales Alicia Mariela',
+      'Magnani Enzo Luciano',
+      'Rivero Patricia Soledad'
+    ];
+    const DEFAULT_ABOGADO = 'Gonzalez Juan Jose';
+    const RECORDS_PER_PAGE = 10;
+
+    // ===== ESTADO =====
+    let audiencias = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    let filterAbogado = DEFAULT_ABOGADO;
+    let filterFecha = '';
+
+    // Estado de conexión Firestore
+    let conectadoFirestore = false;
+    let estadoDatos = null; // null | 'firestore' | 'importado'
+    let unsubscribe = null;
+
+    // ===== DOM =====
+    const tbody = document.getElementById('tbodyAudiencias');
+    const totalCount = document.getElementById('totalCount');
+    const printTableBody = document.getElementById('printTableBody');
+    const printDatetime = document.getElementById('printDatetime');
+    const pageNumbers = document.getElementById('pageNumbers');
+    const pageInfo = document.getElementById('pageInfo');
+    const prevPageBtn = document.getElementById('prevPage');
+    const nextPageBtn = document.getElementById('nextPage');
+
+    const newRegModal = document.getElementById('newRegModal');
+    const editModal = document.getElementById('editModal');
+    const calendarModal = document.getElementById('calendarModal');
+    const reportModal = document.getElementById('reportModal');
+    const calendarGrid = document.getElementById('calendarGrid');
+    const monthYear = document.getElementById('monthYear');
+    const calendarDetailList = document.getElementById('calendarDetailList');
+    let calendarCurrentDate = new Date();
+
+    const filterAbogadoEl = document.getElementById('filterAbogado');
+    const filterFechaEl = document.getElementById('filterFecha');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+
+    const reportMonthYear = document.getElementById('reportMonthYear');
+    const reportEstadoList = document.getElementById('reportEstadoList');
+    const reportAbogadoList = document.getElementById('reportAbogadoList');
+    const reportAcuerdoList = document.getElementById('reportAcuerdoList');
+    let reportCurrentDate = new Date();
+
+    // ===== AUXILIARES =====
+    function formatearFecha(fechaStr) {
+      if (!fechaStr) return '';
+      const partes = fechaStr.split('-');
+      if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+      return fechaStr;
+    }
+    function obtenerDiaSemana(fechaStr) {
+      if (!fechaStr) return '';
+      const partes = fechaStr.split('-');
+      if (partes.length !== 3) return '';
+      const fecha = new Date(parseInt(partes[0]), parseInt(partes[1])-1, parseInt(partes[2]));
+      const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+      return dias[fecha.getDay()];
+    }
+    function formatearFechaHoraActual() {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2,'0');
+      const mm = String(now.getMonth()+1).padStart(2,'0');
+      const yyyy = now.getFullYear();
+      const hh = String(now.getHours()).padStart(2,'0');
+      const min = String(now.getMinutes()).padStart(2,'0');
+      return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+    }
+    function escapeHtml(texto) {
+      if (!texto) return '';
+      const div = document.createElement('div');
+      div.textContent = texto;
+      return div.innerHTML;
+    }
+    function claseEstado(estado) {
+      if (!estado) return 'estado-pendiente';
+      switch(estado) {
+        case 'cumplido': return 'estado-cumplido';
+        case 'reprogramado': return 'estado-reprogramado';
+        case 'suspendido': return 'estado-suspendido';
+        case 'finalizado': return 'estado-finalizado';
+        default: return 'estado-pendiente';
+      }
+    }
+    function claseAcuerdo(acuerdo) {
+      if (!acuerdo) return 'acuerdo-vacio';
+      if (acuerdo === 'total') return 'acuerdo-total';
+      if (acuerdo === 'parcial') return 'acuerdo-parcial';
+      return 'acuerdo-vacio';
+    }
+    function etiquetaAcuerdo(acuerdo) {
+      if (!acuerdo) return '—';
+      if (acuerdo === 'total') return 'Total';
+      if (acuerdo === 'parcial') return 'Parcial';
+      return acuerdo;
+    }
+    function ordenarAudiencias() {
+      audiencias.sort((a, b) => {
+        if (a.fecha !== b.fecha) return (a.fecha || '').localeCompare(b.fecha || '');
+        return (a.hora || '00:00').localeCompare(b.hora || '00:00');
+      });
+    }
+
+    // ===== ALERTA FLOTANTE =====
+    function mostrarAlerta(mensaje, tipo) {
+      const el = document.getElementById('floatingAlert');
+      const txt = document.getElementById('floatingAlertText');
+      txt.textContent = mensaje;
+      el.classList.remove('success');
+      if (tipo === 'success') el.classList.add('success');
+      el.classList.add('show');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => el.classList.remove('show'), 4000);
+    }
+
+    // ===== FILTRADO Y PAGINACIÓN =====
+    function getFilteredData() {
+      return audiencias.filter(item => {
+        if (filterAbogado && item.abogado !== filterAbogado) return false;
+        if (filterFecha && item.fecha !== filterFecha) return false;
+        return true;
+      });
+    }
+    function getPaginatedData(filtered) {
+      const start = (currentPage - 1) * RECORDS_PER_PAGE;
+      const end = start + RECORDS_PER_PAGE;
+      return filtered.slice(start, end);
+    }
+
+    // ===== RENDERIZADO =====
+    function renderizarTabla() {
+      const filtered = getFilteredData();
+      const total = filtered.length;
+      totalPages = Math.max(1, Math.ceil(total / RECORDS_PER_PAGE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const pageData = getPaginatedData(filtered);
+      let html = '';
+      pageData.forEach((item) => {
+        const fechaFormateada = formatearFecha(item.fecha);
+        const diaSemana = obtenerDiaSemana(item.fecha);
+        const abogado = item.abogado || '—';
+        const estado = item.estado || '';
+        const estadoLabel = estado ? estado.charAt(0).toUpperCase()+estado.slice(1) : '—';
+        const acuerdo = etiquetaAcuerdo(item.acuerdo);
+        const observaciones = item.observaciones || '';
+        const docId = item.id;
+
+        html += `
+          <tr data-id="${docId}">
+            <td><strong>${diaSemana}</strong></td>
+            <td><strong>${fechaFormateada}</strong></td>
+            <td>${item.hora}</td>
+            <td>${escapeHtml(item.legajo)}</td>
+            <td>${escapeHtml(item.representado)}</td>
+            <td>${escapeHtml(abogado)}</td>
+            <td><span class="${claseEstado(estado)}">${estadoLabel}</span></td>
+            <td><span class="${claseAcuerdo(item.acuerdo)}">${acuerdo}</span></td>
+            <td>${escapeHtml(observaciones)}</td>
+            <td>
+              <button class="btn btn-edit btn-sm edit-btn" data-id="${docId}" style="padding:0.3rem 0.7rem; font-size:0.9rem;"><i class="fas fa-pencil-alt"></i> Editar</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+      totalCount.textContent = total;
+
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.dataset.id;
+          abrirEdicion(id);
+        });
+      });
+
+      actualizarPaginacion(total);
+    }
+
+    function actualizarPaginacion(total) {
+      const start = (currentPage - 1) * RECORDS_PER_PAGE + 1;
+      const end = Math.min(currentPage * RECORDS_PER_PAGE, total);
+      pageInfo.textContent = total > 0 ? `Mostrando ${start}-${end} de ${total}` : 'No hay registros';
+      prevPageBtn.disabled = currentPage === 1;
+      nextPageBtn.disabled = currentPage === totalPages;
+
+      let numsHtml = '';
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible/2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+      if (endPage - startPage < maxVisible - 1) startPage = Math.max(1, endPage - maxVisible + 1);
+      for (let i = startPage; i <= endPage; i++) {
+        const active = i === currentPage ? 'active' : '';
+        numsHtml += `<button class="page-num ${active}" data-page="${i}">${i}</button>`;
+      }
+      pageNumbers.innerHTML = numsHtml;
+      document.querySelectorAll('.page-num').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const page = parseInt(this.dataset.page, 10);
+          if (page !== currentPage) { currentPage = page; renderizarTabla(); }
+        });
+      });
+    }
+
+    // ===== CONEXIÓN / DESCONEXIÓN FIRESTORE =====
+    async function conectarFirestore() {
+      const btn = document.getElementById('btnConectar');
+      if (conectadoFirestore) {
+        // Desconectar
+        if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+        conectadoFirestore = false;
+        estadoDatos = audiencias.length > 0 ? 'importado' : null;
+        actualizarBotonConectar();
+        actualizarEstadoConexionUI();
+        mostrarAlerta('Desconectado de Firestore. Datos conservados en memoria.', 'success');
+        return;
+      }
+
+      btn.disabled = true;
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+
+      try {
+        const snap = await coleccionRef.get();
+        const lista = [];
+        snap.forEach(doc => {
+          const data = doc.data();
+          lista.push({
+            id: doc.id,
+            fecha: data.fecha || '',
+            hora: data.hora || '',
+            legajo: data.legajo || '',
+            representado: data.representado || '',
+            abogado: data.abogado || DEFAULT_ABOGADO,
+            estado: data.estado || '',
+            acuerdo: data.acuerdo || '',
+            observaciones: data.observaciones || ''
+          });
+        });
+        audiencias = lista;
+        ordenarAudiencias();
+        conectadoFirestore = true;
+        estadoDatos = 'firestore';
+
+        // Suscripción en tiempo real
+        unsubscribe = coleccionRef.orderBy('fecha', 'asc').onSnapshot((snapshot) => {
+          const lista2 = [];
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            lista2.push({
+              id: doc.id,
+              fecha: data.fecha || '',
+              hora: data.hora || '',
+              legajo: data.legajo || '',
+              representado: data.representado || '',
+              abogado: data.abogado || DEFAULT_ABOGADO,
+              estado: data.estado || '',
+              acuerdo: data.acuerdo || '',
+              observaciones: data.observaciones || ''
+            });
+          });
+          ordenarAudiencias.call(null);
+          audiencias = lista2;
+          ordenarAudiencias();
+          renderizarTabla();
+        }, (error) => {
+          console.error('Error en la suscripción:', error);
+          mostrarAlerta('Error en tiempo real: ' + error.message, 'danger');
+        });
+
+        renderizarTabla();
+        actualizarEstadoConexionUI();
+        mostrarAlerta(`Conectado. ${audiencias.length} audiencias cargadas desde Firestore.`, 'success');
+      } catch (e) {
+        console.error(e);
+        mostrarAlerta('Error al conectar: ' + e.message, 'danger');
+      } finally {
+        btn.disabled = false;
+        actualizarBotonConectar();
+      }
+    }
+
+    function actualizarBotonConectar() {
+      const btn = document.getElementById('btnConectar');
+      if (conectadoFirestore) {
+        btn.innerHTML = '<i class="fas fa-plug"></i> Desconectar';
+        btn.classList.remove('btn-cyan');
+        btn.classList.add('btn-danger');
+      } else {
+        btn.innerHTML = '<i class="fas fa-plug"></i> Conectar a Firestore';
+        btn.classList.remove('btn-danger');
+        btn.classList.add('btn-cyan');
+      }
+    }
+
+    function actualizarEstadoConexionUI() {
+      const pill = document.getElementById('statusConexion');
+      if (conectadoFirestore) {
+        pill.className = 'status-pill connected';
+        pill.innerHTML = `<i class="fas fa-circle"></i> Firestore · ${audiencias.length}`;
+      } else if (estadoDatos === 'importado') {
+        pill.className = 'status-pill imported';
+        pill.innerHTML = `<i class="fas fa-circle"></i> Datos locales · ${audiencias.length}`;
+      } else {
+        pill.className = 'status-pill';
+        pill.innerHTML = `<i class="fas fa-circle"></i> Sin conexión`;
+      }
+    }
+
+    // ===== EXPORTAR JSON (NO elimina nada en Firestore) =====
+    async function exportarJSON() {
+      const btn = document.getElementById('btnExportarJSON');
+      const textoOriginal = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exportando...';
+
+      try {
+        let registrosExport = [];
+
+        if (conectadoFirestore) {
+          // Lectura directa del servidor, sin eliminar nada
+          const snap = await coleccionRef.get();
+          snap.forEach(doc => {
+            registrosExport.push({ id: doc.id, data: doc.data() });
+          });
+        } else {
+          // Exportar memoria
+          registrosExport = audiencias.map(a => {
+            const { id, ...rest } = a;
+            return { id: id || null, data: rest };
+          });
+        }
+
+        if (registrosExport.length === 0) {
+          mostrarAlerta('No hay registros para exportar.', 'danger');
+          return;
+        }
+
+        const jsonString = JSON.stringify(registrosExport, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const fechaStr = new Date().toISOString().slice(0, 10);
+        const baseLabel = estadoDatos || 'memoria';
+        a.download = `cejume_audiencias_${baseLabel}_${fechaStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        mostrarAlerta(`Exportación exitosa: ${registrosExport.length} registros. La base original en Firestore permanece intacta.`, 'success');
+      } catch (e) {
+        console.error(e);
+        mostrarAlerta('Error al exportar: ' + e.message, 'danger');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = textoOriginal;
+      }
+    }
+
+    // ===== IMPORTAR JSON =====
+    function normalizarRegistro(r, index) {
+      if (!r || typeof r !== 'object') return null;
+      let base = null;
+      // Formato Firestore: { id, data: {...} }
+      if (r.data && typeof r.data === 'object' && !Array.isArray(r.data)) {
+        const id = r.id || ('import_' + Date.now() + '_' + index);
+        base = { id, ...r.data };
+      } else {
+        // Formato plano
+        base = { ...r };
+        if (!base.id) base.id = 'import_' + Date.now() + '_' + index;
+      }
+      // Normalizar campos
+      return {
+        id: base.id,
+        fecha: base.fecha || '',
+        hora: base.hora || '',
+        legajo: base.legajo || '',
+        representado: base.representado || '',
+        abogado: base.abogado || DEFAULT_ABOGADO,
+        estado: base.estado || '',
+        acuerdo: base.acuerdo || '',
+        observaciones: base.observaciones || ''
+      };
+    }
+
+    function importarJSON(archivo) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const contenido = JSON.parse(e.target.result);
+          let registros = [];
+          if (contenido && Array.isArray(contenido.datos)) {
+            registros = contenido.datos;
+          } else if (Array.isArray(contenido)) {
+            registros = contenido;
+          } else {
+            throw new Error("Formato JSON inválido. Se esperaba un array o { datos: [...] }.");
+          }
+
+          registros = registros
+            .map((r, i) => normalizarRegistro(r, i))
+            .filter(r => r !== null);
+
+          if (registros.length === 0) {
+            mostrarAlerta('El archivo JSON no contiene registros válidos.', 'danger');
+            return;
+          }
+
+          // Detener listener si estaba conectado
+          if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+          conectadoFirestore = false;
+          estadoDatos = 'importado';
+
+          audiencias = registros;
+          ordenarAudiencias();
+          currentPage = 1;
+          renderizarTabla();
+          actualizarBotonConectar();
+          actualizarEstadoConexionUI();
+          mostrarAlerta(`Importación exitosa: ${registros.length} registros cargados en memoria. Firestore NO fue modificado.`, 'success');
+        } catch (err) {
+          console.error(err);
+          mostrarAlerta('Error al importar JSON: ' + err.message, 'danger');
+        }
+      };
+      reader.onerror = () => mostrarAlerta('Error al leer el archivo.', 'danger');
+      reader.readAsText(archivo);
+    }
+
+    // ===== OPERACIONES CRUD (Firestore o memoria) =====
+    async function agregarRegistro(datos) {
+      if (conectadoFirestore) {
+        try {
+          await coleccionRef.add(datos);
+        } catch (error) {
+          console.error('Error al agregar:', error);
+          mostrarAlerta('Error al guardar el registro en Firestore.', 'danger');
+        }
+      } else {
+        const id = 'local_' + Date.now();
+        audiencias.push({ id, ...datos });
+        ordenarAudiencias();
+        renderizarTabla();
+        actualizarEstadoConexionUI();
+      }
+    }
+
+    async function actualizarRegistro(id, datos) {
+      if (conectadoFirestore) {
+        try {
+          await coleccionRef.doc(id).update(datos);
+        } catch (error) {
+          console.error('Error al actualizar:', error);
+          mostrarAlerta('Error al actualizar el registro en Firestore.', 'danger');
+        }
+      } else {
+        const idx = audiencias.findIndex(a => a.id === id);
+        if (idx !== -1) {
+          audiencias[idx] = { ...audiencias[idx], ...datos };
+          ordenarAudiencias();
+          renderizarTabla();
+          actualizarEstadoConexionUI();
+        }
+      }
+    }
+
+    async function obtenerRegistro(id) {
+      // Buscar en memoria (funciona tanto en modo importado como conectado)
+      const local = audiencias.find(a => a.id === id);
+      if (local) return local;
+      // Fallback a Firestore
+      try {
+        const doc = await coleccionRef.doc(id).get();
+        if (doc.exists) return { id: doc.id, ...doc.data() };
+        return null;
+      } catch (error) {
+        console.error('Error al obtener:', error);
+        return null;
+      }
+    }
+
+    // ===== CALENDARIO =====
+    function renderCalendar(year, month) {
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const countByDate = {};
+      audiencias.forEach(item => { if (item.fecha) countByDate[item.fecha] = (countByDate[item.fecha] || 0) + 1; });
+      let html = '';
+      const weekDays = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      weekDays.forEach(d => html += `<div class="calendar-weekday">${d}</div>`);
+      for (let i = 0; i < firstDay; i++) html += `<div class="calendar-day empty"></div>`;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const count = countByDate[dateStr] || 0;
+        const hasAudiencias = count > 0;
+        html += `<div class="calendar-day ${hasAudiencias ? 'has-audiencias' : ''}" data-date="${dateStr}" data-count="${count}"><div class="day-number">${d}</div>${count > 0 ? `<div class="day-badge">${count}</div>` : ''}</div>`;
+      }
+      calendarGrid.innerHTML = html;
+      monthYear.textContent = `${new Date(year, month).toLocaleString('es', { month: 'long', year: 'numeric' })}`;
+      document.querySelectorAll('.calendar-day.has-audiencias').forEach(el => {
+        el.addEventListener('click', function() {
+          const date = this.dataset.date;
+          const audienciasDelDia = audiencias.filter(item => item.fecha === date);
+          if (audienciasDelDia.length === 0) { calendarDetailList.innerHTML = 'No hay audiencias en esta fecha.'; return; }
+          let html2 = '<ul>';
+          audienciasDelDia.forEach(item => {
+            const estadoLabel = item.estado ? item.estado.charAt(0).toUpperCase()+item.estado.slice(1) : '—';
+            const clase = claseEstado(item.estado);
+            const acuerdoLabel = etiquetaAcuerdo(item.acuerdo);
+            const claseAc = claseAcuerdo(item.acuerdo);
+            html2 += `<li><span>${escapeHtml(item.hora)} - ${escapeHtml(item.representado)} (${escapeHtml(item.legajo)})</span><span class="detalle-estado ${clase}">${estadoLabel}</span> <span class="${claseAc}">${acuerdoLabel}</span></li>`;
+          });
+          html2 += '</ul>';
+          calendarDetailList.innerHTML = html2;
+        });
+      });
+    }
+
+    function abrirCalendario() {
+      const now = new Date();
+      calendarCurrentDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      renderCalendar(calendarCurrentDate.getFullYear(), calendarCurrentDate.getMonth());
+      calendarDetailList.innerHTML = 'Seleccione una fecha para ver los detalles.';
+      calendarModal.classList.add('active');
+    }
+    function cerrarCalendario() { calendarModal.classList.remove('active'); }
+    document.getElementById('prevMonth').addEventListener('click', function() {
+      calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() - 1);
+      renderCalendar(calendarCurrentDate.getFullYear(), calendarCurrentDate.getMonth());
+      calendarDetailList.innerHTML = 'Seleccione una fecha para ver los detalles.';
+    });
+    document.getElementById('nextMonth').addEventListener('click', function() {
+      calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + 1);
+      renderCalendar(calendarCurrentDate.getFullYear(), calendarCurrentDate.getMonth());
+      calendarDetailList.innerHTML = 'Seleccione una fecha para ver los detalles.';
+    });
+
+    // ===== REPORTE MENSUAL =====
+    function generarReporte(year, month) {
+      const mesStr = `${year}-${String(month+1).padStart(2,'0')}`;
+      const audienciasMes = audiencias.filter(item => item.fecha && item.fecha.startsWith(mesStr));
+      const estados = {}, abogados = {}, acuerdos = { total: 0, parcial: 0 };
+      audienciasMes.forEach(item => {
+        const estado = item.estado || 'sin estado';
+        estados[estado] = (estados[estado] || 0) + 1;
+        const abog = item.abogado || 'No asignado';
+        abogados[abog] = (abogados[abog] || 0) + 1;
+        const acuerdo = item.acuerdo || '';
+        if (acuerdo === 'total') acuerdos.total++;
+        else if (acuerdo === 'parcial') acuerdos.parcial++;
+      });
+      const estadoLabels = { 'suspendido':'Suspendido','finalizado':'Finalizado','cumplido':'Cumplido','reprogramado':'Reprogramado','pendiente':'Pendiente','sin estado':'Sin estado' };
+      const estadoColors = { 'suspendido':'suspendido','finalizado':'finalizado','cumplido':'cumplido','reprogramado':'reprogramado','pendiente':'pendiente','sin estado':'pendiente' };
+      let estadoHtml = '';
+      for (const [key, count] of Object.entries(estados)) {
+        const label = estadoLabels[key] || key;
+        const color = estadoColors[key] || 'pendiente';
+        estadoHtml += `<li><span>${label}</span> <span class="badge-estado ${color}">${count}</span></li>`;
+      }
+      if (Object.keys(estados).length === 0) estadoHtml = '<li>No hay audiencias este mes.</li>';
+      reportEstadoList.innerHTML = estadoHtml;
+
+      let abogadoHtml = '';
+      for (const [key, count] of Object.entries(abogados)) {
+        abogadoHtml += `<li><span>${escapeHtml(key)}</span> <span class="badge-estado pendiente">${count}</span></li>`;
+      }
+      if (Object.keys(abogados).length === 0) abogadoHtml = '<li>No hay audiencias este mes.</li>';
+      reportAbogadoList.innerHTML = abogadoHtml;
+
+      let acuerdoHtml = '';
+      const totalAcuerdos = acuerdos.total + acuerdos.parcial;
+      if (totalAcuerdos === 0) {
+        acuerdoHtml = '<li>No hay acuerdos registrados este mes.</li>';
+      } else {
+        acuerdoHtml += `<li><span>Total</span> <span class="badge-estado acuerdo-total">${acuerdos.total}</span></li>`;
+        acuerdoHtml += `<li><span>Parcial</span> <span class="badge-estado acuerdo-parcial">${acuerdos.parcial}</span></li>`;
+      }
+      reportAcuerdoList.innerHTML = acuerdoHtml;
+      reportMonthYear.textContent = `${new Date(year, month).toLocaleString('es', { month: 'long', year: 'numeric' })}`;
+    }
+
+    function abrirReporte() {
+      const now = new Date();
+      reportCurrentDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      generarReporte(reportCurrentDate.getFullYear(), reportCurrentDate.getMonth());
+      reportModal.classList.add('active');
+    }
+    function cerrarReporte() { reportModal.classList.remove('active'); }
+    document.getElementById('prevReportMonth').addEventListener('click', function() {
+      reportCurrentDate.setMonth(reportCurrentDate.getMonth() - 1);
+      generarReporte(reportCurrentDate.getFullYear(), reportCurrentDate.getMonth());
+    });
+    document.getElementById('nextReportMonth').addEventListener('click', function() {
+      reportCurrentDate.setMonth(reportCurrentDate.getMonth() + 1);
+      generarReporte(reportCurrentDate.getFullYear(), reportCurrentDate.getMonth());
+    });
+
+    // ===== MODAL NUEVO REGISTRO =====
+    function abrirNuevoRegistro() {
+      const select = document.getElementById('newAbogado');
+      select.innerHTML = '';
+      ABOGADOS.forEach(nombre => {
+        const selected = (nombre === DEFAULT_ABOGADO) ? 'selected' : '';
+        select.innerHTML += `<option value="${escapeHtml(nombre)}" ${selected}>${escapeHtml(nombre)}</option>`;
+      });
+      document.getElementById('newRegForm').reset();
+      select.value = DEFAULT_ABOGADO;
+      document.getElementById('newAcuerdo').value = '';
+      document.getElementById('newObservaciones').value = '';
+      newRegModal.classList.add('active');
+    }
+
+    function cerrarNuevoRegistro() { newRegModal.classList.remove('active'); }
+
+    async function guardarNuevoRegistro(e) {
+      e.preventDefault();
+      const fecha = document.getElementById('newFecha').value;
+      const hora = document.getElementById('newHora').value;
+      const legajo = document.getElementById('newLegajo').value.trim();
+      const representado = document.getElementById('newRepresentado').value.trim();
+      const abogado = document.getElementById('newAbogado').value;
+      const estado = document.getElementById('newEstado').value;
+      const acuerdo = document.getElementById('newAcuerdo').value;
+      const observaciones = document.getElementById('newObservaciones').value.trim();
+      if (!fecha || !hora || !legajo || !representado || !abogado || !estado) {
+        mostrarAlerta('Todos los campos son obligatorios excepto Acuerdo y Observaciones.', 'danger');
+        return;
+      }
+      await agregarRegistro({ fecha, hora, legajo, representado, abogado, estado, acuerdo, observaciones });
+      cerrarNuevoRegistro();
+      if (!conectadoFirestore) mostrarAlerta('Registro guardado en memoria.', 'success');
+    }
+
+    // ===== MODAL EDITAR =====
+    async function abrirEdicion(id) {
+      const datos = await obtenerRegistro(id);
+      if (!datos) { mostrarAlerta('No se encontró el registro.', 'danger'); return; }
+      document.getElementById('editId').value = id;
+      document.getElementById('editFecha').value = datos.fecha || '';
+      document.getElementById('editHora').value = datos.hora || '';
+      document.getElementById('editLegajo').value = datos.legajo || '';
+      document.getElementById('editRepresentado').value = datos.representado || '';
+      document.getElementById('editEstado').value = datos.estado || '';
+      document.getElementById('editAcuerdo').value = datos.acuerdo || '';
+      document.getElementById('editObservaciones').value = datos.observaciones || '';
+
+      const select = document.getElementById('editAbogado');
+      select.innerHTML = '';
+      ABOGADOS.forEach(nombre => {
+        const selected = (nombre === datos.abogado) ? 'selected' : '';
+        select.innerHTML += `<option value="${escapeHtml(nombre)}" ${selected}>${escapeHtml(nombre)}</option>`;
+      });
+
+      editModal.classList.add('active');
+    }
+
+    function cerrarEdicion() { editModal.classList.remove('active'); }
+
+    async function guardarEdicion(e) {
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      const fecha = document.getElementById('editFecha').value;
+      const hora = document.getElementById('editHora').value;
+      const legajo = document.getElementById('editLegajo').value.trim();
+      const representado = document.getElementById('editRepresentado').value.trim();
+      const abogado = document.getElementById('editAbogado').value;
+      const estado = document.getElementById('editEstado').value;
+      const acuerdo = document.getElementById('editAcuerdo').value;
+      const observaciones = document.getElementById('editObservaciones').value.trim();
+      if (!fecha || !hora || !legajo || !representado || !abogado || !estado) {
+        mostrarAlerta('Todos los campos son obligatorios excepto Acuerdo y Observaciones.', 'danger');
+        return;
+      }
+      await actualizarRegistro(id, { fecha, hora, legajo, representado, abogado, estado, acuerdo, observaciones });
+      cerrarEdicion();
+      if (!conectadoFirestore) mostrarAlerta('Registro actualizado en memoria.', 'success');
+    }
+
+    // ===== IMPRESIÓN =====
+    function imprimir() {
+      printDatetime.textContent = `Impreso: ${formatearFechaHoraActual()}`;
+      let html = '';
+      audiencias.forEach(item => {
+        const fechaFormateada = formatearFecha(item.fecha);
+        const diaSemana = obtenerDiaSemana(item.fecha);
+        const abogado = item.abogado || '—';
+        const estado = item.estado ? item.estado.charAt(0).toUpperCase()+item.estado.slice(1) : '—';
+        const acuerdo = etiquetaAcuerdo(item.acuerdo);
+        const claseAc = claseAcuerdo(item.acuerdo);
+        const observaciones = item.observaciones || '';
+        html += `<tr><td>${diaSemana}</td><td>${fechaFormateada}</td><td>${item.hora}</td><td>${escapeHtml(item.legajo)}</td><td>${escapeHtml(item.representado)}</td><td>${escapeHtml(abogado)}</td><td>${escapeHtml(estado)}</td><td class="${claseAc}">${escapeHtml(acuerdo)}</td><td>${escapeHtml(observaciones)}</td></tr>`;
+      });
+      printTableBody.innerHTML = html;
+      window.print();
+    }
+
+    // ===== FILTROS =====
+    function aplicarFiltros() {
+      filterAbogado = filterAbogadoEl.value;
+      filterFecha = filterFechaEl.value;
+      currentPage = 1;
+      renderizarTabla();
+    }
+    function limpiarFiltros() {
+      filterAbogadoEl.value = '';
+      filterFechaEl.value = '';
+      filterAbogado = '';
+      filterFecha = '';
+      currentPage = 1;
+      renderizarTabla();
+    }
+
+    // ===== INICIALIZACIÓN =====
+    function init() {
+      let options = '<option value="">Todos</option>';
+      ABOGADOS.forEach(nombre => {
+        const selected = (nombre === DEFAULT_ABOGADO) ? 'selected' : '';
+        options += `<option value="${escapeHtml(nombre)}" ${selected}>${escapeHtml(nombre)}</option>`;
+      });
+      filterAbogadoEl.innerHTML = options;
+      filterAbogado = DEFAULT_ABOGADO;
+      filterFechaEl.value = '';
+      filterFecha = '';
+
+      // No se conecta automáticamente: el usuario debe pulsar "Conectar a Firestore"
+      renderizarTabla();
+      actualizarBotonConectar();
+      actualizarEstadoConexionUI();
+
+      prevPageBtn.addEventListener('click', function() { if (currentPage > 1) { currentPage--; renderizarTabla(); } });
+      nextPageBtn.addEventListener('click', function() { if (currentPage < totalPages) { currentPage++; renderizarTabla(); } });
+
+      filterAbogadoEl.addEventListener('change', aplicarFiltros);
+      filterFechaEl.addEventListener('change', aplicarFiltros);
+      clearFiltersBtn.addEventListener('click', limpiarFiltros);
+
+      document.getElementById('newRegBtn').addEventListener('click', abrirNuevoRegistro);
+      document.getElementById('newRegClose').addEventListener('click', cerrarNuevoRegistro);
+      document.getElementById('newRegCancel').addEventListener('click', cerrarNuevoRegistro);
+      document.getElementById('newRegForm').addEventListener('submit', guardarNuevoRegistro);
+
+      document.getElementById('editClose').addEventListener('click', cerrarEdicion);
+      document.getElementById('editCancel').addEventListener('click', cerrarEdicion);
+      document.getElementById('editForm').addEventListener('submit', guardarEdicion);
+
+      document.getElementById('printBtn').addEventListener('click', imprimir);
+
+      document.getElementById('calendarBtn').addEventListener('click', abrirCalendario);
+      document.getElementById('calendarClose').addEventListener('click', cerrarCalendario);
+
+      document.getElementById('reportBtn').addEventListener('click', abrirReporte);
+      document.getElementById('reportClose').addEventListener('click', cerrarReporte);
+
+      // Botones Firestore
+      document.getElementById('btnConectar').addEventListener('click', conectarFirestore);
+      document.getElementById('btnExportarJSON').addEventListener('click', exportarJSON);
+      document.getElementById('btnImportarJSON').addEventListener('click', () => document.getElementById('importJsonInput').click());
+      document.getElementById('importJsonInput').addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          importarJSON(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+
+      document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
+
+</body>
+</html>
