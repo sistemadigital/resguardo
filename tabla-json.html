@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Expedientes - Visor / Exportador</title>
+    
+    <!-- Firebase (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+    
+    <style>
+        /* ----- MODERN MINIMALIST RESET & VARIABLES ----- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-body: #F8FAFC; --bg-surface: #FFFFFF; --bg-surface-soft: #F1F5F9;
+            --border-light: #E2E8F0; --border-focus: #3B82F6; --primary: #2563EB;
+            --primary-dark: #1E40AF; --primary-soft: #EFF6FF; --text-main: #0F172A;
+            --text-muted: #475569; --text-light: #64748B; --success: #10B981;
+            --warning: #F59E0B; --danger: #EF4444; --info: #06B6D4; --gray-mid: #6B7280;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.02); --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04); 
+            --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body { font-family: var(--font-sans); background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+        .header { background: var(--bg-surface); border-bottom: 1px solid var(--border-light); padding: 14px 24px; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 100%; margin: 0 auto; gap: 16px; flex-wrap: wrap; }
+        
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .logo { font-size: 1.25rem; font-weight: 700; color: var(--primary); letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; animation: slideInLeft 0.8s ease-out forwards; }
+
+        .container { max-width: 100%; margin: 0; padding: 16px 20px; }
+
+        /* ----- COMPACT FILTERS ----- */
+        .filters-section { background: var(--bg-surface); padding: 18px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-light); margin-bottom: 24px; box-shadow: var(--shadow-sm); }
+        .search-main-row { display: flex; gap: 12px; align-items: center; width: 100%; flex-wrap: wrap; }
+        .search-wrapper { flex: 1; min-width: 280px; display: flex; gap: 8px; }
+        
+        .advanced-filters-panel { max-height: 0; overflow: hidden; opacity: 0; transition: var(--transition); margin-top: 0; }
+        .advanced-filters-panel.show { max-height: 500px; opacity: 1; margin-top: 18px; border-top: 1px solid var(--border-light); padding-top: 18px; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; width: 100%; }
+        
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-label { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .input, .dropdown { border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 9px 12px; background-color: var(--bg-surface); color: var(--text-main); font-size: 0.88rem; width: 100%; transition: var(--transition); font-family: var(--font-sans); height: 40px; }
+        .input:focus, .dropdown:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08); }
+
+        /* ----- BORDE AZUL CELESTE PARA EL CAMPO DE BÚSQUEDA ----- */
+        #buscador {
+            border-color: #87CEEB; /* azul celeste */
+        }
+
+        /* ----- BUTTONS ----- */
+        .button { background-color: var(--primary); color: white; border: none; border-radius: var(--radius-sm); padding: 8px 16px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-sans); height: 40px; }
+        .button:hover { background-color: var(--primary-dark); }
+        .button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .button-success { background-color: var(--success); } .button-success:hover:not(:disabled) { background-color: #059669; }
+        .button-secondary { background-color: var(--bg-surface-soft); color: var(--text-muted); border: 1px solid var(--border-light); } .button-secondary:hover:not(:disabled) { background-color: #E2E8F0; color: var(--text-main); }
+        .button-danger { background-color: var(--danger); } .button-danger:hover:not(:disabled) { background-color: #DC2626; }
+        .button-toggle.active { background-color: var(--primary-soft); color: var(--primary); border-color: var(--primary); }
+        .button-warning { background-color: var(--warning); } .button-warning:hover:not(:disabled) { background-color: #D97706; }
+        .button-purple { background-color: #8b5cf6; } .button-purple:hover:not(:disabled) { background-color: #7c3aed; }
+        .button-cyan { background-color: #06B6D4; } .button-cyan:hover:not(:disabled) { background-color: #0891B2; }
+
+        /* ----- LAYOUT: TABLA + PANEL LATERAL ----- */
+        .layout-wrapper { 
+            display: flex; 
+            gap: 24px; 
+            align-items: flex-start; 
+            width: 100%; 
+        }
+        .table-section { 
+            flex: 1; 
+            min-width: 0; 
+            background: var(--bg-surface); 
+            border-radius: var(--radius-md); 
+            border: 1px solid var(--border-light); 
+            overflow: hidden; 
+            box-shadow: var(--shadow-sm); 
+        }
+        .table-title { font-size: 1rem; font-weight: 600; padding: 14px 20px; background: var(--bg-surface-soft); border-bottom: 1px solid var(--border-light); color: var(--text-main); display:flex; justify-content:space-between; align-items:center; gap:12px; }
+        .status-pill { font-size: 0.72rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; background: #FEE2E2; color: #991B1B; display: inline-flex; align-items: center; gap: 6px; }
+        .status-pill.connected { background: #D1FAE5; color: #065F46; }
+        .status-pill.imported { background: #FEF3C7; color: #92400E; }
+        .table-wrap { overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        .data-table th { text-align: left; background-color: var(--bg-surface-soft); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); padding: 12px 16px; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
+        .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-light); color: var(--text-main); font-size: 0.85rem; vertical-align: middle; transition: var(--transition); }
+        .data-table tr { cursor: pointer; }
+        .data-table tr:hover td { background-color: #F8FAFC; }
+        
+        .data-table tr.row-active td { font-weight: 500; }
+        .data-table tr.row-active[data-prioridad="prioridad-alta"] td { background-color: rgba(239, 68, 68, 0.15) !important; }
+        .data-table tr.row-active[data-prioridad="prioridad-media"] td { background-color: rgba(245, 158, 11, 0.15) !important; }
+        .data-table tr.row-active[data-prioridad="prioridad-baja"] td { background-color: rgba(16, 185, 129, 0.15) !important; }
+        .data-table tr.row-active[data-prioridad="prioridad-ninguna"] td { background-color: rgba(100, 116, 139, 0.15) !important; }
+
+        .prioridad-pill { display: inline-block; padding: 4px 10px; border-radius: 40px; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; background-color: var(--gray-mid); color: white; }
+        .prioridad-alta { background-color: var(--danger); } .prioridad-media { background-color: var(--warning); } .prioridad-baja { background-color: var(--success); } .prioridad-ninguna { background-color: var(--text-light); }
+        .prioridad-texto { font-size: 0.88rem; font-weight: 600; padding: 6px 12px; border-radius: 20px; margin-bottom: 16px; display: inline-block; }
+        .prioridad-texto.alta { background: rgba(239, 68, 68, 0.08); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.15); } .prioridad-texto.media { background: rgba(245, 158, 11, 0.08); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.15); } .prioridad-texto.baja { background: rgba(16, 185, 129, 0.08); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.15); } .prioridad-texto.ninguna { background: rgba(100, 116, 139, 0.08); color: var(--text-muted); border: 1px solid rgba(100, 116, 139, 0.15); }
+
+        #paginacion-container { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; margin-top: 20px; background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border-light); flex-wrap: wrap; gap: 10px; }
+        .page-info { font-size: 0.82rem; color: var(--text-muted); }
+
+        /* ----- PANEL LATERAL DE DETALLE ----- */
+        #modalVer { 
+            width: 480px; 
+            flex-shrink: 0; 
+            position: sticky; 
+            top: 85px; 
+            height: calc(100vh - 110px); 
+            background: var(--bg-surface); 
+            border-radius: var(--radius-md); 
+            border: 1px solid var(--border-light); 
+            border-left: 4px solid var(--primary); 
+            box-shadow: var(--shadow-md); 
+            overflow: hidden; 
+            display: none; 
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        #modalVer.show { display: flex; }
+
+        #modalVer .content { 
+            height: 100%; 
+            width: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            background: transparent; 
+            border: none; 
+            box-shadow: none; 
+            border-radius: 0; 
+        }
+
+        @media (max-width: 1200px) {
+            #modalVer { 
+                position: fixed; 
+                inset: 0; 
+                width: 100vw; 
+                height: 100vh; 
+                top: 0; 
+                left: 0; 
+                background: rgba(15, 23, 42, 0.5); 
+                backdrop-filter: blur(4px); 
+                z-index: 1000; 
+                border-radius: 0; 
+                border: none; 
+                justify-content: flex-end; 
+                align-items: stretch; 
+                display: none; 
+            }
+            #modalVer.show { display: flex; }
+            #modalVer .content { 
+                width: 450px; 
+                max-width: 100vw; 
+                background: var(--bg-surface); 
+                height: 100%; 
+                animation: slideInPanel 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+                border-radius: 0; 
+                border-left: 4px solid var(--primary);
+            }
+            @keyframes slideInPanel { 
+                from { opacity: 0; transform: translateX(30px); } 
+                to { opacity: 1; transform: translateX(0); } 
+            }
+        }
+
+        .modal-header { position: sticky; top: 0; background: var(--bg-surface); border-bottom: 1px solid var(--border-light); padding: 16px 20px; font-size: 1.05rem; font-weight: 600; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; gap: 12px; z-index: 5; }
+        .modal-header i { color: var(--primary); font-size: 1.2rem; }
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+        .controls-form { background: var(--bg-surface-soft); padding: 14px 20px; border-top: 1px solid var(--border-light); display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; }
+
+        /* ----- DETALLES TEXT STYLING ----- */
+        #verContenido p { margin-bottom: 12px; font-size: 0.9rem; color: var(--text-main); line-height: 1.6; }
+        #verContenido p strong { color: var(--text-muted); font-weight: 600; display: inline-block; min-width: 150px; }
+        #verContenido ul { margin-left: 20px; margin-bottom: 14px; list-style-type: square; color: var(--text-muted); font-size: 0.88rem; }
+        #verContenido div { background: var(--bg-surface-soft); padding: 12px; border-radius: var(--radius-sm); font-size: 0.88rem; margin-top: 4px; margin-bottom: 14px; border: 1px solid var(--border-light); }
+
+        .field { margin-bottom: 16px; }
+        .field label { font-weight: 600; color: var(--text-main); font-size: 0.82rem; margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.3px; }
+        #formCausa input, #formCausa textarea, #formCausa select { width: 100%; padding: 9px 12px; border: 1px solid var(--border-light); border-radius: var(--radius-sm); font-size: 0.9rem; background: var(--bg-surface); transition: var(--transition); }
+        #formCausa input:focus, #formCausa textarea:focus, #formCausa select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.06); }
+        .error-message { color: var(--danger); font-size: 0.72rem; margin-top: 4px; display: none; }
+        .field.error .error-message { display: block; } .field.error input, .field.error textarea { border-color: var(--danger); background-color: #FEF2F2; }
+
+        .tabs-nav { display: flex; gap: 4px; border-bottom: 1px solid var(--border-light); margin-bottom: 20px; overflow-x: auto; flex-wrap: nowrap; }
+        .tab-button { background: transparent; border: none; padding: 8px 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; border-radius: var(--radius-sm) var(--radius-sm) 0 0; transition: var(--transition); white-space: nowrap; }
+        .tab-button.active { color: var(--primary); background: var(--primary-soft); border-bottom: 2px solid var(--primary); font-weight: 600; }
+        .tab-content { display: none; } .tab-content.active { display: block; }
+
+        #modalVer .modal-body textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: var(--radius-sm); font-family: var(--font-sans); font-size: 0.85rem; resize: vertical; min-height: 70px; background: var(--bg-surface); }
+        #agregarNota { margin: 16px 0; background: var(--bg-surface-soft); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); }
+        #agregarNota label { font-weight: 600; margin-bottom: 8px; display: block; color: var(--text-main); font-size: 0.85rem; }
+        .notes-history { max-height: 280px; overflow-y: auto; margin-top: 8px; padding-right: 4px; }
+        .note-item { background: var(--bg-surface); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 10px; border-left: 3px solid var(--primary); box-shadow: var(--shadow-sm); border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); }
+        .note-meta { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px; }
+        .note-text { font-size: 0.85rem; line-height: 1.4; color: var(--text-main); }
+        #cargarMasNotas { margin-top: 8px; width: 100%; justify-content: center; }
+
+        .btn-eliminar-audiencia, .btn-eliminar-diligencia, .btn-eliminar-costas { background: var(--danger); color: white; border: none; border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; font-size: 0.75rem; height: 38px; }
+        .btn-audiencia, .btn-diligencia { background: var(--success); border: none; padding: 8px 14px; border-radius: var(--radius-sm); color: white; cursor: pointer; font-size: 0.8rem; font-weight: 500; margin-top: 8px; }
+        .audiencia-item, .diligencia-item, .costas-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .audiencia-item input, .diligencia-item input, .costas-item input, .costas-item select { flex: 1; min-width: 140px; height: 38px; }
+        .editor-toolbar { display: flex; gap: 6px; margin-bottom: 10px; background: var(--bg-surface-soft); border-radius: var(--radius-sm); padding: 6px 10px; border: 1px solid var(--border-light); flex-wrap: wrap; }
+        .editor-toolbar button { background: white; border: 1px solid var(--border-light); border-radius: 4px; padding: 4px 10px; cursor: pointer; font-weight: 500; transition: all 0.1s; }
+        .editor-toolbar button:hover { background: var(--primary-soft); }
+        #observaciones-editor { min-height: 130px; border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 12px; background: white; line-height: 1.5; }
+
+        .floating-alert { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background-color: var(--danger); color: white; padding: 12px 24px; border-radius: 60px; box-shadow: var(--shadow-md); z-index: 2000; transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1); font-size: 0.85rem; font-weight: 500; backdrop-filter: blur(8px); background-color: rgba(239, 68, 68, 0.95); display: flex; align-items: center; gap: 8px; }
+        .floating-alert.success { background-color: rgba(16, 185, 129, 0.95); }
+        .floating-alert.show { top: 20px; opacity: 1; visibility: visible; }
+
+        /* ----- ACTIONS CELL ----- */
+        .actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+        .actions .button { height: 32px; width: 32px; padding: 0; justify-content: center; border-radius: 4px; }
+
+        /* ----- MODAL REGISTRO ----- */
+        #modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); justify-content: center; align-items: center; padding: 20px; z-index: 1000; }
+        #modal .content { background: var(--bg-surface); border-radius: var(--radius-lg); max-width: 900px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); animation: fadeInUp 0.25s ease; overflow: hidden; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        #alertModal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); justify-content: center; align-items: center; padding: 20px; z-index: 1100; }
+        #alertModal .content { background: var(--bg-surface); border-radius: var(--radius-lg); max-width: 400px; width: 100%; padding: 20px; box-shadow: var(--shadow-lg); }
+
+        /* ----- Elementos para impresión general ----- */
+        .print-header { display: none; }
+        .print-header-detail { display: none; }
+
+        /* ----- MODAL IFRAME ----- */
+        #iframeModal, #iframeModalResumen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(6px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1500;
+            animation: fadeIn 0.2s ease;
+        }
+        #iframeModal { padding: 20px; }
+        #iframeModal .content {
+            background: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 1100px;
+            height: 90vh;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            position: relative;
+            animation: scaleIn 0.25s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        #iframeModal .modal-header, #iframeModalResumen .modal-header {
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--border-light);
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-surface);
+        }
+        #iframeModal .modal-header h2, #iframeModalResumen .modal-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 0;
+        }
+        #iframeModal .modal-header .close-btn, #iframeModalResumen .modal-header .close-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.8rem;
+            line-height: 1;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: var(--transition);
+            padding: 0 8px;
+        }
+        #iframeModal .modal-header .close-btn:hover, #iframeModalResumen .modal-header .close-btn:hover { color: var(--danger); }
+        #iframeModal .iframe-wrapper, #iframeModalResumen .iframe-wrapper { flex: 1; position: relative; overflow: hidden; }
+        #iframeModal .iframe-wrapper iframe, #iframeModalResumen .iframe-wrapper iframe { width: 100%; height: 100%; border: none; display: block; }
+        
+        #iframeModalResumen .content {
+            background: var(--bg-surface);
+            border-radius: 0;
+            width: 100vw;
+            height: 100vh;
+            max-width: 100vw;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            animation: scaleIn 0.25s ease;
+        }
+
+        /* ----- RESPONSIVE ----- */
+        @media (max-width: 768px) {
+            .container { padding: 12px; }
+            .header { padding: 12px 16px; }
+            .header-content { flex-direction: column; align-items: stretch; gap: 12px; }
+            .button { justify-content: center; }
+            .modal-body { padding: 14px; }
+            .tabs-nav { flex-wrap: nowrap; overflow-x: auto; }
+            .notes-history { max-height: 220px; }
+            .search-wrapper { min-width: 200px; }
+            .filter-grid { grid-template-columns: 1fr 1fr; }
+            .data-table th, .data-table td { padding: 8px 10px; font-size: 0.75rem; }
+            .prioridad-pill { font-size: 0.6rem; padding: 2px 8px; }
+            #paginacion-container { flex-direction: column; align-items: stretch; text-align: center; }
+            .page-info { margin-bottom: 8px; }
+            #modalVer { width: 100%; }
+            #modalVer .content { width: 100%; }
+
+            #modal .content {
+                max-width: 100%;
+                height: 100vh;
+                max-height: 100vh;
+                border-radius: 0;
+                margin: 0;
+            }
+            #modal .modal-body {
+                overflow-y: auto;
+                flex: 1;
+                padding-bottom: 80px;
+            }
+            #modal .tabs-nav { display: none; }
+            #modal .tab-content {
+                display: block !important;
+                margin-bottom: 24px;
+                border-bottom: 1px solid var(--border-light);
+                padding-bottom: 20px;
+            }
+            #modal .tab-content:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+            #modal .controls-form {
+                position: sticky;
+                bottom: 0;
+                background: var(--bg-surface);
+                border-top: 1px solid var(--border-light);
+                z-index: 10;
+                padding: 12px 16px;
+                justify-content: center;
+            }
+            #modal .controls-form .button { width: 100%; justify-content: center; }
+            #modal .field input, #modal .field textarea, #modal .field select { font-size: 16px; }
+            #modal .tab-content .field:last-child { margin-bottom: 0; }
+        }
+        @media (max-width: 480px) {
+            .filter-grid { grid-template-columns: 1fr; }
+            .header-content .logo { font-size: 1rem; }
+            .actions .button { width: 28px; height: 28px; }
+            #modalVer .content { width: 100%; }
+            #modal .content { height: 100vh; max-height: 100vh; }
+            #modal .modal-body { padding: 12px; }
+            #modal .controls-form { padding: 10px 12px; }
+        }
+
+        /* ----- IMPRESIÓN ----- */
+        @media print {
+            .header, .filters-section, .floating-alert, #modal, #alertModal, .no-print,
+            .layout-wrapper .table-section .table-title, .layout-wrapper .table-section .table-wrap,
+            #paginacion-container, .controls-form, .modal-header .button, .modal-header button,
+            #btnXCloseVer, #btnCerrarVer, #btnPrintRegistro, #btnPrintFiltrado, #btnNuevo,
+            #selectorBaseDatos, .search-main-row, #btnToggleFiltros, .advanced-filters-panel, #modalVer,
+            #iframeModal, #iframeModalResumen, #btnConectar, #btnExportarJSON, #btnImportarJSON,
+            #btnExportarTodo, #btnLimpiarMemoria {
+                display: none !important;
+            }
+
+            body.print-table-mode .table-section {
+                display: block !important;
+                border: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            body.print-table-mode .table-section .table-wrap {
+                display: block !important;
+                overflow: visible !important;
+            }
+            body.print-table-mode .data-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            body.print-table-mode .data-table th,
+            body.print-table-mode .data-table td {
+                border: 1px solid #ccc !important;
+                padding: 6px 10px !important;
+            }
+            body.print-table-mode .data-table th {
+                background: #f0f0f0 !important;
+            }
+            body.print-table-mode .print-header {
+                display: block !important;
+                text-align: center;
+                font-size: 14px;
+                margin-bottom: 16px;
+                font-weight: bold;
+            }
+        }
+
+        /* ----- ESTILOS PARA LA INFORMACIÓN DEL PASE EN DETALLE ----- */
+        .pase-info {
+            background: #f0f7ff;
+            border-left: 4px solid var(--primary);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+        }
+        .pase-info p { margin-bottom: 8px; }
+        .pase-info .historial-item {
+            font-size: 0.8rem;
+            padding: 4px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .pase-info .historial-item:last-child { border-bottom: none; }
+        .pase-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.7rem;
+        }
+        .pase-badge.en_proceso { background: #e3f2fd; color: #1565c0; }
+        .pase-badge.en_secretaria { background: #fff3e0; color: #e67e22; }
+        .pase-badge.finalizada { background: #e8f5e9; color: #2e7d32; }
+        .pase-badge.en_defensor { background: #f3e5f5; color: #7b1fa2; }
+        .pase-badge.devuelto_siged { background: #ffebee; color: #c62828; }
+        .pase-badge.remitido { background: #e8eaf6; color: #3949ab; }
+        .pase-badge.rechazado { background: #fce4ec; color: #c62828; }
+        .pase-badge.en_espera { background: #f5f5f5; color: #616161; }
+        .pase-badge:not(.en_proceso):not(.en_secretaria):not(.finalizada):not(.en_defensor):not(.devuelto_siged):not(.remitido):not(.rechazado):not(.en_espera) {
+            background: #eceff1; color: #455a64;
+        }
+
+        /* ----- Estado vacío inicial ----- */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--border-light);
+            margin-bottom: 16px;
+            display: block;
+        }
+        .empty-state h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+        .empty-state p {
+            font-size: 0.9rem;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-alert" id="floating-alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="floating-alert-text"></span>
+    </div>
+    
+    <header class="header">
+        <div class="header-content">
+            <div class="logo"><i class="fas fa-folder-open" style="color: var(--primary);"></i> Base de datos Expedientes</div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <select id="selectorBaseDatos" class="dropdown" style="width: auto; font-weight: bold; background-color: var(--primary-soft); border-color: var(--primary);">
+                    <option value="nueva">Activos (nueva base)</option>
+                    <option value="historica">Históricos (Anteriores)</option>
+                </select>
+                <button id="btnConectar" class="button button-cyan" title="Cargar todos los expedientes desde Firestore a la memoria"><i class="fas fa-plug"></i> Conectar a Firestore</button>
+                <button id="btnExportarJSON" class="button button-purple" title="Exportar todo lo cargado a un único JSON"><i class="fas fa-download"></i> Exportar JSON</button>
+                <button id="btnImportarJSON" class="button button-warning" title="Importar datos desde un archivo JSON local"><i class="fas fa-upload"></i> Importar JSON</button>
+                <input type="file" id="importJsonInput" accept=".json,application/json" style="display: none;">
+                <button id="btnNuevo" class="button" title="Crear un nuevo expediente"><i class="fas fa-plus"></i> Nuevo Expediente</button>
+                <button id="btnPrintFiltrado" class="button button-success" title="Imprimir la tabla actual"><i class="fas fa-print"></i> Exportar Tabla</button>
+                <button id="btnTotalExpedientes" class="button" style="background-color: #87CEEB; color: #00008B; font-weight: bold; border: none;"><i class="fas fa-chart-simple"></i> Total de Expedientes</button>
+                <button id="btnVistaResumida" class="button" style="background-color: #FF8C00; color: #0000FF; font-weight: bold; border: none;"><i class="fas fa-list-ul"></i> Vista Resumida</button>
+            </div>
+        </div>
+    </header>
+    
+    <main class="container">
+        <section class="filters-section">
+            <div class="search-main-row">
+                <div class="search-wrapper">
+                    <input type="text" id="buscador" class="input" placeholder="Buscar por Carátula, N° Expediente, NNyA o palabras clave...">
+                    <button id="btnBuscar" class="button" title="Buscar"><i class="fas fa-search"></i> Buscar</button>
+                </div>
+                <button type="button" id="btnToggleFiltros" class="button button-secondary">
+                    <i class="fas fa-sliders-h"></i> Filtros Avanzados
+                </button>
+            </div>
+            
+            <div id="advancedFiltersPanel" class="advanced-filters-panel">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroTipoProceso">Tipo de Proceso</label>
+                        <select id="filtroTipoProceso" class="dropdown"><option value="">Tipo de Proceso (todos)</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroIntervencion">Intervención</label>
+                        <select id="filtroIntervencion" class="dropdown"><option value="">Intervención (todas)</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroEstado">Estado</label>
+                        <select id="filtroEstado" class="dropdown">
+                            <option value="">Estado (todos)</option><option>En trámite</option><option>Finalizado</option><option>En Alzada</option><option>Archivado</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroUsuario">Usuario</label>
+                        <select id="filtroUsuario" class="dropdown"><option value="">Usuario (todos)</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroPrioridad">Prioridad</label>
+                        <select id="filtroPrioridad" class="dropdown">
+                            <option value="">Prioridad (todas)</option><option value="Ninguna">Ninguna</option><option value="Baja">Baja</option><option value="Media">Media</option><option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="filtroCostas">Costas a Favor</label>
+                        <select id="filtroCostas" class="dropdown">
+                            <option value="">Todos</option>
+                            <option value="SI">Sí</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Período</label>
+                        <select id="filtroPeriodo" class="dropdown">
+                            <option value="90">Últimos 3 meses</option>
+                            <option value="180">Últimos 6 meses</option>
+                            <option value="365">Último año</option>
+                            <option value="todos">Histórico completo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <div class="layout-wrapper" id="layoutWrapper">
+            
+            <section class="table-section">
+                <h2 class="table-title">
+                    <span>Expedientes Judiciales</span>
+                    <span id="statusConexion" class="status-pill"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Sin conexión</span>
+                </h2>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>N°</th><th>Carátula</th><th>Tipo</th><th>Juzgado</th><th>Usuario</th><th>Estado</th><th>Prioridad</th><th>Registro</th><th>Eventos</th><th class="no-print">Acciones</th></tr>
+                        </thead>
+                        <tbody id="tbodyCausas">
+                            <tr>
+                                <td colspan="10">
+                                    <div class="empty-state">
+                                        <i class="fas fa-database"></i>
+                                        <h3>No hay registros cargados</h3>
+                                        <p>Haga clic en <strong>"Conectar a Firestore"</strong> para cargar todos los expedientes, o bien use <strong>"Importar JSON"</strong> para cargar un archivo local.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <div id="modalVer">
+                <div class="content">
+                    <div class="modal-header">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fa-solid fa-eye"></i>
+                            <h2 style="margin:0;">Detalle del Expediente</h2>
+                        </div>
+                        <button type="button" id="btnXCloseVer" style="background:transparent; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-light);"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="print-header-detail">Fecha de impresión: <span id="fechaHoraDetalle"></span></div>
+                        <div id="verContenido"></div>
+                        <div id="agregarNota">
+                            <label for="notaBitacora">Agregar Nota de Seguimiento:</label>
+                            <textarea id="notaBitacora" placeholder="Escribe aquí la nota..."></textarea>
+                            <button id="btnAgregarNota" class="button" style="margin-top: 10px;"><i class="fa fa-plus"></i> Guardar Nota</button>
+                        </div>
+                        <div class="notes-history">
+                            <h4 style="margin-bottom: 12px; font-size:0.9rem; font-weight:600; color:var(--text-muted); border-bottom:1px solid var(--border-light); padding-bottom:4px;">Historial de Notas</h4>
+                            <div id="historialNotas"></div>
+                            <button id="cargarMasNotas" class="button button-secondary" style="display:none; margin-top: 12px;"><i class="fas fa-chevron-down"></i> Cargar más notas</button>
+                        </div>
+                    </div>
+                    <div class="controls-form">
+                        <button id="btnCerrarVer" class="button button-secondary"><i class="fa fa-xmark"></i>Cerrar Vista</button>
+                        <button id="btnPrintRegistro" class="button button-success"><i class="fa fa-print"></i>Imprimir</button>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <div id="paginacion-container" style="display:none;"></div>
+    </main>
+
+    <!-- MODAL NUEVO/EDITAR -->
+    <div id="modal">
+        <div class="content">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fa-solid fa-file-pen"></i>
+                    <h2 id="tituloForm" style="margin:0;">Nuevo Expediente</h2>
+                </div>
+                <button type="button" id="btnCloseModal" style="background:transparent; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-light);">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formCausa" action="#" method="post">
+                    <input type="hidden" id="editId" />
+                    <div class="tabs-container">
+                        <div class="tabs-nav">
+                            <button type="button" class="tab-button active" data-tab="tab1">Datos Principales</button>
+                            <button type="button" class="tab-button" data-tab="tab2">Fechas</button>
+                            <button type="button" class="tab-button" data-tab="tab3">Audiencias</button>
+                            <button type="button" class="tab-button" data-tab="tab4">Vencimientos</button>
+                            <button type="button" class="tab-button" data-tab="tab5">Diligencias</button>
+                            <button type="button" class="tab-button" data-tab="tab6">Recursos</button>
+                            <button type="button" class="tab-button" data-tab="tab7">Costas</button>
+                            <button type="button" class="tab-button" data-tab="tab8">Observaciones</button>
+                        </div>
+                        <div id="tab1" class="tab-content active">
+                            <div class="field"><label for="numCausa">N° Expediente *</label><input id="numCausa" required autocomplete="off" inputmode="text" /><span class="error-message">Este campo es obligatorio.</span></div>
+                            <div class="field"><label for="caratula">Carátula Completa *</label><textarea id="caratula" rows="2" required></textarea></div>
+                            <div class="field"><label for="tipoProceso">Tipo de Proceso *</label><select id="tipoProceso" required></select></div>
+                            <div class="field"><label for="juzgado">Juzgado *</label><select id="juzgado" required></select></div>
+                            <div class="field"><label for="prioridad">Prioridad *</label><select id="prioridad" required><option value="Ninguna">Ninguna</option><option value="Baja">Baja</option><option value="Media">Media</option><option value="Alta">Alta</option></select></div>
+                            <div class="field"><label for="usuarioAsignado">Usuario Asignado *</label><select id="usuarioAsignado" required></select></div>
+                            <div class="field"><label for="estado">Estado del Proceso</label><select id="estado"><option>En trámite</option><option>Finalizado</option><option>Archivado</option><option>En Alzada</option></select></div>
+                            <div class="field"><label for="intervencion">Intervención</label><select id="intervencion"><option>Defensor Oficial</option><option>Ministerio Principal</option><option>Ministerio Complementario</option><option>Patrocinante Actor</option><option>Patrocinante Demandado</option><option>Patrocinante Tercero</option><option value="Defensor de Ausente">Defensor de Ausente</option><option>Patrocinante presunto incapaz</option><option value="Defensor Oficial Asesor Letrado">Asistencia Letrada del incapaz</option><option>Ministerio Público del incapaz</option><option>Ministerio Público en turno Abril</option><option>Ministerio Público en turno Agosto</option><option>Ministerio Público en turno Diciembre</option><option>Tutor Ad Litem</option><option>Defensor Oficial Art 329 CPCC</option><option>Defensor Oficial Art 626 CPCC</option></select></div>
+                            <div class="field"><label for="datosNnya">Datos de NNyA (máx. 500 palabras)</label><textarea id="datosNnya"></textarea><div class="counter" id="counterNnya" style="display:none">0/500</div></div>
+                        </div>
+                        <div id="tab2" class="tab-content">
+                            <div class="field"><label for="fechaInicio">Fecha de Inicio</label><input type="date" id="fechaInicio" /></div>
+                            <div class="field"><label for="fechaPase">Fecha de Pase</label><input type="datetime-local" id="fechaPase" step="60" /></div>
+                        </div>
+                        <div id="tab3" class="tab-content">
+                            <div class="field"><label for="audiencias">Audiencias señaladas</label><div id="audiencias-container" class="audiencias-container"></div><button type="button" id="btnAgregarAudiencia" class="btn-audiencia"><i class="fa fa-plus"></i> Agregar Audiencia</button></div>
+                            <div class="field"><label for="audienciaGesell">Audiencia en Cámara Gesell</label><div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="habilitarAudienciaGesell" /><span>Habilitar</span></div><input type="datetime-local" id="audienciaGesell" step="60" disabled /></div>
+                            <div class="field"><label for="nnyaGesell">NNyA en Gesell (máx. 400 palabras)</label><textarea id="nnyaGesell" disabled></textarea><div class="counter" id="counterNnyaGesell" style="display:none">0/400</div></div>
+                        </div>
+                        <div id="tab4" class="tab-content">
+                            <div class="field"><label for="vencimiento">Vencimiento</label><input type="datetime-local" id="vencimiento" step="60" /></div>
+                            <div class="field"><label for="vencimientoRecursos">Vencimiento de Recursos</label><input type="datetime-local" id="vencimientoRecursos" step="60" /></div>
+                        </div>
+                        <div id="tab5" class="tab-content">
+                            <div class="field"><label for="diligencias">Diligencias</label><div id="diligencias-container" class="diligencias-container"></div><button type="button" id="btnAgregarDiligencia" class="btn-diligencia"><i class="fa fa-plus"></i> Agregar Diligencia</button></div>
+                        </div>
+                        <div id="tab6" class="tab-content">
+                            <div class="field"><label for="recursos">Recursos Interpuestos</label><select id="recursos"><option value="">Seleccione un recurso</option><option>Apelación</option><option>Queja</option><option>Inconstitucionalidad</option><option>Nulidad</option><option>Reposición</option><option>Aclaratoria</option><option>Recurso Extraordinario</option><option>Recurso de Inaplicabilidad</option></select></div>
+                            <div id="recursos-opcionales" style="display:none;"><div class="field"><label for="recursosContestacion">Recursos Contestación</label><select id="recursosContestacion"><option value="">Seleccione un recurso</option><option>Apelación</option><option>Queja</option><option>Inconstitucionalidad</option><option>Nulidad</option><option>Reposición</option><option>Aclaratoria</option><option>Recurso Extraordinario</option><option>Recurso de Inaplicabilidad</option></select></div><div class="field"><label for="estadoRecursos">Estado de Recursos</label><select id="estadoRecursos"><option value="">Seleccione un estado</option><option>Pendiente</option><option>En trámite</option><option>Resuelto</option><option>Rechazado</option></select></div></div>
+                        </div>
+                        <div id="tab7" class="tab-content">
+                            <div class="field"><label>Costas por Resolución / Sentencia</label><div id="costas-items-container"></div><button type="button" id="btnAgregarCostasItem" class="btn-diligencia" style="margin-top:8px;"><i class="fa fa-plus"></i> Agregar fecha</button></div>
+                            <div class="field"><label for="detalleCostas">Detalle general de Costas</label><textarea id="detalleCostas" rows="3" placeholder="Especifique cualquier detalle relevante de las costas..."></textarea></div>
+                        </div>
+                        <div id="tab8" class="tab-content">
+                            <div class="field"><label for="observaciones">Observaciones (máx. 1000 palabras)</label><div class="editor-toolbar"><button type="button" id="btnBold" title="Negrita"><i class="fas fa-bold"></i></button><button type="button" id="btnColorAzul" class="color-button azul">A</button><button type="button" id="btnColorRojo" class="color-button rojo">A</button><button type="button" id="btnColorVerde" class="color-button verde">A</button><button type="button" id="btnColorNormal" class="color-button normal">Normal</button></div><div id="observaciones-editor" contenteditable="true"></div><input type="hidden" id="observaciones" name="observaciones"><div class="counter" id="counter">0/1000</div></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="controls-form">
+                <button class="button button-success" type="button" id="btnGuardar"><i class="fa fa-save"></i>Guardar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL IFRAME: Total de Expedientes -->
+    <div id="iframeModal">
+        <div class="content">
+            <div class="modal-header">
+                <h2><i class="fas fa-chart-simple" style="color: var(--primary); margin-right: 8px;"></i>Total de Expedientes</h2>
+                <button class="close-btn" id="closeIframeModal" title="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="iframe-wrapper">
+                <iframe src="https://sistemadigital.github.io/reporte/total-causas" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL IFRAME: Vista Resumida -->
+    <div id="iframeModalResumen">
+        <div class="content">
+            <div class="modal-header">
+                <h2><i class="fas fa-list-ul" style="color: #FF8C00; margin-right: 8px;"></i>Vista Resumida</h2>
+                <button class="close-btn" id="closeIframeModalResumen" title="Cerrar y volver"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="iframe-wrapper">
+                <iframe src="https://sistemadigital.github.io/empleados/tabla-vista" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <div id="alertModal"><div class="content"><h3 id="alertTitle" style="padding:16px 20px 0 20px;"></h3><p id="alertMessage" style="padding:10px 20px; font-size:0.9rem;"></p><div class="controls-form" style="background:transparent; border:none;"><button id="btnAlertOK" class="button button-success"><i class="fa fa-check"></i> OK</button></div></div></div>
+
+    <script>
+        // ============================================================
+        //  CONFIGURACIÓN FIREBASE
+        // ============================================================
+        const firebaseConfigHistorica = {
+            apiKey: "AIzaSyBt6X0u0BpiNPcV2SNPrN-spCmjl2AhZaA",
+            authDomain: "causas-defensoria.firebaseapp.com",
+            projectId: "causas-defensoria",
+            storageBucket: "causas-defensoria.appspot.com",
+            messagingSenderId: "186064671470",
+            appId: "1:186064671470:web:b58bae5eadbe6e469f19ff"
+        };
+        const firebaseConfigNueva = {
+            apiKey: "AIzaSyBevCwkh4iOWVqhp3gG2ae1eCUMkFpnr6I",
+            authDomain: "causas-2defensoria.firebaseapp.com",
+            projectId: "causas-2defensoria",
+            storageBucket: "causas-2defensoria.firebasestorage.app",
+            messagingSenderId: "663905632804",
+            appId: "1:663905632804:web:4f686a88004dc642ad0eb1"
+        };
+        const firebaseConfigPases = {
+            apiKey: "AIzaSyBiPiBIUTecqjifyZBqbrNw8aQNv7rwqwA",
+            authDomain: "pasedefensoria6.firebaseapp.com",
+            projectId: "pasedefensoria6",
+            storageBucket: "pasedefensoria6.firebasestorage.app",
+            messagingSenderId: "785250989941",
+            appId: "1:785250989941:web:1bfb35a5f954144dbb853c"
+        };
+
+        let appNueva, dbNueva;
+        let appHistorica, dbHistorica;
+        let appPases, dbPases;
+
+        try {
+            appNueva = firebase.initializeApp(firebaseConfigNueva);
+            appHistorica = firebase.initializeApp(firebaseConfigHistorica, "historica");
+            dbNueva = appNueva.firestore();
+            dbHistorica = appHistorica.firestore();
+
+            appPases = firebase.initializeApp(firebaseConfigPases, "pases");
+            dbPases = appPases.firestore();
+
+            try { dbNueva.enablePersistence({ synchronizeTabs: true }); } catch(e) { }
+            try { dbPases.enablePersistence({ synchronizeTabs: true }); } catch(e) { }
+        } catch (e) {
+            console.error("Error Firebase:", e);
+        }
+
+        // ============================================================
+        //  VARIABLES GLOBALES
+        // ============================================================
+        let datosLocales = [];          // Todos los registros cargados en memoria
+        let datosPaginaActual = [];     // Registros de la página actual
+        let causaActualId = null;
+        let usuariosCache = [], juzgadosPorTipoCache = {};
+        let filterTimeout = null;
+
+        // Estado de conexión: null | 'nueva' | 'historica' | 'importado'
+        let estadoDatos = null;
+        let conectadoFirestore = false;
+
+        const recordsPerPage = 10;
+        let currentPage = 1;
+        let totalPages = 1;
+        let totalRecords = 0;
+
+        let ultimoNumeroValidado = '';
+        let numeroValido = false;
+
+        // ============================================================
+        //  UTILIDADES
+        // ============================================================
+        const intervencionOptions = ["Defensor Oficial","Ministerio Principal", "Ministerio Complementario", "Patrocinante Actor", "Patrocinante Demandado", "Patrocinante Tercero", "Defensor de Ausente", "Patrocinante presunto incapaz", "Asesor Letrado", "Ministerio Público del incapaz", "Ministerio Público en turno Abril", "Ministerio Público en turno Agosto", "Ministerio Público en turno Diciembre", "Asistencia Letrada del incapaz","Tutor Ad Litem","Defensor Oficial Art 329 CPCC", "Defensor Oficial Art 626 CPCC"];
+
+        const $ = (id) => document.getElementById(id);
+        const tbody = $("tbodyCausas"), modal = $("modal"), modalVer = $("modalVer"), verContenido = $("verContenido"), tituloForm = $("tituloForm"), editId = $("editId"), buscador = $("buscador"), filtroEstado = $("filtroEstado"), filtroUsuario = $("filtroUsuario"), filtroPrioridad = $("filtroPrioridad"), filtroIntervencion = $("filtroIntervencion"), filtroTipoProceso = $("filtroTipoProceso");
+        const notaBitacora = $("notaBitacora"), historialNotas = $("historialNotas"), btnAgregarNota = $("btnAgregarNota"), floatingAlert = $("floating-alert"), floatingAlertText = $("floating-alert-text"), audienciasContainer = $("audiencias-container"), diligenciasContainer = $("diligencias-container"), alertModal = $("alertModal"), alertTitle = $("alertTitle"), alertMessage = $("alertMessage");
+        const selTipo = $("tipoProceso"), selJuz = $("juzgado"), selUsu = $("usuarioAsignado"), selPrioridad = $("prioridad");
+        const tabButtons = document.querySelectorAll(".tab-button"), tabContents = document.querySelectorAll(".tab-content");
+        const observacionesEditor = $("observaciones-editor"), observacionesHidden = $("observaciones");
+
+        const toDate = (v) => {
+            if (!v) return null;
+            if (v.toDate) return v.toDate();
+            if (v.seconds) return new Date(v.seconds * 1000 + (v.nanoseconds || 0) / 1000000);
+            if (typeof v === 'string') { const d = new Date(v); if (!isNaN(d.getTime())) return d; }
+            if (v instanceof Date) return v;
+            return null;
+        };
+
+        function formatearFecha(d, conHora = false) {
+            const f = toDate(d);
+            if (!f || isNaN(f.getTime())) return "";
+            const dia = String(f.getDate()).padStart(2, '0'), mes = String(f.getMonth() + 1).padStart(2, '0'), año = f.getFullYear();
+            if (!conHora) return `${dia}/${mes}/${año}`;
+            const h = String(f.getHours()).padStart(2, '0'), m = String(f.getMinutes()).padStart(2, '0');
+            return `${dia}/${mes}/${año} ${h}:${m}`;
+        }
+
+        function formatFechaParaInput(f, conHora = true) {
+            if (!f) return "";
+            const fObj = toDate(f);
+            if (!fObj || isNaN(fObj.getTime())) return "";
+            const año = fObj.getFullYear(), mes = String(fObj.getMonth() + 1).padStart(2, '0'), dia = String(fObj.getDate()).padStart(2, '0');
+            if (!conHora) return `${año}-${mes}-${dia}`;
+            return `${año}-${mes}-${dia}T${String(fObj.getHours()).padStart(2, '0')}:${String(fObj.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function parseDateTimeLocalToTimestamp(dt) {
+            if (!dt) return null;
+            const [dPart, tPart] = dt.split('T');
+            if (!dPart || !tPart) return null;
+            const [y, m, d] = dPart.split('-').map(Number);
+            const [h, min] = tPart.split(':').map(Number);
+            const date = new Date(y, m - 1, d, h, min);
+            return isNaN(date.getTime()) ? null : firebase.firestore.Timestamp.fromDate(date);
+        }
+
+        function parseDateToTimestamp(dStr) {
+            if (!dStr) return null;
+            const [y, m, d] = dStr.split('-').map(Number);
+            const date = new Date(y, m - 1, d);
+            return isNaN(date.getTime()) ? null : firebase.firestore.Timestamp.fromDate(date);
+        }
+
+        const prioridadClase = (p) => { p = (p || "").toLowerCase(); return p === "alta" ? "prioridad-alta" : p === "media" ? "prioridad-media" : p === "baja" ? "prioridad-baja" : "prioridad-ninguna"; };
+        const prioridadClaseTexto = (p) => { p = (p || "").toLowerCase(); return p === "alta" ? "alta" : p === "media" ? "media" : p === "baja" ? "baja" : "ninguna"; };
+
+        function mostrarAlertaFlotante(mensaje, tipo = 'danger') {
+            if (!floatingAlertText) return;
+            floatingAlertText.textContent = mensaje;
+            floatingAlert.classList.remove('success');
+            if (tipo === 'success') floatingAlert.classList.add('success');
+            floatingAlert.classList.add('show');
+            setTimeout(() => floatingAlert.classList.remove('show'), 5000);
+        }
+
+        const mostrarAlertaPersonalizada = (t, m) => {
+            alertTitle.textContent = t;
+            alertMessage.textContent = m;
+            alertModal.style.display = "flex";
+        };
+
+        // ============================================================
+        //  FILTROS (aplicados en memoria)
+        // ============================================================
+        function aplicarFiltros() {
+            const fUsuario = filtroUsuario.value;
+            const fEstado = filtroEstado.value;
+            const fPrioridad = filtroPrioridad.value;
+            const fIntervencion = filtroIntervencion.value;
+            const fTipoProceso = filtroTipoProceso.value;
+            const fCostas = $("filtroCostas").value;
+            const periodo = $("filtroPeriodo").value;
+            const busqueda = buscador.value.trim().toLowerCase();
+
+            let resultado = [...datosLocales];
+
+            if (fUsuario) resultado = resultado.filter(d => d.usuarioAsignado === fUsuario);
+            if (fEstado) resultado = resultado.filter(d => d.estado === fEstado);
+            if (fPrioridad) resultado = resultado.filter(d => d.prioridad === fPrioridad);
+            if (fIntervencion) resultado = resultado.filter(d => d.intervencion === fIntervencion);
+            if (fTipoProceso) resultado = resultado.filter(d => d.tipoProceso === fTipoProceso);
+            if (fCostas) resultado = resultado.filter(d => d.costasFavor === fCostas);
+
+            if (periodo !== "todos") {
+                const dias = parseInt(periodo);
+                const limite = new Date();
+                limite.setDate(limite.getDate() - dias);
+                resultado = resultado.filter(d => {
+                    const f = toDate(d.fechaRegistro);
+                    return f && f >= limite;
+                });
+            }
+
+            if (busqueda.length >= 1) {
+                const q = busqueda.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                resultado = resultado.filter(d => {
+                    const partes = [
+                        d.numCausa, d.caratula, d.usuarioAsignado, d.datosNnya,
+                        d.nnyaGesell, d.observaciones, d.intervencion, d.detalleCostas,
+                        d.tipoProceso, d.juzgado, d.estado,
+                        Array.isArray(d.diligencias) ? d.diligencias.map(x => x.detalle).join(' ') : ''
+                    ].filter(Boolean).join(' ').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    return partes.includes(q);
+                });
+            }
+
+            resultado.sort((a, b) => {
+                const fa = toDate(a.fechaRegistro)?.getTime() || 0;
+                const fb = toDate(b.fechaRegistro)?.getTime() || 0;
+                return fb - fa;
+            });
+
+            return resultado;
+        }
+
+        // ============================================================
+        //  RENDER PRINCIPAL
+        // ============================================================
+        function renderizar(resetPage = false) {
+            if (resetPage) currentPage = 1;
+
+            const filtrados = aplicarFiltros();
+            totalRecords = filtrados.length;
+            totalPages = Math.ceil(totalRecords / recordsPerPage) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const start = (currentPage - 1) * recordsPerPage;
+            const end = start + recordsPerPage;
+            datosPaginaActual = filtrados.slice(start, end);
+
+            renderTablas(datosPaginaActual);
+            renderPaginacion();
+            actualizarEstadoConexionUI();
+        }
+
+        function renderTablas(data) {
+            if (datosLocales.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10">
+                            <div class="empty-state">
+                                <i class="fas fa-database"></i>
+                                <h3>No hay registros cargados</h3>
+                                <p>Haga clic en <strong>"Conectar a Firestore"</strong> para cargar todos los expedientes, o bien use <strong>"Importar JSON"</strong> para cargar un archivo local.</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                return;
+            }
+            if (data.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='10' style='text-align:center; padding: 30px;'>No hay registros que coincidan con los filtros aplicados.</td></tr>";
+                return;
+            }
+
+            tbody.innerHTML = "";
+            data.forEach(d => {
+                const todosEventos = obtenerTodosEventos(d);
+                let eventosHTML = "—";
+                if (todosEventos.length > 0) {
+                    eventosHTML = `<div class="eventos-lista">`;
+                    const eventosMostrar = todosEventos.slice(0, 3);
+                    eventosMostrar.forEach(evento => {
+                        let evText = `${evento.tipo}: ${formatearFecha(evento.fecha, true)}`;
+                        if (evento.tipo === "Diligencia" && evento.detalle) evText += ` - ${evento.detalle.substring(0, 30)}...`;
+                        eventosHTML += `<div class="evento-tabla ${evento.clase}">${evText}</div>`;
+                    });
+                    if (todosEventos.length > 3) eventosHTML += `<div class="evento-tabla">+${todosEventos.length - 3} más</div>`;
+                    eventosHTML += `</div>`;
+                }
+
+                const botonEditar = `<button class="button button-secondary editar-detalles" data-id="${d.id}" title="Editar"><i class="fa fa-pen"></i></button>`;
+                const botonVer = `<button class="button ver-detalles" data-id="${d.id}" title="Ver"><i class="fa fa-eye"></i></button>`;
+
+                tbody.insertAdjacentHTML("beforeend", `<tr data-row-id="${d.id}" data-prioridad="${prioridadClase(d.prioridad)}"><td>${d.numCausa||""}</td><td>${d.caratula ? (d.caratula.length > 50 ? d.caratula.substring(0,50)+'...' : d.caratula) : ""}</td><td>${d.tipoProceso||""}</td><td>${d.juzgado||""}</td><td>${d.usuarioAsignado||""}</td><td>${d.estado||""}</td><td><span class="prioridad-pill ${prioridadClase(d.prioridad)}">${d.prioridad||"Ninguna"}</span></td><td>${formatearFecha(d.fechaRegistro, false)}</td><td>${eventosHTML}</td><td class="actions" onclick="event.stopPropagation();">${botonVer}${botonEditar}</td></tr>`);
+            });
+
+            setTimeout(() => {
+                document.querySelectorAll("#tbodyCausas tr").forEach(row => {
+                    row.onclick = () => {
+                        const id = row.getAttribute("data-row-id");
+                        if (id) abrirVer(id);
+                    };
+                });
+                document.querySelectorAll(".ver-detalles").forEach(b => b.onclick = (e) => { e.stopPropagation(); abrirVer(b.dataset.id); });
+                document.querySelectorAll(".editar-detalles").forEach(b => b.onclick = (e) => { e.stopPropagation(); abrirEditar(b.dataset.id); });
+            }, 0);
+        }
+
+        function renderPaginacion() {
+            const container = $("paginacion-container");
+            if (totalPages <= 1) {
+                container.style.display = "none";
+                container.innerHTML = "";
+                return;
+            }
+            container.style.display = "flex";
+            const startReg = ((currentPage - 1) * recordsPerPage) + 1;
+            const endReg = Math.min(currentPage * recordsPerPage, totalRecords);
+            container.innerHTML = `
+                <div class="page-info">Página ${currentPage} de ${totalPages} | Mostrando del ${startReg} al ${endReg} de ${totalRecords} registros</div>
+                <div class="nav-buttons" style="display:flex; gap:8px;">
+                    <button id="btnPrevPage" class="button" ${currentPage === 1 ? 'disabled' : ''}><i class="fa fa-arrow-left"></i> Anterior</button>
+                    <button id="btnNextPage" class="button" ${currentPage >= totalPages ? 'disabled' : ''}>Siguiente <i class="fa fa-arrow-right"></i></button>
+                </div>`;
+            if ($("btnPrevPage")) $("btnPrevPage").onclick = () => { if (currentPage > 1) { currentPage--; renderizar(); } };
+            if ($("btnNextPage")) $("btnNextPage").onclick = () => { if (currentPage < totalPages) { currentPage++; renderizar(); } };
+        }
+
+        function actualizarEstadoConexionUI() {
+            const pill = $("statusConexion");
+            if (!pill) return;
+            if (conectadoFirestore) {
+                pill.className = "status-pill connected";
+                pill.innerHTML = `<i class="fas fa-circle" style="font-size: 0.5rem;"></i> Firestore (${estadoDatos === 'nueva' ? 'Nueva' : 'Histórica'}) · ${datosLocales.length}`;
+            } else if (estadoDatos === "importado") {
+                pill.className = "status-pill imported";
+                pill.innerHTML = `<i class="fas fa-circle" style="font-size: 0.5rem;"></i> Datos locales · ${datosLocales.length}`;
+            } else {
+                pill.className = "status-pill";
+                pill.innerHTML = `<i class="fas fa-circle" style="font-size: 0.5rem;"></i> Sin conexión`;
+            }
+        }
+
+        // ============================================================
+        //  OBTENER EVENTOS PARA TABLA
+        // ============================================================
+        function obtenerTodosEventos(causa) {
+            const eventos = [];
+            if (Array.isArray(causa.audiencias)) causa.audiencias.forEach(a => {
+                const f = toDate(a);
+                if (f && !isNaN(f.getTime())) eventos.push({ tipo: "Audiencia", fecha: f, clase: "audiencia" });
+            });
+            if (causa.audienciaGesell) {
+                const f = toDate(causa.audienciaGesell);
+                if (f && !isNaN(f.getTime())) eventos.push({ tipo: "Gesell", fecha: f, clase: "gesell" });
+            }
+            if (causa.vencimiento) {
+                const f = toDate(causa.vencimiento);
+                if (f && !isNaN(f.getTime())) eventos.push({ tipo: "Vencimiento", fecha: f, clase: "vencimiento" });
+            }
+            if (causa.vencimientoRecursos) {
+                const f = toDate(causa.vencimientoRecursos);
+                if (f && !isNaN(f.getTime())) eventos.push({ tipo: "Recurso", fecha: f, clase: "recurso" });
+            }
+            if (Array.isArray(causa.diligencias)) causa.diligencias.forEach(d => {
+                const f = toDate(d.fecha);
+                if (f && !isNaN(f.getTime())) eventos.push({ tipo: "Diligencia", fecha: f, detalle: d.detalle||'', clase: "diligencia" });
+            });
+            return eventos.sort((a,b)=>b.fecha-a.fecha);
+        }
+
+        // ============================================================
+        //  CONECTAR / DESCONECTAR FIRESTORE
+        // ============================================================
+        async function conectarFirestore() {
+            if (conectadoFirestore) {
+                // Desconectar: mantener datos en memoria pero marcar como no conectado
+                conectadoFirestore = false;
+                estadoDatos = datosLocales.length > 0 ? "importado" : null;
+                actualizarEstadoConexionUI();
+                actualizarBotonConectar();
+                mostrarAlertaFlotante("Desconectado de Firestore. Los datos permanecen en memoria.", 'success');
+                return;
+            }
+
+            const baseSel = $("selectorBaseDatos").value;
+            const db = baseSel === "nueva" ? dbNueva : dbHistorica;
+
+            const btn = $("btnConectar");
+            btn.disabled = true;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+
+            try {
+                const snapshot = await db.collection("causas").get();
+                datosLocales = [];
+                snapshot.forEach(doc => {
+                    datosLocales.push({ id: doc.id, ...doc.data() });
+                });
+                conectadoFirestore = true;
+                estadoDatos = baseSel;
+                actualizarFiltrosDesdeDatos();
+                renderizar(true);
+                mostrarAlertaFlotante(`Conectado. ${datosLocales.length} expedientes cargados desde ${baseSel === 'nueva' ? 'base activa' : 'base histórica'}.`, 'success');
+            } catch (e) {
+                console.error(e);
+                mostrarAlertaFlotante("Error al conectar: " + e.message, 'danger');
+            } finally {
+                btn.disabled = false;
+                actualizarBotonConectar();
+            }
+        }
+
+        function actualizarBotonConectar() {
+            const btn = $("btnConectar");
+            if (conectadoFirestore) {
+                btn.innerHTML = '<i class="fas fa-plug"></i> Desconectar';
+                btn.classList.remove('button-cyan');
+                btn.classList.add('button-danger');
+            } else {
+                btn.innerHTML = '<i class="fas fa-plug"></i> Conectar a Firestore';
+                btn.classList.remove('button-danger');
+                btn.classList.add('button-cyan');
+            }
+        }
+
+        // ============================================================
+        //  EXPORTAR JSON
+        // ============================================================
+        function exportarJSON() {
+            if (datosLocales.length === 0) {
+                mostrarAlertaFlotante("No hay registros para exportar.", 'danger');
+                return;
+            }
+            const exportData = {
+                version: '1.0',
+                fecha_exportacion: new Date().toISOString(),
+                base_origen: estadoDatos || 'local',
+                total_registros: datosLocales.length,
+                datos: datosLocales
+            };
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const fechaStr = new Date().toISOString().slice(0, 10);
+            const baseLabel = estadoDatos || 'local';
+            a.download = `expedientes_${baseLabel}_${fechaStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            mostrarAlertaFlotante(`Exportación exitosa: ${datosLocales.length} registros.`, 'success');
+        }
+
+        // ============================================================
+        //  IMPORTAR JSON
+        // ============================================================
+        function importarJSON(archivo) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const contenido = JSON.parse(e.target.result);
+                    let registros = [];
+                    if (contenido && Array.isArray(contenido.datos)) {
+                        registros = contenido.datos;
+                    } else if (Array.isArray(contenido)) {
+                        registros = contenido;
+                    } else {
+                        throw new Error("Formato JSON inválido: debe contener un array en 'datos' o ser un array directo.");
+                    }
+                    // Asegurar que cada registro tenga id
+                    registros = registros.map((r, i) => {
+                        if (!r.id) r.id = 'import_' + Date.now() + '_' + i;
+                        return r;
+                    });
+                    datosLocales = registros;
+                    conectadoFirestore = false;
+                    estadoDatos = "importado";
+                    actualizarBotonConectar();
+                    actualizarFiltrosDesdeDatos();
+                    renderizar(true);
+                    mostrarAlertaFlotante(`Importación exitosa: ${registros.length} registros cargados.`, 'success');
+                } catch (err) {
+                    console.error(err);
+                    mostrarAlertaFlotante("Error al importar JSON: " + err.message, 'danger');
+                }
+            };
+            reader.onerror = () => mostrarAlertaFlotante("Error al leer el archivo.", 'danger');
+            reader.readAsText(archivo);
+        }
+
+        // ============================================================
+        //  ACTUALIZAR FILTROS CON DATOS CARGADOS
+        // ============================================================
+        function actualizarFiltrosDesdeDatos() {
+            const usuarios = [...new Set(datosLocales.map(d => d.usuarioAsignado).filter(Boolean))].sort();
+            const usuariosFull = [...new Set([...usuariosCache, ...usuarios])].sort((a,b)=>a.localeCompare(b));
+            poblarFiltro('filtroUsuario', usuariosFull, 'Usuario (todos)');
+
+            const tipos = [...new Set(datosLocales.map(d => d.tipoProceso).filter(Boolean))].sort();
+            const tiposFull = [...new Set([...Object.keys(juzgadosPorTipoCache), ...tipos])].sort();
+            poblarFiltro('filtroTipoProceso', tiposFull, 'Tipo de Proceso (todos)');
+
+            const intervs = [...new Set(datosLocales.map(d => d.intervencion).filter(Boolean))].sort();
+            const intervsFull = [...new Set([...intervencionOptions, ...intervs])].sort();
+            poblarFiltro('filtroIntervencion', intervsFull, 'Intervención (todas)');
+        }
+
+        // ============================================================
+        //  CATÁLOGOS (para el formulario)
+        // ============================================================
+        function getCachedData(key) {
+            const c = localStorage.getItem(key);
+            if (!c) return null;
+            try {
+                const d = JSON.parse(c);
+                if (Date.now() - d.timestamp > 24 * 60 * 60 * 1000) return null;
+                return d.items;
+            } catch(e) { return null; }
+        }
+        function setCachedData(key, items) {
+            try { localStorage.setItem(key, JSON.stringify({ items, timestamp: Date.now() })); } catch(e) {}
+        }
+
+        async function cargarCatalogoOptimizado(coleccion, cacheKey, transform) {
+            const cached = getCachedData(cacheKey);
+            if (cached) return cached;
+            try {
+                const snap = await dbNueva.collection(coleccion).get();
+                const items = snap.docs.map(transform);
+                setCachedData(cacheKey, items);
+                return items;
+            } catch (e) { return []; }
+        }
+
+        async function cargarCatalagosConCache() {
+            const usrs = await cargarCatalogoOptimizado("usuarios", "cache_usuarios", d => d.data().nombreCompleto);
+            usuariosCache = usrs.filter(u=>u).sort((a,b)=>a.localeCompare(b));
+            poblarFiltro('usuarioAsignado', usuariosCache);
+            poblarFiltro('filtroUsuario', usuariosCache, 'Usuario (todos)');
+
+            const juzs = await cargarCatalogoOptimizado("juzgados", "cache_juzgados", d => ({ tipo: d.data().tipo, nombre: d.data().nombre }));
+            juzgadosPorTipoCache = {};
+            juzs.forEach(({ tipo, nombre }) => {
+                if (tipo && nombre) {
+                    if (!juzgadosPorTipoCache[tipo]) juzgadosPorTipoCache[tipo] = [];
+                    juzgadosPorTipoCache[tipo].push(nombre);
+                }
+            });
+            Object.keys(juzgadosPorTipoCache).forEach(t => juzgadosPorTipoCache[t].sort((a,b)=>a.localeCompare(b)));
+
+            poblarTiposProceso();
+            poblarFiltroIntervencion();
+        }
+
+        function poblarFiltro(id, opciones, defaultText = "Seleccione") {
+            const sel = $(id);
+            if (!sel) return;
+            const curr = sel.value;
+            sel.innerHTML = `<option value="">${defaultText}</option>` + opciones.map(o => `<option value="${o}">${o}</option>`).join('');
+            if (curr) sel.value = curr;
+        }
+        function poblarTiposProceso() {
+            const t = Object.keys(juzgadosPorTipoCache).sort();
+            poblarFiltro('tipoProceso', t);
+            poblarFiltro('filtroTipoProceso', t, 'Tipo de Proceso (todos)');
+        }
+        function poblarFiltroIntervencion() {
+            poblarFiltro('filtroIntervencion', intervencionOptions, 'Intervención (todas)');
+        }
+        function poblarJuzgadosPorTipo(tipo) {
+            const j = juzgadosPorTipoCache[tipo] || [];
+            poblarFiltro('juzgado', j);
+        }
+
+        // ============================================================
+        //  NOTAS (Firestore)
+        // ============================================================
+        let notasLastDoc = null, notasHasMore = true, currentCausaId = null;
+
+        async function cargarNotas(causaId, reset = true) {
+            if (reset) {
+                notasLastDoc = null;
+                notasHasMore = true;
+                historialNotas.innerHTML = "";
+                document.getElementById("cargarMasNotas").style.display = "none";
+            }
+            if (!causaId) return;
+
+            if (!conectadoFirestore) {
+                historialNotas.innerHTML = "<p style='font-size:0.85rem; color:var(--text-muted);'>Conecte a Firestore para ver el historial de notas.</p>";
+                return;
+            }
+
+            const db = estadoDatos === "nueva" ? dbNueva : (estadoDatos === "historica" ? dbHistorica : dbNueva);
+
+            try {
+                let q = db.collection("causas").doc(causaId).collection("seguimiento").orderBy("fecha", "desc").limit(5);
+                if (!reset && notasLastDoc) q = q.startAfter(notasLastDoc);
+                const snap = await q.get();
+                if (snap.empty && reset) {
+                    historialNotas.innerHTML = "<p style='font-size:0.85rem; color:var(--text-muted);'>No hay notas.</p>";
+                    return;
+                }
+                notasLastDoc = snap.docs[snap.docs.length - 1];
+                notasHasMore = snap.docs.length === 5;
+                snap.forEach(doc => {
+                    const n = doc.data();
+                    historialNotas.insertAdjacentHTML("beforeend", `<div class="note-item"><div class="note-meta"><span>${formatearFecha(n.fecha, true)}</span><span>por: ${n.usuario || "Anónimo"}</span></div><div class="note-text">${n.texto}</div></div>`);
+                });
+                document.getElementById("cargarMasNotas").style.display = notasHasMore ? "inline-flex" : "none";
+            } catch(e) {
+                historialNotas.innerHTML = `<p style='font-size:0.85rem; color:var(--danger);'>Error: ${e.message}</p>`;
+            }
+        }
+
+        // ============================================================
+        //  OBTENER INFORMACIÓN DEL PASE
+        // ============================================================
+        async function obtenerInformacionPase(numCausa) {
+            if (!numCausa) return null;
+            try {
+                const snapshot = await dbPases.collection("operador").where("numero", "==", numCausa).get();
+                if (snapshot.empty) return null;
+                let pases = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    if (data.fechaAsignacion && data.fechaAsignacion.toDate) data.fechaAsignacion = data.fechaAsignacion.toDate();
+                    if (data.fechaLimite && data.fechaLimite.toDate) data.fechaLimite = data.fechaLimite.toDate();
+                    if (data.fechaPaseSecretario && data.fechaPaseSecretario.toDate) data.fechaPaseSecretario = data.fechaPaseSecretario.toDate();
+                    if (data.fechaFinalizacion && data.fechaFinalizacion.toDate) data.fechaFinalizacion = data.fechaFinalizacion.toDate();
+                    if (data.historial && Array.isArray(data.historial)) {
+                        data.historial = data.historial.map(h => {
+                            if (h.fecha && h.fecha.toDate) h.fecha = h.fecha.toDate();
+                            return h;
+                        });
+                    }
+                    pases.push(data);
+                });
+                pases.sort((a, b) => {
+                    const fa = a.fechaPaseSecretario || new Date(0);
+                    const fb = b.fechaPaseSecretario || new Date(0);
+                    return fb - fa;
+                });
+                return pases[0];
+            } catch (e) {
+                console.error("Error obteniendo pase:", e);
+                return null;
+            }
+        }
+
+        // ============================================================
+        //  ABRIR VER (DETALLE)
+        // ============================================================
+        async function abrirVer(id) {
+            causaActualId = id;
+            try {
+                const d = datosLocales.find(causa => causa.id === id);
+                if (!d) {
+                    mostrarAlertaPersonalizada("Error", "El expediente no está en la memoria actual.");
+                    return;
+                }
+
+                document.querySelectorAll("#tbodyCausas tr").forEach(r => r.classList.remove('row-active'));
+                const activeRow = document.querySelector(`tr[data-row-id="${id}"]`);
+                if (activeRow) activeRow.classList.add('row-active');
+
+                $("agregarNota").style.display = conectadoFirestore ? "block" : "none";
+
+                const paseInfo = await obtenerInformacionPase(d.numCausa);
+
+                let contenidoHTML = `<div class="prioridad-texto ${prioridadClaseTexto(d.prioridad)}"><strong>Prioridad: ${d.prioridad || "Ninguna"}</strong></div>`;
+                const etiquetas = { numCausa: "N° Expediente", caratula: "Carátula", tipoProceso: "Tipo de Proceso", juzgado: "Juzgado", fechaInicio: "Fecha de Inicio", fechaPase: "Fecha de Pase", intervencion: "Intervención", datosNnya: "Datos de NNyA", vencimiento: "Vencimiento", usuarioAsignado: "Usuario Asignado", estado: "Estado", recursos: "Recursos Interpuestos", recursosContestacion: "Contestación de Recursos", estadoRecursos: "Estado de Recursos", vencimientoRecursos: "Vencimiento de Recursos", audienciaGesell: "Audiencia Gesell", nnyaGesell: "NNyA en Gesell", observaciones: "Observaciones", detalleCostas: "Detalle de Costas", fechaRegistro: "Fecha de Registro" };
+                const ordenClaves = ["numCausa","caratula","tipoProceso","juzgado","estado","usuarioAsignado","fechaRegistro","fechaInicio","fechaPase","intervencion","datosNnya","vencimiento","audiencias","diligencias","recursos","recursosContestacion","estadoRecursos","vencimientoRecursos","detalleCostas","audienciaGesell","nnyaGesell","observaciones"];
+
+                if (d.costasItems && Array.isArray(d.costasItems) && d.costasItems.length > 0) {
+                    contenidoHTML += `<p><strong>Costas por Resolución/Sentencia:</strong></p><ul>`;
+                    d.costasItems.forEach(item => {
+                        const fechaStr = formatearFecha(item.fecha, false);
+                        const costasTexto = item.costasFavor === "SI" ? "Sí" : "No";
+                        contenidoHTML += `<li>${fechaStr} - Costas a favor: ${costasTexto}</li>`;
+                    });
+                    contenidoHTML += `</ul>`;
+                } else if (d.fechaCostas) {
+                    const fechaStr = formatearFecha(d.fechaCostas, false);
+                    const costasTexto = d.costasFavor === "SI" ? "Sí" : "No";
+                    contenidoHTML += `<p><strong>Costas por Resolución/Sentencia:</strong> ${fechaStr} - Costas a favor: ${costasTexto}</p>`;
+                }
+
+                ordenClaves.forEach(k => {
+                    const v = d[k];
+                    if (v !== null && v !== undefined && v !== "" && k !== "prioridad" && k !== "costasItems" && k !== "fechaCostas" && k !== "costasFavor") {
+                        const etiqueta = etiquetas[k] || k;
+                        if (k === "audiencias" && Array.isArray(v) && v.length > 0) {
+                            contenidoHTML += `<p><strong>Audiencias:</strong></p>`;
+                            v.forEach(aud => contenidoHTML += `<p style="margin-left: 20px;">${formatearFecha(aud, true)}</p>`);
+                        }
+                        else if (k === "diligencias" && Array.isArray(v) && v.length > 0) {
+                            contenidoHTML += `<p><strong>Diligencias:</strong></p>`;
+                            v.forEach(dilig => {
+                                contenidoHTML += `<p style="margin-left: 20px;">${formatearFecha(dilig.fecha, true)}${dilig.detalle ? ` - ${dilig.detalle}` : ''}</p>`;
+                            });
+                        }
+                        else if (['fechaInicio','fechaRegistro'].includes(k)) {
+                            contenidoHTML += `<p><strong>${etiqueta}:</strong> ${formatearFecha(v, false)}</p>`;
+                        }
+                        else if (v.seconds || v.toDate || (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v))) {
+                            contenidoHTML += `<p><strong>${etiqueta}:</strong> ${formatearFecha(v, true)}</p>`;
+                        }
+                        else if (k === "observaciones") {
+                            contenidoHTML += `<p><strong>${etiqueta}:</strong></p><div>${v}</div>`;
+                        }
+                        else if (k !== "audiencias" && k !== "diligencias") {
+                            contenidoHTML += `<p><strong>${etiqueta}:</strong> ${v}</p>`;
+                        }
+                    }
+                });
+
+                // ---- INFORMACIÓN DEL PASE ----
+                if (paseInfo) {
+                    let estadoPase = paseInfo.estado || "Sin estado";
+                    const estadoClases = {
+                        'en_proceso': 'en_proceso', 'en_secretaria': 'en_secretaria', 'finalizada': 'finalizada',
+                        'en_defensor': 'en_defensor', 'devuelto_siged': 'devuelto_siged', 'remitido': 'remitido',
+                        'rechazado': 'rechazado', 'en_espera': 'en_espera'
+                    };
+                    const badgeClass = estadoClases[estadoPase] || '';
+
+                    contenidoHTML += `<div class="pase-info">`;
+                    contenidoHTML += `<p><strong>🔹 Estado del Pase:</strong> <span class="pase-badge ${badgeClass}">${estadoPase.replace(/_/g, ' ').toUpperCase()}</span></p>`;
+                    if (paseInfo.empleadoAsignado) contenidoHTML += `<p><strong>Empleado Asignado:</strong> ${paseInfo.empleadoAsignado}</p>`;
+                    if (paseInfo.fechaAsignacion) contenidoHTML += `<p><strong>Fecha de Asignación:</strong> ${formatearFecha(paseInfo.fechaAsignacion, true)}</p>`;
+                    if (paseInfo.fechaLimite) contenidoHTML += `<p><strong>Fecha Límite:</strong> ${formatearFecha(paseInfo.fechaLimite, true)}</p>`;
+                    if (paseInfo.nivelSecretario) contenidoHTML += `<p><strong>Nivel:</strong> ${paseInfo.nivelSecretario}</p>`;
+                    if (paseInfo.tipo) contenidoHTML += `<p><strong>Tipo de Pase:</strong> ${paseInfo.tipo}</p>`;
+                    if (paseInfo.observaciones) contenidoHTML += `<p><strong>Observaciones:</strong> ${paseInfo.observaciones}</p>`;
+                    if (paseInfo.historial && paseInfo.historial.length > 0) {
+                        contenidoHTML += `<p><strong>Historial de movimientos:</strong></p><div style="max-height:150px; overflow-y:auto;">`;
+                        paseInfo.historial.slice(0, 5).forEach(h => {
+                            const fechaStr = h.fecha ? formatearFecha(h.fecha, true) : '';
+                            const usuario = h.usuario || 'Sistema';
+                            const accion = h.accion || '';
+                            const comentario = h.comentario || '';
+                            contenidoHTML += `<div class="historial-item">${fechaStr} - <strong>${usuario}</strong>: ${accion} ${comentario ? ' ('+comentario+')' : ''}</div>`;
+                        });
+                        contenidoHTML += `</div>`;
+                    }
+                    contenidoHTML += `</div>`;
+                } else {
+                    contenidoHTML += `<div class="pase-info" style="background:#f9f9f9; border-left-color:#999;"><p><em>No hay pase asociado a este expediente.</em></p></div>`;
+                }
+
+                verContenido.innerHTML = contenidoHTML;
+                currentCausaId = id;
+                await cargarNotas(id, true);
+
+                modalVer.classList.add('show');
+            } catch(e) {
+                console.error(e);
+                mostrarAlertaPersonalizada("Error", "No se pudo abrir el detalle.");
+            }
+        }
+
+        function cerrarVerPanel() {
+            modalVer.classList.remove('show');
+            document.querySelectorAll("#tbodyCausas tr").forEach(r => r.classList.remove('row-active'));
+        }
+
+        // ============================================================
+        //  ABRIR EDITAR
+        // ============================================================
+        async function abrirEditar(id) {
+            modo = "editar";
+            resetFormCausa();
+            editId.value = id;
+            tituloForm.textContent = "Editar Expediente";
+            const d = datosLocales.find(causa => causa.id === id);
+            if (d) {
+                cargarDatosEnForm(d);
+                modal.style.display = "flex";
+            } else {
+                mostrarAlertaPersonalizada("Error", "El expediente no fue encontrado.");
+            }
+        }
+
+        // ============================================================
+        //  AGREGAR NOTA
+        // ============================================================
+        async function agregarNota() {
+            if (!causaActualId) return;
+            if (!conectadoFirestore) { mostrarAlertaFlotante("Conecte a Firestore para guardar notas.", 'danger'); return; }
+            const txt = notaBitacora.value.trim();
+            if (!txt) return;
+            const db = estadoDatos === "historica" ? dbHistorica : dbNueva;
+            try {
+                await db.collection("causas").doc(causaActualId).collection("seguimiento").add({
+                    texto: txt,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    usuario: "Usuario Actual"
+                });
+                const fechaAhora = new Date();
+                const fechaFormateada = formatearFecha(fechaAhora, true);
+                const notaHTML = `<div class="note-item"><div class="note-meta"><span>${fechaFormateada}</span><span>por: Usuario Actual</span></div><div class="note-text">${txt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div></div>`;
+                historialNotas.insertAdjacentHTML('afterbegin', notaHTML);
+                notaBitacora.value = "";
+                mostrarAlertaFlotante("Nota guardada.", 'success');
+            } catch(e) {
+                mostrarAlertaFlotante("Error al guardar nota: " + e.message, 'danger');
+            }
+        }
+
+        // ============================================================
+        //  AUDIENCIAS / DILIGENCIAS / COSTAS
+        // ============================================================
+        function agregarAudiencia() {
+            const container = $("audiencias-container");
+            const div = document.createElement('div');
+            div.className = 'audiencia-item';
+            const fechaInput = document.createElement('input');
+            fechaInput.type = 'datetime-local';
+            fechaInput.className = 'audiencia-fecha';
+            fechaInput.step = '60';
+            const now = new Date();
+            now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15);
+            fechaInput.value = formatFechaParaInput(now, true);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn-eliminar-audiencia';
+            deleteBtn.innerHTML = '<i class="fa fa-trash"></i>';
+            div.appendChild(fechaInput);
+            div.appendChild(deleteBtn);
+            container.appendChild(div);
+            deleteBtn.onclick = () => div.remove();
+        }
+
+        function agregarDiligencia() {
+            const container = $("diligencias-container");
+            const div = document.createElement('div');
+            div.className = 'diligencia-item';
+            const fechaInput = document.createElement('input');
+            fechaInput.type = 'datetime-local';
+            fechaInput.className = 'diligencia-fecha';
+            fechaInput.step = '60';
+            const now = new Date();
+            now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15);
+            fechaInput.value = formatFechaParaInput(now, true);
+            const detalleInput = document.createElement('input');
+            detalleInput.type = 'text';
+            detalleInput.className = 'diligencia-detalle';
+            detalleInput.placeholder = 'Detalle de la diligencia';
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn-eliminar-diligencia';
+            deleteBtn.innerHTML = '<i class="fa fa-trash"></i>';
+            div.appendChild(fechaInput);
+            div.appendChild(detalleInput);
+            div.appendChild(deleteBtn);
+            container.appendChild(div);
+            deleteBtn.onclick = () => div.remove();
+        }
+
+        function agregarItemCostas(fecha = "", costasFavor = "NO") {
+            const container = document.getElementById("costas-items-container");
+            const div = document.createElement('div');
+            div.className = 'costas-item';
+            const fechaInput = document.createElement('input');
+            fechaInput.type = 'date';
+            fechaInput.className = 'costas-fecha';
+            fechaInput.value = fecha;
+            const select = document.createElement('select');
+            select.className = 'costas-favor';
+            select.innerHTML = `<option value="NO">NO</option><option value="SI">SI</option>`;
+            if (costasFavor === "SI") select.value = "SI";
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn-eliminar-costas';
+            deleteBtn.innerHTML = '<i class="fa fa-trash"></i>';
+            div.appendChild(fechaInput);
+            div.appendChild(select);
+            div.appendChild(deleteBtn);
+            container.appendChild(div);
+            deleteBtn.onclick = () => div.remove();
+        }
+
+        // ============================================================
+        //  GUARDAR EXPEDIENTE
+        // ============================================================
+        const guardarExpediente = async () => {
+            if (!validateForm()) return;
+
+            const btnGuardar = $("btnGuardar");
+            btnGuardar.disabled = true;
+            btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            const datos = recolectarDatosForm();
+
+            try {
+                const textosParaKeywords = [
+                    datos.numCausa, datos.caratula, datos.usuarioAsignado, datos.datosNnya,
+                    datos.nnyaGesell, datos.observaciones, datos.intervencion, datos.detalleCostas,
+                    datos.recursos, datos.recursosContestacion, datos.estadoRecursos,
+                    (datos.diligencias || []).map(d => d.detalle).join(' ')
+                ].filter(Boolean).join(' ').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/gi, '').split(/\s+/).filter(p => p.length > 0);
+                datos.keywords = [...new Set(textosParaKeywords)];
+
+                if (modo === "nuevo") {
+                    // Verificar duplicado en memoria
+                    const numActual = $("numCausa").value.trim();
+                    if (datosLocales.some(x => x.numCausa === numActual)) {
+                        mostrarAlertaFlotante("El N° Expediente ya existe.", 'danger');
+                        $("numCausa").closest('.field').classList.add('error');
+                        return;
+                    }
+
+                    if (conectadoFirestore) {
+                        const db = estadoDatos === "historica" ? dbHistorica : dbNueva;
+                        const ref = await db.collection("causas").add({ ...datos, fechaRegistro: firebase.firestore.FieldValue.serverTimestamp() });
+                        datos.id = ref.id;
+                        datos.fechaRegistro = new Date();
+                        datosLocales.push(datos);
+                    } else {
+                        datos.id = 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                        datos.fechaRegistro = new Date();
+                        datosLocales.push(datos);
+                    }
+                    mostrarAlertaFlotante("Se guardó correctamente.", 'success');
+                } else {
+                    // Editar
+                    const idx = datosLocales.findIndex(x => x.id === editId.value);
+                    if (conectadoFirestore) {
+                        const db = estadoDatos === "historica" ? dbHistorica : dbNueva;
+                        await db.collection("causas").doc(editId.value).update(datos);
+                    }
+                    if (idx !== -1) {
+                        datosLocales[idx] = { ...datosLocales[idx], ...datos };
+                    }
+                    mostrarAlertaFlotante("Actualizado correctamente.", 'success');
+                }
+
+                modal.style.display = "none";
+                resetFormCausa();
+                renderizar(true);
+            } catch (e) {
+                console.error(e);
+                mostrarAlertaFlotante("Fallo al procesar: " + e.message, 'danger');
+            } finally {
+                btnGuardar.disabled = false;
+                btnGuardar.innerHTML = '<i class="fa fa-save"></i> Guardar';
+            }
+        };
+
+        // ============================================================
+        //  VALIDACIONES
+        // ============================================================
+        async function validarExistenciaExpediente() {
+            const num = $("numCausa").value.trim();
+            const field = $("numCausa").closest('.field');
+            if (modo === "nuevo" && num) {
+                const existe = datosLocales.some(x => x.numCausa === num);
+                if (existe) {
+                    field.classList.add('error');
+                    field.querySelector('.error-message').textContent = `Número ya registrado.`;
+                    deshabilitarCamposFormulario(true);
+                    mostrarAlertaFlotante(`El número ya existe.`, 'danger');
+                    numeroValido = false;
+                } else {
+                    field.classList.remove('error');
+                    deshabilitarCamposFormulario(false);
+                    numeroValido = true;
+                    ultimoNumeroValidado = num;
+                }
+            } else {
+                numeroValido = false;
+                ultimoNumeroValidado = '';
+            }
+        }
+
+        function deshabilitarCamposFormulario(d) {
+            document.querySelectorAll('#formCausa input:not(#numCausa), #formCausa textarea, #formCausa select').forEach(c => c.disabled = d);
+            if ($("btnGuardar")) $("btnGuardar").disabled = d;
+        }
+
+        function validateForm() {
+            let isValid = true;
+            ["numCausa", "caratula", "tipoProceso", "juzgado", "prioridad", "usuarioAsignado"].forEach(id => {
+                const field = $(id);
+                const parent = field.closest('.field');
+                if (field.value.trim() === "") {
+                    parent.classList.add('error');
+                    isValid = false;
+                } else {
+                    parent.classList.remove('error');
+                }
+            });
+            if (!isValid) mostrarAlertaFlotante("Complete todos los campos obligatorios.", 'danger');
+            return isValid;
+        }
+
+        function resetFormCausa() {
+            $("formCausa").reset();
+            observacionesEditor.innerHTML = '';
+            observacionesHidden.value = '';
+            audienciasContainer.innerHTML = '';
+            diligenciasContainer.innerHTML = '';
+            document.getElementById("costas-items-container").innerHTML = '';
+            $("habilitarAudienciaGesell").checked = false;
+            $("audienciaGesell").disabled = true;
+            $("nnyaGesell").disabled = true;
+            $("recursos-opcionales").style.display = 'none';
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            tabButtons[0].classList.add('active');
+            tabContents[0].classList.add('active');
+            $("counter").textContent = '0/1000';
+            document.querySelectorAll('.field').forEach(f => f.classList.remove('error'));
+            numeroValido = false;
+            ultimoNumeroValidado = '';
+            deshabilitarCamposFormulario(false);
+        }
+
+        function recolectarDatosForm() {
+            const datos = {
+                numCausa: $("numCausa").value.trim(),
+                caratula: $("caratula").value.trim(),
+                tipoProceso: $("tipoProceso").value,
+                juzgado: $("juzgado").value,
+                prioridad: $("prioridad").value,
+                usuarioAsignado: $("usuarioAsignado").value,
+                estado: $("estado").value,
+                intervencion: $("intervencion").value,
+                datosNnya: $("datosNnya").value.trim(),
+                fechaInicio: parseDateToTimestamp($("fechaInicio").value),
+                fechaPase: parseDateTimeLocalToTimestamp($("fechaPase").value),
+                vencimiento: parseDateTimeLocalToTimestamp($("vencimiento").value),
+                vencimientoRecursos: parseDateTimeLocalToTimestamp($("vencimientoRecursos").value),
+                recursos: $("recursos").value || null,
+                recursosContestacion: $("recursosContestacion").value || null,
+                estadoRecursos: $("estadoRecursos").value || null,
+                observaciones: observacionesHidden.value,
+                detalleCostas: $("detalleCostas").value.trim()
+            };
+
+            const costasItems = [];
+            let flagCostasFavor = "NO";
+            document.querySelectorAll('.costas-item').forEach(item => {
+                const fecha = item.querySelector('.costas-fecha').value;
+                const costasFavor = item.querySelector('.costas-favor').value;
+                if (fecha) {
+                    costasItems.push({ fecha: parseDateToTimestamp(fecha), costasFavor: costasFavor });
+                    if (costasFavor === "SI") flagCostasFavor = "SI";
+                }
+            });
+            datos.costasItems = costasItems;
+            datos.costasFavor = flagCostasFavor;
+
+            if ($("habilitarAudienciaGesell").checked) {
+                datos.audienciaGesell = parseDateTimeLocalToTimestamp($("audienciaGesell").value);
+                datos.nnyaGesell = $("nnyaGesell").value.trim();
+            } else {
+                datos.audienciaGesell = null;
+                datos.nnyaGesell = "";
+            }
+
+            datos.audiencias = [];
+            audienciasContainer.querySelectorAll('.audiencia-fecha').forEach(i => {
+                const t = parseDateTimeLocalToTimestamp(i.value);
+                if (t) datos.audiencias.push(t);
+            });
+
+            datos.diligencias = [];
+            diligenciasContainer.querySelectorAll('.diligencia-item').forEach(i => {
+                const f = parseDateTimeLocalToTimestamp(i.querySelector('.diligencia-fecha').value);
+                const d = i.querySelector('.diligencia-detalle').value.trim();
+                if (f) datos.diligencias.push({ fecha: f, detalle: d });
+            });
+
+            return datos;
+        }
+
+        function cargarDatosEnForm(data) {
+            $("numCausa").value = data.numCausa||'';
+            $("caratula").value = data.caratula||'';
+            $("tipoProceso").value = data.tipoProceso||'';
+            poblarJuzgadosPorTipo(data.tipoProceso);
+            setTimeout(()=>{ $("juzgado").value = data.juzgado||''; }, 100);
+            $("prioridad").value = data.prioridad||'Ninguna';
+            $("usuarioAsignado").value = data.usuarioAsignado||'';
+            $("estado").value = data.estado||'En trámite';
+            $("intervencion").value = data.intervencion||'';
+            $("datosNnya").value = data.datosNnya||'';
+            $("fechaInicio").value = formatFechaParaInput(data.fechaInicio, false);
+            $("fechaPase").value = formatFechaParaInput(data.fechaPase, true);
+            $("vencimiento").value = formatFechaParaInput(data.vencimiento, true);
+            $("vencimientoRecursos").value = formatFechaParaInput(data.vencimientoRecursos, true);
+            $("recursos").value = data.recursos||'';
+            $("recursosContestacion").value = data.recursosContestacion||'';
+            $("estadoRecursos").value = data.estadoRecursos||'';
+            observacionesEditor.innerHTML = data.observaciones||'';
+            observacionesHidden.value = data.observaciones||'';
+            $("detalleCostas").value = data.detalleCostas||'';
+
+            const container = document.getElementById("costas-items-container");
+            container.innerHTML = '';
+            if (data.costasItems && Array.isArray(data.costasItems) && data.costasItems.length > 0) {
+                data.costasItems.forEach(item => {
+                    const fechaStr = formatFechaParaInput(item.fecha, false);
+                    agregarItemCostas(fechaStr, item.costasFavor);
+                });
+            } else if (data.fechaCostas) {
+                const fechaStr = formatFechaParaInput(data.fechaCostas, false);
+                const costasFavor = data.costasFavor === "SI" ? "SI" : "NO";
+                agregarItemCostas(fechaStr, costasFavor);
+            }
+
+            audienciasContainer.innerHTML='';
+            if (Array.isArray(data.audiencias)) data.audiencias.forEach(a => {
+                const div=document.createElement('div');
+                div.className='audiencia-item';
+                div.innerHTML=`<input type="datetime-local" class="audiencia-fecha" step="60" value="${formatFechaParaInput(a,true)}"><button type="button" class="btn-eliminar-audiencia"><i class="fa fa-trash"></i></button>`;
+                audienciasContainer.appendChild(div);
+                div.querySelector('.btn-eliminar-audiencia').onclick=()=>audienciasContainer.removeChild(div);
+            });
+
+            diligenciasContainer.innerHTML='';
+            if(Array.isArray(data.diligencias)) data.diligencias.forEach(d=>{
+                const div=document.createElement('div');
+                div.className='diligencia-item';
+                div.innerHTML=`<input type="datetime-local" class="diligencia-fecha" step="60" value="${formatFechaParaInput(d.fecha,true)}"><input type="text" class="diligencia-detalle" value="${(d.detalle||'').replace(/"/g,'&quot;')}"><button type="button" class="btn-eliminar-diligencia"><i class="fa fa-trash"></i></button>`;
+                diligenciasContainer.appendChild(div);
+                div.querySelector('.btn-eliminar-diligencia').onclick=()=>diligenciasContainer.removeChild(div);
+            });
+
+            if(data.audienciaGesell){
+                $("habilitarAudienciaGesell").checked=true;
+                $("audienciaGesell").disabled=false;
+                $("nnyaGesell").disabled=false;
+                $("audienciaGesell").value=formatFechaParaInput(data.audienciaGesell,true);
+                $("nnyaGesell").value=data.nnyaGesell||'';
+            }
+            if(data.recursos) $("recursos-opcionales").style.display='block';
+        }
+
+        // ============================================================
+        //  IMPRESIÓN
+        // ============================================================
+        function imprimirTabla() {
+            const ahora = new Date();
+            const fechaStr = ahora.toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            let header = document.querySelector('.print-header');
+            if (!header) {
+                header = document.createElement('div');
+                header.className = 'print-header';
+                header.style.display = 'none';
+                document.body.prepend(header);
+            }
+            header.innerHTML = `Fecha de impresión: ${fechaStr}`;
+            document.body.classList.add('print-table-mode');
+            window.print();
+            setTimeout(() => {
+                document.body.classList.remove('print-table-mode');
+            }, 500);
+        }
+
+        function imprimirDetalle() {
+            const ahora = new Date();
+            const fechaStr = ahora.toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            let iframe = document.getElementById('print-detail-iframe');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'print-detail-iframe';
+                iframe.style.position = 'fixed';
+                iframe.style.right = '0';
+                iframe.style.bottom = '0';
+                iframe.style.width = '0';
+                iframe.style.height = '0';
+                iframe.style.border = 'none';
+                iframe.style.zIndex = '-1000';
+                document.body.appendChild(iframe);
+            }
+
+            const contenidoHTML = document.getElementById('verContenido').innerHTML;
+            const tituloHTML = document.querySelector('#modalVer h2')?.innerText || 'Detalle del Expediente';
+
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(`
+                <html>
+                <head>
+                    <title>${tituloHTML}</title>
+                    <style>
+                        body { font-family: 'Inter', -apple-system, sans-serif; padding: 30px; color: #0F172A; line-height: 1.6; background: white; }
+                        .print-header { text-align: right; font-size: 0.85rem; color: #64748B; margin-bottom: 20px; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px; }
+                        h2 { margin-top: 0; margin-bottom: 24px; color: #1E3A8A; font-size: 1.6rem; font-weight: 700; border-bottom: 3px solid #2563EB; padding-bottom: 8px; }
+                        p { margin-bottom: 12px; font-size: 0.95rem; }
+                        p strong { color: #475569; font-weight: 600; display: inline-block; min-width: 160px; }
+                        ul { margin-left: 24px; margin-bottom: 16px; list-style-type: square; color: #475569; font-size: 0.95rem; }
+                        li { margin-bottom: 6px; }
+                        div { background: #F8FAFC; padding: 14px; border-radius: 8px; font-size: 0.95rem; margin-top: 6px; margin-bottom: 16px; border: 1px solid #E2E8F0; }
+                        .pase-info { border-left: 4px solid #2563EB; background: #f0f7ff; }
+                        .pase-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-weight: 600; font-size: 0.7rem; }
+                        .historial-item { font-size: 0.8rem; padding: 4px 0; border-bottom: 1px solid #e2e8f0; }
+                        .historial-item:last-child { border-bottom: none; }
+                        @media print { body { padding: 0; } .print-header { margin-bottom: 15px; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">Fecha de impresión: ${fechaStr}</div>
+                    <h2>${tituloHTML}</h2>
+                    ${contenidoHTML}
+                </body>
+                </html>
+            `);
+            doc.close();
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            }, 250);
+        }
+
+        // ============================================================
+        //  MODALES IFRAME
+        // ============================================================
+        function abrirIframeModal() {
+            const modalIframe = document.getElementById('iframeModal');
+            modalIframe.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        function cerrarIframeModal() {
+            const modalIframe = document.getElementById('iframeModal');
+            modalIframe.style.display = 'none';
+            document.body.style.overflow = '';
+            const iframe = modalIframe.querySelector('iframe');
+            iframe.src = iframe.src;
+        }
+        function abrirIframeModalResumen() {
+            const modalIframe = document.getElementById('iframeModalResumen');
+            modalIframe.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        function cerrarIframeModalResumen() {
+            const modalIframe = document.getElementById('iframeModalResumen');
+            modalIframe.style.display = 'none';
+            document.body.style.overflow = '';
+            const iframe = modalIframe.querySelector('iframe');
+            iframe.src = iframe.src;
+        }
+
+        // ============================================================
+        //  INICIALIZACIÓN
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Restricción: solo números y "/" en N° Expediente
+            const numCausaInput = document.getElementById('numCausa');
+            if (numCausaInput) {
+                numCausaInput.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9/]/g, '');
+                });
+            }
+
+            // Validación de carátula
+            const caratulaField = document.getElementById('caratula');
+            if (caratulaField) {
+                function validarCaratula(valor) {
+                    valor = valor.toUpperCase();
+                    valor = valor.replace(/"/g, '');
+                    const trimmed = valor.trim();
+                    if (trimmed.startsWith('EXPTE')) {
+                        mostrarAlertaFlotante('La carátula no debe comenzar con el número de expediente.', 'danger');
+                        return { valido: false, valor: '' };
+                    }
+                    if (trimmed.length > 0 && !/^[A-Z]/.test(trimmed)) {
+                        mostrarAlertaFlotante('La carátula debe comenzar con una letra.', 'danger');
+                        return { valido: false, valor: '' };
+                    }
+                    return { valido: true, valor: valor };
+                }
+                caratulaField.addEventListener('input', function() {
+                    const r = validarCaratula(this.value);
+                    if (!r.valido) this.value = ''; else this.value = r.valor;
+                });
+                caratulaField.addEventListener('paste', function() {
+                    setTimeout(() => {
+                        const r = validarCaratula(this.value);
+                        if (!r.valido) this.value = ''; else this.value = r.valor;
+                    }, 10);
+                });
+            }
+
+            $("btnToggleFiltros").onclick = function() {
+                const panel = $("advancedFiltersPanel");
+                panel.classList.toggle("show");
+                this.classList.toggle("active");
+            };
+
+            // Selector de base: si hay conexión activa, desconectar y actualizar UI
+            $("selectorBaseDatos").addEventListener('change', () => {
+                if (conectadoFirestore) {
+                    conectadoFirestore = false;
+                    estadoDatos = datosLocales.length > 0 ? "importado" : null;
+                    actualizarBotonConectar();
+                    actualizarEstadoConexionUI();
+                }
+            });
+
+            $("btnConectar").onclick = conectarFirestore;
+            $("btnExportarJSON").onclick = exportarJSON;
+            $("btnImportarJSON").onclick = () => $("importJsonInput").click();
+            $("importJsonInput").addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    importarJSON(e.target.files[0]);
+                    e.target.value = '';
+                }
+            });
+
+            $("btnNuevo").onclick = () => {
+                modo = "nuevo";
+                resetFormCausa();
+                editId.value = "";
+                tituloForm.textContent = "Nuevo Expediente";
+                modal.style.display = "flex";
+            };
+            $("btnGuardar").onclick = guardarExpediente;
+            $("btnCerrarVer").onclick = cerrarVerPanel;
+            $("btnXCloseVer").onclick = cerrarVerPanel;
+            $("btnAlertOK").onclick = () => alertModal.style.display = "none";
+            $("btnAgregarNota").onclick = agregarNota;
+            document.getElementById("cargarMasNotas").onclick = () => cargarNotas(currentCausaId, false);
+
+            document.getElementById("btnCloseModal").onclick = function() {
+                modal.style.display = "none";
+                resetFormCausa();
+            };
+
+            modal.addEventListener('click', e => { if (e.target === modal) { modal.style.display = "none"; resetFormCausa(); } });
+            modalVer.addEventListener('click', e => { if (e.target === modalVer && window.innerWidth <= 1200) cerrarVerPanel(); });
+
+            $("btnAgregarAudiencia").onclick = agregarAudiencia;
+            $("btnAgregarDiligencia").onclick = agregarDiligencia;
+            document.getElementById("btnAgregarCostasItem").onclick = () => agregarItemCostas();
+
+            $("btnBuscar").onclick = () => renderizar(true);
+            buscador.addEventListener('keypress', e => { if (e.key === 'Enter') renderizar(true); });
+
+            // Filtros: recalcular
+            [filtroEstado, filtroUsuario, filtroPrioridad, filtroIntervencion, filtroTipoProceso, $("filtroCostas"), $("filtroPeriodo")].forEach(el => {
+                el.addEventListener('change', () => { clearTimeout(filterTimeout); filterTimeout = setTimeout(() => renderizar(true), 300); });
+            });
+
+            let expedienteTimer;
+            $("numCausa").addEventListener('input', function(){
+                clearTimeout(expedienteTimer);
+                expedienteTimer = setTimeout(() => validarExistenciaExpediente(), 1200);
+            });
+
+            selTipo.addEventListener('change', function() { poblarJuzgadosPorTipo(this.value); });
+            $("recursos").addEventListener('change', function() { $("recursos-opcionales").style.display = this.value ? "block" : "none"; });
+            $("habilitarAudienciaGesell").addEventListener('change', function() {
+                $("audienciaGesell").disabled = !this.checked;
+                $("nnyaGesell").disabled = !this.checked;
+            });
+
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabButtons.forEach(b => b.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    $(btn.getAttribute('data-tab')).classList.add('active');
+                });
+            });
+
+            const btnBold = $("btnBold"), btnColorAzul = $("btnColorAzul"), btnColorRojo = $("btnColorRojo"), btnColorVerde = $("btnColorVerde"), btnColorNormal = $("btnColorNormal");
+            if (btnBold) btnBold.onclick = () => document.execCommand('bold', false, null);
+            if (btnColorAzul) btnColorAzul.onclick = () => document.execCommand('foreColor', false, '#2563EB');
+            if (btnColorRojo) btnColorRojo.onclick = () => document.execCommand('foreColor', false, '#EF4444');
+            if (btnColorVerde) btnColorVerde.onclick = () => document.execCommand('foreColor', false, '#10B981');
+            if (btnColorNormal) btnColorNormal.onclick = () => document.execCommand('foreColor', false, '#0F172A');
+            observacionesEditor.addEventListener('input', () => observacionesHidden.value = observacionesEditor.innerHTML);
+
+            $("btnPrintFiltrado").onclick = imprimirTabla;
+            $("btnPrintRegistro").onclick = imprimirDetalle;
+
+            document.getElementById("btnTotalExpedientes").onclick = abrirIframeModal;
+            document.getElementById("btnVistaResumida").onclick = abrirIframeModalResumen;
+            document.getElementById("closeIframeModal").onclick = cerrarIframeModal;
+            document.getElementById("closeIframeModalResumen").onclick = cerrarIframeModalResumen;
+            document.getElementById("iframeModal").addEventListener('click', function(e) {
+                if (e.target === this) cerrarIframeModal();
+            });
+            document.getElementById("iframeModalResumen").addEventListener('click', function(e) {
+                if (e.target === this) cerrarIframeModalResumen();
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const modalIframe = document.getElementById('iframeModal');
+                    if (modalIframe.style.display === 'flex') cerrarIframeModal();
+                    const modalIframeResumen = document.getElementById('iframeModalResumen');
+                    if (modalIframeResumen.style.display === 'flex') cerrarIframeModalResumen();
+                }
+            });
+
+            // Catálogos (para el formulario). No bloquea si falla.
+            try {
+                await cargarCatalagosConCache();
+            } catch(e) {
+                console.warn("No se pudieron cargar los catálogos:", e);
+            }
+
+            // Estado inicial: tabla vacía, sin conexión
+            actualizarBotonConectar();
+            actualizarEstadoConexionUI();
+            renderizar(true);
+        });
+    </script>
+</body>
+</html>
