@@ -1,0 +1,2276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analizador de Legajos — Informes JSON</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#1c2b3d;
+    --ink-soft:#3c4d63;
+    --paper:#f3efe4;
+    --paper-card:#fbf9f3;
+    --manila:#e4dcc4;
+    --manila-dark:#cabf99;
+    --line:#c9bf9f;
+    --line-soft:rgba(201,191,159,.5);
+    --accent:#8a2b2b;
+    --accent-soft:#c76b4a;
+    --gold:#9c7a34;
+    --good:#3e6b52;
+    --shadow-sm: 0 1px 2px rgba(28,43,61,.05);
+    --shadow-md: 0 1px 3px rgba(28,43,61,.06), 0 1px 2px rgba(28,43,61,.04);
+    --shadow-lg: 0 6px 20px rgba(28,43,61,.10), 0 2px 6px rgba(28,43,61,.06);
+    --radius: 6px;
+    --radius-sm: 4px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--manila);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    font-size:16px;
+    line-height:1.5;
+  }
+  h1,h2,h3,h4{
+    font-family:'Newsreader', Georgia, serif;
+    font-weight:600;
+    color:var(--ink);
+    margin:0 0 .4em 0;
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; letter-spacing:.01em; }
+  a{ color:var(--accent); }
+  button{ font-family:inherit; }
+
+  /* ---------- Pantalla de carga ---------- */
+  #uploadScreen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 20px;
+  }
+  .upload-wrap{
+    max-width:760px;
+    width:100%;
+  }
+  .upload-header{
+    text-align:left;
+    margin-bottom:28px;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:18px;
+  }
+  .upload-header .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px;
+    color:var(--accent);
+    margin-bottom:10px;
+  }
+  .upload-header h1{
+    font-size:42px;
+    line-height:1.15;
+    max-width:640px;
+  }
+  .upload-header p{
+    max-width:560px;
+    color:var(--ink-soft);
+    font-size:16.5px;
+    line-height:1.6;
+    margin-top:12px;
+  }
+  .dropzone{
+    background:var(--paper-card);
+    border:2px dashed var(--manila-dark);
+    border-radius:var(--radius);
+    padding:48px 28px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .dropzone.drag{
+    border-color:var(--accent);
+    background:#fff;
+  }
+  .dropzone .stamp{
+    width:60px;height:60px;
+    margin:0 auto 18px auto;
+    border:2px solid var(--ink);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    transform:rotate(-8deg);
+  }
+  .dropzone h3{ font-size:21px; margin-bottom:8px;}
+  .dropzone p{ color:var(--ink-soft); font-size:15px; margin:0 0 18px 0;}
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    padding:12px 22px;
+    border-radius:var(--radius-sm);
+    font-size:15px;
+    font-weight:500;
+    cursor:pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .btn:hover{ background:#0f1826; }
+  .btn:active{ transform:translateY(1px); }
+  .btn.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:1.5px solid var(--ink);
+  }
+  .btn.secondary:hover{ background:rgba(28,43,61,.06); }
+  .btn.accent{ background:var(--accent); }
+  .btn.accent:hover{ background:#6f2222; }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  #fileInput{ display:none; }
+
+  .filelist{
+    margin-top:18px;
+    text-align:left;
+  }
+  .filelist-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 16px;
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    margin-bottom:8px;
+    font-size:14.5px;
+  }
+  .filelist-item .fname{ font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:var(--ink-soft);}
+  .filelist-item .fmeta{ color:var(--good); font-size:13.5px; }
+  .filelist-item .ferror{ color:var(--accent); font-size:13.5px; }
+  .filelist-item button.remove{
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:20px;line-height:1;
+    padding:0 4px;
+  }
+  .upload-actions{ margin-top:22px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .upload-note{ font-size:13.5px; color:var(--ink-soft); margin-top:14px; line-height:1.5; }
+
+  /* ---------- Dashboard ---------- */
+  #app{ display:none; min-height:100vh; }
+  #app.active{ display:flex; }
+  .sidebar{
+    width:260px;
+    flex-shrink:0;
+    background:linear-gradient(180deg, #1c2b3d 0%, #162333 100%);
+    color:#e9e5d8;
+    min-height:100vh;
+    padding:22px 0;
+    display:flex;
+    flex-direction:column;
+    position:sticky;
+    top:0;
+    align-self:flex-start;
+    height:100vh;
+    overflow-y:auto;
+  }
+  .sidebar-brand{
+    padding:0 20px 18px 20px;
+    border-bottom:1px solid rgba(255,255,255,.14);
+    margin-bottom:14px;
+  }
+  .sidebar-brand .kicker{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-soft); }
+  .sidebar-brand h2{ color:#fff; font-size:21px; margin:4px 0 0 0; }
+  .tab-group-label{
+    font-size:12px;
+    color:#9aa6b8;
+    padding:6px 20px;
+    margin-top:8px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .tab{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:11px 20px;
+    cursor:pointer;
+    font-size:15px;
+    color:#cbd3df;
+    border-left:3px solid transparent;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .tab:hover{ background:rgba(255,255,255,.05); }
+  .tab.active{
+    background:rgba(255,255,255,.08);
+    border-left-color:var(--accent-soft);
+    color:#fff;
+    font-weight:500;
+  }
+  .tab .tab-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tab .tab-count{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:#dfe4ec;
+    flex-shrink:0;
+    background:rgba(255,255,255,.10);
+    padding:2px 8px;
+    border-radius:10px;
+  }
+  .tab.tab-special .tab-name::before{
+    content:'★';
+    color:var(--accent-soft);
+    margin-right:6px;
+    font-size:11px;
+  }
+  .sidebar-foot{
+    margin-top:auto;
+    padding:14px 20px 0 20px;
+    border-top:1px solid rgba(255,255,255,.14);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .sidebar-foot button{
+    background:none;
+    border:1px solid rgba(255,255,255,.25);
+    color:#dfe4ec;
+    padding:9px 12px;
+    border-radius:var(--radius-sm);
+    font-size:13.5px;
+    cursor:pointer;
+    text-align:left;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .sidebar-foot button:hover{ background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.4); }
+
+  .main{
+    flex:1;
+    min-width:0;
+    padding:30px 40px 80px 40px;
+    max-width:1500px;
+    margin:0 auto;
+    width:100%;
+  }
+  .topbar{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .topbar .eyebrow-line{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--gold);
+  }
+  .topbar h1{ font-size:34px; margin-top:4px; line-height:1.15; }
+  .topbar-actions{ display:flex; gap:8px; }
+  .btn.small{ padding:8px 14px; font-size:13.5px; }
+
+  /* ---------- CARD / MODULE ---------- */
+  .card{
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:22px;
+    overflow:hidden;
+    box-shadow:var(--shadow-md);
+    transition: box-shadow .22s ease;
+  }
+  .card:hover{ box-shadow:var(--shadow-lg); }
+  .card-head{
+    padding:16px 24px 14px;
+    border-bottom:1px solid var(--line-soft);
+    background:linear-gradient(180deg, rgba(228,220,196,.45) 0%, rgba(228,220,196,.08) 100%);
+  }
+  .card-head h3{
+    font-size:19px;
+    margin:0 0 4px 0;
+    letter-spacing:-.005em;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .card-head h3::before{
+    content:'';
+    width:9px; height:9px;
+    background:var(--accent);
+    border-radius:50%;
+    flex-shrink:0;
+    box-shadow:0 0 0 2px rgba(138,43,43,.15);
+  }
+  .card-head .card-sub{
+    margin:0;
+    font-size:13.5px;
+    color:var(--ink-soft);
+    padding-left:19px;
+    line-height:1.45;
+  }
+  .card-body{
+    padding:20px 24px 22px;
+  }
+  .card > h3{ font-size:18px; margin:20px 24px 4px 24px; }
+  .card > .card-sub{ font-size:13.5px; color:var(--ink-soft); margin:0 24px 14px 24px; }
+
+  /* ---------- Stat boxes ---------- */
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(180px,1fr));
+    gap:16px;
+    margin-bottom:22px;
+  }
+  .stat-box{
+    background:linear-gradient(180deg, #ffffff 0%, var(--paper-card) 100%);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 20px 18px 22px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:var(--shadow-sm);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .stat-box::before{
+    content:'';
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:4px;
+    background:linear-gradient(180deg, var(--accent) 0%, var(--accent-soft) 100%);
+  }
+  .stat-box:hover{
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-lg);
+  }
+  .stat-box .stat-num{
+    font-family:'Newsreader', serif;
+    font-size:36px;
+    font-weight:600;
+    line-height:1.05;
+    color:var(--ink);
+  }
+  .stat-box .stat-label{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin-top:8px;
+    line-height:1.4;
+  }
+
+  .narrative{
+    font-size:16.5px;
+    line-height:1.75;
+    color:var(--ink);
+  }
+  .narrative p{ margin:0 0 14px 0; }
+  .narrative p:last-child{ margin-bottom:0; }
+  .narrative strong{ color:var(--accent); font-weight:600; }
+
+  .two-col{ display:grid; grid-template-columns:1.1fr .9fr; gap:22px; }
+
+  .chart-box{ position:relative; height:290px; }
+  .chart-box.tall{ height:340px; }
+
+  /* ---------- Tables ---------- */
+  table.data-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14.5px;
+  }
+  table.data-table th{
+    text-align:left;
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:500;
+    font-size:12px;
+    color:var(--ink-soft);
+    border-bottom:1.5px solid var(--ink);
+    padding:10px 12px;
+    white-space:nowrap;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+  }
+  table.data-table td{
+    padding:10px 12px;
+    border-bottom:1px solid var(--line-soft);
+    vertical-align:top;
+  }
+  table.data-table tr:hover td{ background:rgba(28,43,61,.03); }
+  table.data-table tr:last-child td{ border-bottom:none; }
+  table.data-table td.num{ text-align:right; font-family:'IBM Plex Mono',monospace; }
+
+  .field-type-badge{
+    display:inline-block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    padding:3px 9px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:rgba(228,220,196,.4);
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .rank-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:26px;
+    height:26px;
+    padding:0 6px;
+    border-radius:50%;
+    background:rgba(228,220,196,.7);
+    border:1px solid var(--manila-dark);
+    color:var(--ink);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    font-weight:600;
+  }
+  .rank-badge.top1{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .rank-badge.top2{ background:var(--gold); color:#fff; border-color:var(--gold); }
+  .rank-badge.top3{ background:var(--accent-soft); color:#fff; border-color:var(--accent-soft); }
+
+  .bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:7px; font-size:14px; }
+  .bar-row .bar-label{ width:200px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bar-row .bar-track{ flex:1; background:var(--manila); border-radius:2px; height:16px; overflow:hidden; }
+  .bar-row .bar-fill{ background:var(--ink); height:100%; }
+  .bar-row .bar-val{ width:80px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink-soft); flex-shrink:0;}
+
+  /* ---------- Toolbar / Search ---------- */
+  .toolbar-row{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+  .search-input{
+    flex:1;
+    min-width:200px;
+    padding:11px 14px;
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    font-size:15px;
+    background:#fff;
+    font-family:inherit;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .search-input:focus{
+    outline:none;
+    border-color:var(--accent-soft);
+    box-shadow:0 0 0 3px rgba(199,107,74,.15);
+  }
+  select.col-select, select.plain-select{
+    padding:11px 12px;
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    background:#fff;
+    font-size:14.5px;
+    font-family:inherit;
+    cursor:pointer;
+  }
+  select.col-select:focus, select.plain-select:focus{
+    outline:none;
+    border-color:var(--accent-soft);
+    box-shadow:0 0 0 3px rgba(199,107,74,.15);
+  }
+  .pagination{ display:flex; justify-content:space-between; align-items:center; margin-top:16px; font-size:14px; color:var(--ink-soft); flex-wrap:wrap; gap:10px;}
+  .pagination button{
+    background:#fff; border:1px solid var(--line); border-radius:var(--radius-sm);
+    padding:7px 14px; cursor:pointer; font-size:14px;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .pagination button:hover:not(:disabled){ background:rgba(28,43,61,.05); border-color:var(--ink-soft); }
+  .pagination button:disabled{ opacity:.4; cursor:not-allowed; }
+
+  .empty-note{ color:var(--ink-soft); font-size:14.5px; font-style:italic; }
+
+  /* ---------- Section title ---------- */
+  .section-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--gold);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin:38px 0 14px 0;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-title::before{
+    content:'';
+    width:7px; height:7px;
+    background:var(--accent);
+    border-radius:50%;
+    flex-shrink:0;
+  }
+  .section-title.first{ margin-top:0; }
+
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+
+  .file-report{ display:none; }
+  .file-report.active{ display:block; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(20,26,36,.55);
+    display:none; align-items:center; justify-content:center; z-index:50; padding:20px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.active{ display:flex; }
+  .modal-box{
+    background:var(--paper-card); border-radius:var(--radius); max-width:720px; width:100%;
+    max-height:85vh; overflow:auto; padding:26px 28px; border:1px solid var(--line);
+    box-shadow:0 20px 50px rgba(0,0,0,.25);
+  }
+  .modal-box h3{ font-size:20px; margin-bottom:16px; }
+  .modal-box pre{ white-space:pre-wrap; font-size:13.5px; font-family:'IBM Plex Mono',monospace; line-height:1.65; }
+  .modal-close{ float:right; background:none; border:none; font-size:22px; cursor:pointer; color:var(--ink-soft); }
+
+  /* ---------- Keywords cloud ---------- */
+  .kw-cloud{ display:flex; flex-wrap:wrap; gap:8px; }
+  .kw-chip{
+    background:rgba(228,220,196,.5);
+    border:1px solid var(--manila-dark);
+    border-radius:20px;
+    padding:6px 14px;
+    font-size:13.5px;
+    color:var(--ink);
+    transition: background .15s ease, transform .15s ease;
+  }
+  .kw-chip:hover{
+    background:rgba(228,220,196,.9);
+    transform:translateY(-1px);
+  }
+
+  /* ---------- Dataset mini-cards (overview) ---------- */
+  .ds-card .card-head h3::before{ background:var(--gold); box-shadow:0 0 0 2px rgba(156,122,52,.15); }
+
+  /* ---------- User report specifics ---------- */
+  .user-hero{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:20px;
+  }
+  .user-detail-list{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .user-detail-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:12px;
+    padding:6px 0;
+    border-bottom:1px dashed var(--line-soft);
+    font-size:14.5px;
+  }
+  .user-detail-row:last-child{ border-bottom:none; }
+  .user-detail-row .u-name{ font-weight:500; }
+  .user-detail-row .u-val{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13.5px;
+    color:var(--ink-soft);
+  }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+
+  @media (max-width: 1100px){
+    .main{ padding:26px 28px 70px 28px; max-width:100%; }
+    .topbar h1{ font-size:30px; }
+    .card-head{ padding:14px 20px 12px; }
+    .card-body{ padding:18px 20px 20px; }
+    .topbar .eyebrow-line{ font-size:12.5px; }
+  }
+
+  @media (max-width: 900px){
+    .two-col{ grid-template-columns:1fr; }
+    .grid-2{ grid-template-columns:1fr; gap:18px; }
+    .stat-grid{ grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:14px; }
+    .chart-box{ height:260px; }
+    .chart-box.tall{ height:300px; }
+  }
+
+  @media (max-width: 768px){
+    #app.active{ flex-direction:column; }
+    .sidebar{
+      width:100%;
+      height:auto;
+      min-height:auto;
+      position:sticky;
+      top:0;
+      padding:0;
+      z-index:30;
+      box-shadow:0 2px 8px rgba(0,0,0,.15);
+      overflow-y:visible;
+    }
+    .sidebar-brand{
+      padding:14px 18px 12px;
+      margin-bottom:0;
+      border-bottom:none;
+    }
+    .sidebar-brand .kicker{ font-size:11px; }
+    .sidebar-brand h2{ font-size:18px; margin:2px 0 0 0; }
+    .tab-group-label{ display:none; }
+    #tabList{
+      display:flex;
+      overflow-x:auto;
+      overflow-y:hidden;
+      padding:0 8px 8px 8px;
+      gap:4px;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:thin;
+    }
+    #tabList::-webkit-scrollbar{ height:4px; }
+    #tabList::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.2); border-radius:2px; }
+    .tab{
+      flex-shrink:0;
+      border-left:none;
+      border-bottom:3px solid transparent;
+      padding:10px 14px;
+      white-space:nowrap;
+      font-size:14.5px;
+      border-radius:4px 4px 0 0;
+    }
+    .tab.active{
+      border-left-color:transparent;
+      border-bottom-color:var(--accent-soft);
+    }
+    .tab .tab-name{ max-width:160px; }
+    .sidebar-foot{
+      flex-direction:row;
+      padding:10px 14px 14px;
+      border-top:1px solid rgba(255,255,255,.14);
+      gap:8px;
+    }
+    .sidebar-foot button{
+      flex:1;
+      font-size:13px;
+      padding:9px 10px;
+      text-align:center;
+    }
+    .main{
+      padding:20px 18px 50px 18px;
+      max-width:100%;
+    }
+    .topbar{ margin-bottom:18px; }
+    .topbar h1{ font-size:26px; }
+    .topbar .eyebrow-line{ font-size:12px; }
+    .stat-grid{ grid-template-columns:repeat(2, 1fr); gap:12px; margin-bottom:18px; }
+    .stat-box{ padding:14px 16px 14px 18px; }
+    .stat-box .stat-num{ font-size:28px; }
+    .stat-box .stat-label{ font-size:12.5px; margin-top:6px; }
+    .card-head{ padding:14px 18px 12px; }
+    .card-head h3{ font-size:17px; }
+    .card-head .card-sub{ font-size:12.5px; padding-left:19px; }
+    .card-body{ padding:16px 18px 18px; }
+    .narrative{ font-size:15.5px; line-height:1.7; }
+    .chart-box{ height:230px; }
+    .chart-box.tall{ height:260px; }
+    table.data-table{ font-size:13.5px; }
+    table.data-table th{ font-size:11px; padding:8px 10px; }
+    table.data-table td{ padding:8px 10px; }
+    .section-title{ font-size:12px; margin:28px 0 12px 0; }
+    .search-input{ font-size:14.5px; padding:10px 12px; }
+    select.plain-select{ font-size:14px; padding:10px 10px; }
+    .pagination{ font-size:13px; }
+    .pagination button{ font-size:13px; padding:6px 12px; }
+    .modal-box{ padding:22px 20px; }
+    .modal-box pre{ font-size:12.5px; }
+    .upload-header h1{ font-size:32px; }
+    .upload-header p{ font-size:15.5px; }
+    .dropzone{ padding:36px 22px; }
+    .dropzone h3{ font-size:19px; }
+  }
+
+  @media (max-width: 480px){
+    .main{ padding:16px 14px 40px 14px; }
+    .topbar h1{ font-size:22px; }
+    .stat-grid{ grid-template-columns:1fr 1fr; gap:10px; }
+    .stat-box .stat-num{ font-size:24px; }
+    .stat-box .stat-label{ font-size:12px; }
+    .card-body{ padding:14px 16px 16px; }
+    .card-head{ padding:12px 16px 10px; }
+    .card-head h3{ font-size:16px; }
+    .narrative{ font-size:15px; }
+    .chart-box{ height:210px; }
+    .chart-box.tall{ height:230px; }
+    .toolbar-row{ gap:8px; }
+    .search-input{ min-width:100%; font-size:14.5px; }
+    select.plain-select{ flex:1; min-width:0; }
+    .sidebar-brand h2{ font-size:16px; }
+    .tab{ font-size:14px; padding:9px 12px; }
+    .tab .tab-name{ max-width:130px; }
+    .sidebar-foot button{ font-size:12px; padding:8px 8px; }
+    .upload-header h1{ font-size:26px; }
+    .upload-header p{ font-size:15px; }
+    .upload-wrap{ max-width:100%; }
+    .dropzone{ padding:28px 16px; }
+    .dropzone h3{ font-size:17px; }
+    .dropzone .stamp{ width:48px; height:48px; font-size:11px; }
+    .upload-actions{ flex-direction:column; align-items:stretch; }
+    .upload-actions .btn{ justify-content:center; }
+    .modal-box{ padding:18px 16px; }
+    .pagination{ flex-direction:column; align-items:flex-start; }
+  }
+
+  @media (min-width: 1400px){
+    .main{ max-width:1600px; padding:34px 56px 90px 56px; }
+    .topbar h1{ font-size:36px; }
+    .card-head h3{ font-size:20px; }
+    .narrative{ font-size:17px; }
+    .stat-box .stat-num{ font-size:40px; }
+    .chart-box{ height:320px; }
+    .chart-box.tall{ height:380px; }
+    .grid-2{ gap:24px; }
+  }
+
+  @media (min-width: 1800px){
+    .main{ max-width:1780px; }
+    .sidebar{ width:280px; }
+    .tab{ font-size:15.5px; padding:12px 22px; }
+    .stat-grid{ grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); }
+    .chart-box{ height:340px; }
+    .chart-box.tall{ height:400px; }
+  }
+
+  @media print{
+    .sidebar, .topbar-actions, .toolbar-row, .pagination{ display:none !important; }
+    #app{ display:block !important; }
+    .main{ max-width:100%; padding:0; }
+    .file-report{ display:block !important; page-break-after:always; }
+    body{ background:#fff; }
+    .card{ break-inside:avoid; border:1px solid #999; box-shadow:none; }
+    .stat-box{ box-shadow:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ PANTALLA DE CARGA ============ -->
+<div id="uploadScreen">
+  <div class="upload-wrap">
+    <div class="upload-header">
+      <div class="kicker">EXPTE. Nº — ANALIZADOR DE LEGAJOS DIGITALES</div>
+      <h1>Convertí tus archivos JSON en un informe legible</h1>
+      <p>Subí uno o varios archivos JSON de cualquier estructura — dictámenes, causas, planillas, exportaciones de bases de datos — y la aplicación arma automáticamente un informe con estadísticas, gráficos y una lectura narrativa de cada conjunto de datos.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <div class="stamp">JSON</div>
+      <h3>Arrastrá tus archivos aquí</h3>
+      <p>o hacé clic para elegirlos desde tu equipo (podés subir varios a la vez)</p>
+      <button class="btn" type="button" id="pickFilesBtn">Elegir archivos JSON</button>
+      <input type="file" id="fileInput" accept=".json,application/json" multiple>
+    </div>
+
+    <div class="filelist" id="filelist"></div>
+
+    <div class="upload-actions">
+      <button class="btn accent" id="generateBtn" disabled>Generar informe</button>
+      <button class="btn secondary" id="loadExampleBtn">Probar con datos de ejemplo</button>
+    </div>
+    <div class="upload-note">Todo el análisis ocurre en tu navegador: los archivos no se envían a ningún servidor.</div>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="kicker">LEGAJO DIGITAL</div>
+      <h2>Analizador de Datos</h2>
+    </div>
+    <div class="tab-group-label">— NAVEGACIÓN —</div>
+    <div id="tabList"></div>
+    <div class="sidebar-foot">
+      <button id="exportPdfBtn">Exportar informe (PDF)</button>
+      <button id="resetBtn">Cargar otros archivos</button>
+    </div>
+  </aside>
+
+  <main class="main" id="mainContent">
+    <!-- se completa dinámicamente -->
+  </main>
+</div>
+
+<div class="modal-overlay" id="recordModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalCloseBtn">&times;</button>
+    <h3>Detalle del registro</h3>
+    <pre id="modalContent"></pre>
+  </div>
+</div>
+
+
+<script>
+/* ============================================================
+   ANALIZADOR DE LEGAJOS — motor de análisis de JSON genéricos
+   ============================================================ */
+
+const STOPWORDS_ES = new Set(("de la que el en y a los del se las por un para con no una su al lo como más o "+
+  "pero sus le ya o este sí porque esta entre cuando muy sin sobre también me hasta hay donde quien desde todo "+
+  "nos durante todos uno les ni contra otros ese eso ante ellos e esto mí antes algunos qué unos yo otro otras "+
+  "otra él tanto esa estos mucho quienes nada muchos cual poco ella estar estas algunas algo nosotros mi mis tú "+
+  "te ti tu tus ellas nosotras vosotros vosotras os mío mía míos mías tuyo tuya tuyos tuyas suyo suya suyos suyas "+
+  "nuestro nuestra nuestros nuestras vuestro vuestra vuestros vuestras esos esas art nº n id fecha señor señora "+
+  "misma mismo caracter articulo codigo civil comercial nacion resolucion consta obrante representacion asumo "+
+  "carácter artículo código comercial nación resolución representación").split(/\s+/));
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+
+function isPlainObject(v){
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+function isFirestoreTimestamp(v){
+  return isPlainObject(v) && 'seconds' in v && 'nanoseconds' in v && Object.keys(v).length <= 3;
+}
+
+function humanizeFieldName(key){
+  const KNOWN = {
+    id:'ID', topic:'Materia', subject:'Asunto', expediente:'Expediente',
+    content:'Contenido', assignedUser:'Usuario asignado', createdAt:'Fecha de creación',
+    updatedAt:'Fecha de actualización', dictamenDate:'Fecha de dictamen', year:'Año',
+    number:'Número', firmaDefensor:'Firma del defensor', firmaDefensorSubrogante:'Firma defensor subrogante',
+    juzgado:'Juzgado', estado:'Estado', tipoProceso:'Tipo de proceso', intervencion:'Intervención',
+    observaciones:'Observaciones', datosNnya:'Datos NNyA', prioridad:'Prioridad', caratula:'Carátula',
+    numCausa:'N° de causa', keywords:'Palabras clave', usuarioAsignado:'Usuario asignado',
+    fechaRegistro:'Fecha de registro', fechaInicio:'Fecha de inicio', fechaPase:'Fecha de pase',
+    vencimiento:'Vencimiento', recursos:'Recursos', recursosContestacion:'Contestación de recursos',
+    estadoRecursos:'Estado de recursos', vencimientoRecursos:'Vencimiento de recursos',
+    audiencias:'Audiencias', audienciaGesell:'Audiencia Gesell', nnyaGesell:'NNyA en Cámara Gesell',
+    diligencias:'Diligencias', costasFavor:'Costas a favor', detalleCostas:'Detalle de costas',
+    costasItems:'Ítems de costas', fechaCostas:'Fecha de costas', fechasFiltro:'Fechas (filtro)'
+  };
+  if(KNOWN[key]) return KNOWN[key];
+  const last = key.includes('.') ? key.split('.').pop() : key;
+  if(KNOWN[last]) return KNOWN[last];
+  const spaced = last.replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/_/g,' ');
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+function toDateSafe(v){
+  if(v === null || v === undefined) return null;
+  if(isFirestoreTimestamp(v)) return new Date(v.seconds * 1000);
+  if(typeof v === 'string'){
+    const t = v.trim();
+    if(!ISO_DATE_RE.test(t)) return null;
+    const d = new Date(t);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if(typeof v === 'number' && v > 1e8 && v < 5e10){
+    return new Date(v > 1e11 ? v : v * 1000);
+  }
+  return null;
+}
+
+/* -------------------- Extraer arreglo de registros -------------------- */
+function extractArray(json){
+  if(Array.isArray(json)) return json;
+  if(isPlainObject(json)){
+    for(const k of Object.keys(json)){
+      if(Array.isArray(json[k]) && json[k].length && isPlainObject(json[k][0])){
+        return json[k];
+      }
+    }
+    for(const k of Object.keys(json)){
+      if(Array.isArray(json[k])) return json[k];
+    }
+    return [json];
+  }
+  return [];
+}
+
+/* -------------------- Aplanar un registro -------------------- */
+function flattenRecord(rec){
+  if(!isPlainObject(rec)) return { valor: rec };
+  const out = {};
+  for(const k of Object.keys(rec)){
+    const v = rec[k];
+    if(isFirestoreTimestamp(v) || !isPlainObject(v)){
+      out[k] = v;
+      continue;
+    }
+    const nestedKeys = Object.keys(v);
+    const looksLikeWrapper = /^(data|fields|attributes|payload|info|detalle|body|valores|properties)$/i.test(k) || nestedKeys.length >= 3;
+    if(!looksLikeWrapper){
+      out[k] = v;
+      continue;
+    }
+    for(const nk of nestedKeys){
+      const nv = v[nk];
+      const outKey = (nk in out) ? `${k}.${nk}` : nk;
+      if(isFirestoreTimestamp(nv) || !isPlainObject(nv)){
+        out[outKey] = nv;
+      } else {
+        for(const [n2k, n2v] of Object.entries(nv)){
+          out[`${outKey}.${n2k}`] = n2v;
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/* -------------------- Tokenizado para nubes de palabras -------------------- */
+function topWords(strings, limit){
+  const freq = new Map();
+  const wordRe = /[a-záéíóúñü]{4,}/gi;
+  for(const s of strings){
+    if(typeof s !== 'string') continue;
+    const words = s.toLowerCase().normalize('NFC').match(wordRe) || [];
+    for(const w of words){
+      if(STOPWORDS_ES.has(w)) continue;
+      freq.set(w, (freq.get(w) || 0) + 1);
+    }
+  }
+  return [...freq.entries()].sort((a,b)=>b[1]-a[1]).slice(0, limit || 15);
+}
+
+function arrayItemToLabel(item){
+  if(typeof item === 'string') return item;
+  if(isFirestoreTimestamp(item)){
+    const d = toDateSafe(item);
+    return d ? fmtDate(d) : '';
+  }
+  if(isPlainObject(item)){
+    for(const k of ['detalle','nombre','name','title','titulo','descripcion','label','tipo','estado']){
+      if(typeof item[k] === 'string' && item[k].trim()) return item[k].trim();
+    }
+    return JSON.stringify(item).slice(0,80);
+  }
+  return String(item);
+}
+
+/* -------------------- Analizar un campo -------------------- */
+function analyzeField(key, values, totalRecords){
+  const nonNull = values.filter(v => v !== undefined && v !== null && v !== '');
+  const presentCount = nonNull.length;
+  const presentRatio = totalRecords ? presentCount / totalRecords : 0;
+  const label = humanizeFieldName(key);
+  const base = { key, label, totalRecords, presentCount, presentRatio };
+
+  if(presentCount === 0){
+    return { ...base, type: 'empty' };
+  }
+
+  const counts = { number:0, boolean:0, string:0, array:0, tsobj:0, object:0 };
+  for(const v of nonNull){
+    if(Array.isArray(v)) counts.array++;
+    else if(isFirestoreTimestamp(v)) counts.tsobj++;
+    else if(typeof v === 'number') counts.number++;
+    else if(typeof v === 'boolean') counts.boolean++;
+    else if(typeof v === 'object') counts.object++;
+    else counts.string++;
+  }
+  const dominant = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+
+  if(dominant === 'tsobj'){
+    const dates = nonNull.map(toDateSafe).filter(Boolean);
+    return buildDateStats(base, dates);
+  }
+  if(dominant === 'string'){
+    const dateHits = nonNull.filter(v => typeof v === 'string' && ISO_DATE_RE.test(v.trim()));
+    if(dateHits.length / presentCount > 0.8){
+      const dates = dateHits.map(toDateSafe).filter(Boolean);
+      return buildDateStats(base, dates);
+    }
+  }
+
+  if(dominant === 'array'){
+    const allItems = [];
+    let lenSum = 0;
+    let arrCount = 0;
+    for(const v of nonNull){
+      if(!Array.isArray(v)) continue;
+      arrCount++;
+      lenSum += v.length;
+      for(const item of v){
+        allItems.push(arrayItemToLabel(item));
+      }
+    }
+    const freq = new Map();
+    for(const it of allItems){
+      const norm = it.trim();
+      if(norm.length < 2) continue;
+      freq.set(norm, (freq.get(norm) || 0) + 1);
+    }
+    const topItems = [...freq.entries()].sort((a,b)=>b[1]-a[1]).slice(0, 20);
+    return { ...base, type:'array', avgLength: lenSum / (arrCount || 1), topItems, totalItems: allItems.length };
+  }
+
+  if(dominant === 'object'){
+    return { ...base, type:'object', sample: nonNull.slice(0,3) };
+  }
+
+  if(dominant === 'boolean'){
+    const freq = new Map();
+    for(const v of nonNull) freq.set(v ? 'Sí' : 'No', (freq.get(v ? 'Sí':'No')||0)+1);
+    return { ...base, type:'categorical', uniqueCount:freq.size, valueCounts:[...freq.entries()].sort((a,b)=>b[1]-a[1]) };
+  }
+
+  if(dominant === 'number'){
+    const nums = nonNull.filter(v => typeof v === 'number');
+    const looksLikeDate = /fecha|date|time|timestamp/i.test(key) && nums.every(n => n > 1e8);
+    if(looksLikeDate){
+      const dates = nums.map(toDateSafe).filter(Boolean);
+      if(dates.length) return buildDateStats(base, dates);
+    }
+    const sorted = [...nums].sort((a,b)=>a-b);
+    const sum = nums.reduce((a,b)=>a+b,0);
+    const avg = sum / nums.length;
+    const median = sorted[Math.floor(sorted.length/2)];
+    const min = sorted[0], max = sorted[sorted.length-1];
+    const bucketCount = 6;
+    const span = (max - min) || 1;
+    const buckets = new Array(bucketCount).fill(0);
+    for(const n of nums){
+      let idx = Math.floor(((n - min) / span) * bucketCount);
+      if(idx >= bucketCount) idx = bucketCount - 1;
+      if(idx < 0) idx = 0;
+      buckets[idx]++;
+    }
+    const bucketLabels = buckets.map((_,i)=>{
+      const lo = min + (span*i/bucketCount);
+      const hi = min + (span*(i+1)/bucketCount);
+      return `${fmtNum(lo)}–${fmtNum(hi)}`;
+    });
+    const uniqNums = new Set(nums);
+    if(uniqNums.size <= 12){
+      const freq = new Map();
+      for(const n of nums) freq.set(String(n), (freq.get(String(n))||0)+1);
+      return { ...base, type:'categorical', uniqueCount:freq.size, valueCounts:[...freq.entries()].sort((a,b)=>b[1]-a[1]) };
+    }
+    return { ...base, type:'numeric', min, max, avg, median, buckets, bucketLabels };
+  }
+
+  const trimmed = nonNull.map(v => String(v).trim());
+  const uniqueSet = new Set(trimmed);
+  const uniqueCount = uniqueSet.size;
+  const avgLen = trimmed.reduce((a,s)=>a+s.length,0) / trimmed.length;
+  const idLike = /^(id|_id|uuid|guid|objectid)$/i.test(key.split('.').pop());
+
+  if(idLike){
+    return { ...base, type:'id', uniqueCount };
+  }
+  if(uniqueCount <= 40 && uniqueCount / presentCount <= 0.6){
+    const freq = new Map();
+    for(const s of trimmed) freq.set(s, (freq.get(s)||0)+1);
+    return { ...base, type:'categorical', uniqueCount, valueCounts:[...freq.entries()].sort((a,b)=>b[1]-a[1]) };
+  }
+  return { ...base, type:'text', uniqueCount, avgLen, maxLen: Math.max(...trimmed.map(s=>s.length)),
+           topWords: topWords(trimmed, 15) };
+}
+
+function buildDateStats(base, dates){
+  if(!dates.length) return { ...base, type:'empty' };
+  const sorted = [...dates].sort((a,b)=>a-b);
+  const minDate = sorted[0], maxDate = sorted[sorted.length-1];
+  const monthly = new Map();
+  for(const d of dates){
+    const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    monthly.set(k, (monthly.get(k)||0)+1);
+  }
+  const monthKeys = [...monthly.keys()].sort();
+  return { ...base, type:'date', minDate, maxDate,
+           monthlySeries: monthKeys.map(k=>({month:k, count:monthly.get(k)})) };
+}
+
+function fmtNum(n){
+  if(Math.abs(n) >= 1000) return n.toLocaleString('es-AR', {maximumFractionDigits:0});
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+function fmtDate(d){
+  if(!d) return '—';
+  return d.toLocaleDateString('es-AR', { year:'numeric', month:'short', day:'2-digit' });
+}
+function fmtMonth(k){
+  const [y,m] = k.split('-');
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${meses[parseInt(m,10)-1]} ${y}`;
+}
+function pct(n){ return `${(n*100).toFixed(1)}%`; }
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function truncate(s, n){
+  s = String(s);
+  return s.length > n ? s.slice(0,n-1) + '…' : s;
+}
+
+/* -------------------- Construir un dataset a partir de un JSON -------------------- */
+function buildDataset(name, json){
+  const arr = extractArray(json);
+  const records = arr.map(r => isPlainObject(r) ? flattenRecord(r) : { valor: r });
+  const rawRecords = arr;
+  const totalRecords = records.length;
+
+  const keySet = new Set();
+  for(const r of records) for(const k of Object.keys(r)) keySet.add(k);
+  const keys = [...keySet];
+
+  const fields = {};
+  for(const k of keys){
+    const values = records.map(r => r[k]);
+    fields[k] = analyzeField(k, values, totalRecords);
+  }
+
+  return {
+    id: 'ds_' + Math.random().toString(36).slice(2,9),
+    name,
+    totalRecords,
+    keys,
+    fields,
+    records,
+    rawRecords
+  };
+}
+
+
+/* Datos de ejemplo totalmente ficticios, solo para mostrar el funcionamiento de la app. */
+const SAMPLE_DICTAMENES = [
+  { id:'s1', assignedUser:'Ríos Marcela', firmaDefensor:'Sí', topic:'Familia', expediente:'10001/2026', content:'JUZGADO DE FAMILIA N° 1 - Ciudad Ejemplo\nSEÑOR JUEZ: En mi carácter de Ministerio Público Complementario, dictamino favorablemente respecto de la homologación del acuerdo de alimentos.', createdAt:'2026-01-12T10:00:00.000Z', year:'2026', number:1, dictamenDate:'2026-01-12', subject:'MPC' },
+  { id:'s2', assignedUser:'Ríos Marcela', firmaDefensor:'Sí', topic:'Violencia Familiar', expediente:'10002/2026', content:'JUZGADO DE VIOLENCIA FAMILIAR N° 2 - Ciudad Ejemplo\nSEÑOR JUEZ: Me notifico de la medida de protección dictada y no tengo objeciones que formular.', createdAt:'2026-02-03T10:00:00.000Z', year:'2026', number:2, dictamenDate:'2026-02-03', subject:'MPC' },
+  { id:'s3', assignedUser:'Gómez Pablo', firmaDefensor:'No', topic:'Familia', expediente:'10003/2026', content:'Se asume la representación del niño en autos, solicitando se resguarde el interés superior del mismo.', createdAt:'2026-02-20T10:00:00.000Z', year:'2026', number:3, dictamenDate:'2026-02-20', subject:'Mpc' },
+  { id:'s4', assignedUser:'Gómez Pablo', firmaDefensor:'Sí', topic:'Civil', expediente:'10004/2026', content:'Dictamen sobre la procedencia de la medida cautelar solicitada por la parte actora.', createdAt:'2026-03-05T10:00:00.000Z', year:'2026', number:4, dictamenDate:'2026-03-05', subject:'Civil' },
+  { id:'s5', assignedUser:'Ríos Marcela', firmaDefensor:'Sí', topic:'Violencia Familiar', expediente:'10005/2026', content:'Se opina favorablemente respecto de la prórroga de la medida de protección vigente.', createdAt:'2026-03-18T10:00:00.000Z', year:'2026', number:5, dictamenDate:'2026-03-18', subject:'MPC' },
+  { id:'s6', assignedUser:'Fernández Lucía', firmaDefensor:'Sí', topic:'Familia', expediente:'10006/2026', content:'Se dictamina sobre el régimen de comunicación propuesto entre las partes.', createdAt:'2026-04-02T10:00:00.000Z', year:'2026', number:6, dictamenDate:'2026-04-02', subject:'Familia' },
+  { id:'s7', assignedUser:'Fernández Lucía', firmaDefensor:'No', topic:'Violencia Familiar', expediente:'10007/2026', content:'Se notifica de la resolución de alimentos provisorios, sin objeciones.', createdAt:'2026-04-22T10:00:00.000Z', year:'2026', number:7, dictamenDate:'2026-04-22', subject:'MPC' },
+  { id:'s8', assignedUser:'Gómez Pablo', firmaDefensor:'Sí', topic:'Otro', expediente:'10008/2026', content:'Dictamen en autos varios, sin observaciones sobre el trámite en curso.', createdAt:'2026-05-14T10:00:00.000Z', year:'2026', number:8, dictamenDate:'2026-05-14', subject:'proteccion' },
+  { id:'s9', assignedUser:'Ríos Marcela', firmaDefensor:'Sí', topic:'Familia', expediente:'10009/2026', content:'Se asume representación complementaria conforme artículo 103 del Código Civil y Comercial.', createdAt:'2026-06-01T10:00:00.000Z', year:'2026', number:9, dictamenDate:'2026-06-01', subject:'mpc asume' },
+  { id:'s10', assignedUser:'Fernández Lucía', firmaDefensor:'Sí', topic:'Laboral', expediente:'10010/2026', content:'Dictamen sobre homologación de acuerdo laboral entre las partes.', createdAt:'2026-06-19T10:00:00.000Z', year:'2026', number:10, dictamenDate:'2026-06-19', subject:'Laboral' }
+];
+
+const SAMPLE_CAUSAS = [
+  { id:'c1', data:{ juzgado:'Juzgado de Familia N° 1 - Ciudad Ejemplo', estado:'En trámite', tipoProceso:'Familia', intervencion:'Ministerio Complementario', prioridad:'Media', caratula:'PÉREZ C/ GARCÍA S/ ALIMENTOS', numCausa:'20001/2026', usuarioAsignado:'Ríos Marcela', keywords:['alimentos','familia','perez','garcia'], observaciones:'', datosNnya:'', fechaRegistro:{seconds:1735689600,nanoseconds:0} } },
+  { id:'c2', data:{ juzgado:'Juzgado de Violencia Familiar N° 1 - Ciudad Ejemplo', estado:'En trámite', tipoProceso:'Violencia Familiar', intervencion:'Ministerio Complementario', prioridad:'Alta', caratula:'LÓPEZ C/ MARTÍNEZ S/ VIOLENCIA FAMILIAR', numCausa:'20002/2026', usuarioAsignado:'Gómez Pablo', keywords:['violencia','familiar','lopez','martinez'], observaciones:'', datosNnya:'NIÑO DE 8 AÑOS.', fechaRegistro:{seconds:1738368000,nanoseconds:0} } },
+  { id:'c3', data:{ juzgado:'Juzgado de Familia N° 2 - Ciudad Ejemplo', estado:'Finalizado', tipoProceso:'Familia', intervencion:'Patrocinante Actor', prioridad:'Baja', caratula:'DÍAZ S/ TENENCIA', numCausa:'20003/2026', usuarioAsignado:'Fernández Lucía', keywords:['tenencia','diaz'], observaciones:'', datosNnya:'', fechaRegistro:{seconds:1740787200,nanoseconds:0} } },
+  { id:'c4', data:{ juzgado:'Juzgado Civil N° 3 - Ciudad Ejemplo', estado:'En trámite', tipoProceso:'Civil', intervencion:'Patrocinante Demandado', prioridad:'Media', caratula:'SUÁREZ C/ ROMERO S/ DAÑOS Y PERJUICIOS', numCausa:'20004/2026', usuarioAsignado:'Gómez Pablo', keywords:['danos','perjuicios','suarez','romero'], observaciones:'', datosNnya:'', fechaRegistro:{seconds:1743465600,nanoseconds:0} } },
+  { id:'c5', data:{ juzgado:'Juzgado de Violencia Familiar N° 2 - Ciudad Ejemplo', estado:'En trámite', tipoProceso:'Violencia Familiar', intervencion:'Ministerio Complementario', prioridad:'Alta', caratula:'TORRES C/ VEGA S/ VIOLENCIA FAMILIAR', numCausa:'20005/2026', usuarioAsignado:'Ríos Marcela', keywords:['violencia','familiar','torres','vega'], observaciones:'', datosNnya:'NIÑA DE 5 AÑOS.', fechaRegistro:{seconds:1746057600,nanoseconds:0} } },
+  { id:'c6', data:{ juzgado:'Juzgado de Familia N° 1 - Ciudad Ejemplo', estado:'Archivado', tipoProceso:'Familia', intervencion:'Ministerio Complementario', prioridad:'Ninguna', caratula:'MOLINA S/ RÉGIMEN DE COMUNICACIÓN', numCausa:'20006/2026', usuarioAsignado:'Fernández Lucía', keywords:['regimen','comunicacion','molina'], observaciones:'', datosNnya:'', fechaRegistro:{seconds:1748736000,nanoseconds:0} } },
+  { id:'c7', data:{ juzgado:'Juzgado Administrativo N° 1 - Ciudad Ejemplo', estado:'En trámite', tipoProceso:'Administrativo', intervencion:'Ministerio Complementario', prioridad:'Media', caratula:'EXPEDIENTE ADMINISTRATIVO VARIOS', numCausa:'20007/2026', usuarioAsignado:'Gómez Pablo', keywords:['administrativo'], observaciones:'', datosNnya:'', fechaRegistro:{seconds:1751328000,nanoseconds:0} } },
+  { id:'c8', data:{ juzgado:'Juzgado de Familia N° 2 - Ciudad Ejemplo', estado:'En trámite', tipoProceso:'Familia', intervencion:'Patrocinante Actor', prioridad:'Media', caratula:'CASTRO C/ IBARRA S/ ALIMENTOS', numCausa:'20008/2026', usuarioAsignado:'Ríos Marcela', keywords:['alimentos','castro','ibarra'], observaciones:'', datosNnya:'', fechaRegistro:{seconds:1754006400,nanoseconds:0} } }
+];
+
+
+/* ============================================================
+   ANALIZADOR DE LEGAJOS — construcción de vistas e informes
+   ============================================================ */
+
+const PALETTE = ['#2c4a6e','#8a2b2b','#9c7a34','#3e6b52','#c76b4a','#4d6d8a','#7a5230','#4a6b7a','#7d5a8a','#6b7a3e'];
+let chartQueue = [];
+
+if(window.Chart){
+  Chart.defaults.font.family = "'IBM Plex Sans', system-ui, -apple-system, sans-serif";
+  Chart.defaults.font.size = 12.5;
+  Chart.defaults.color = '#3c4d63';
+  Chart.defaults.borderColor = 'rgba(201,191,159,.55)';
+  Chart.defaults.animation.duration = 700;
+  Chart.defaults.animation.easing = 'easeOutQuart';
+}
+
+function registerChart(canvasId, config){
+  chartQueue.push({ canvasId, config });
+}
+function destroyCharts(){
+  activeChartInstances.forEach(c => { try{ c.destroy(); }catch(e){} });
+  activeChartInstances = [];
+  chartQueue = [];
+  Object.keys(tableStates).forEach(k => delete tableStates[k]);
+}
+function instantiateCharts(){
+  chartQueue.forEach(({canvasId, config}) => {
+    const el = document.getElementById(canvasId);
+    if(!el) return;
+    const inst = new Chart(el.getContext('2d'), config);
+    activeChartInstances.push(inst);
+  });
+}
+
+function baseChartOptions(extra){
+  const base = {
+    responsive:true, maintainAspectRatio:false,
+    layout:{ padding:{ top:6, right:12, bottom:4, left:2 } },
+    animation:{ duration:700, easing:'easeOutQuart' },
+    plugins:{
+      legend:{ display:false, labels:{ font:{ family:"'IBM Plex Sans', sans-serif", size:12.5 }, boxWidth:10, boxHeight:10, usePointStyle:true } },
+      tooltip:{
+        backgroundColor:'rgba(28,43,61,.96)',
+        titleColor:'#fbf9f3',
+        bodyColor:'#e9e5d8',
+        titleFont:{ family:"'IBM Plex Sans', sans-serif", size:13, weight:'600' },
+        bodyFont:{ family:"'IBM Plex Sans', sans-serif", size:12.5 },
+        padding:11,
+        cornerRadius:5,
+        displayColors:false,
+        boxPadding:4,
+        borderColor:'rgba(255,255,255,.12)',
+        borderWidth:1
+      }
+    },
+    scales:{
+      x:{
+        grid:{ display:false },
+        border:{ color:'rgba(201,191,159,.7)' },
+        ticks:{ font:{ family:"'IBM Plex Sans', sans-serif", size:12.5 }, color:'#3c4d63' }
+      },
+      y:{
+        grid:{ color:'rgba(201,191,159,.35)' },
+        border:{ display:false },
+        ticks:{ font:{ family:"'IBM Plex Sans', sans-serif", size:12.5 }, color:'#3c4d63' },
+        beginAtZero:true
+      }
+    }
+  };
+  return Object.assign({}, base, extra || {});
+}
+
+function categoricalTooltip(values){
+  return {
+    callbacks:{
+      label: (ctx) => {
+        const v = ctx.parsed[ctx.chart.options.indexAxis === 'y' ? 'x' : 'y'];
+        const total = values.reduce((a,b)=>a+b,0) || 1;
+        return ` ${v} (${((v/total)*100).toFixed(1)}%)`;
+      }
+    }
+  };
+}
+
+/* ---------------- Selección de campos relevantes ---------------- */
+function relevantCategorical(ds, max){
+  return ds.keys
+    .map(k => ds.fields[k])
+    .filter(f => f.type === 'categorical' && f.presentRatio >= 0.05 && f.uniqueCount >= 2)
+    .sort((a,b) => (b.presentRatio - a.presentRatio) || (a.uniqueCount - b.uniqueCount))
+    .slice(0, max);
+}
+function relevantDates(ds){
+  return ds.keys.map(k=>ds.fields[k]).filter(f => f.type==='date' && f.presentRatio >= 0.2);
+}
+function relevantNumeric(ds){
+  return ds.keys.map(k=>ds.fields[k]).filter(f => f.type==='numeric' && f.presentRatio >= 0.2);
+}
+function relevantArrays(ds){
+  return ds.keys.map(k=>ds.fields[k]).filter(f => f.type==='array' && f.presentRatio >= 0.05 && f.topItems && f.topItems.length);
+}
+function relevantText(ds, max){
+  return ds.keys.map(k=>ds.fields[k])
+    .filter(f => f.type==='text' && f.presentRatio >= 0.1 && f.topWords && f.topWords.length)
+    .sort((a,b)=> b.avgLen - a.avgLen)
+    .slice(0, max);
+}
+
+/* ---------------- Detección de campos "usuario asignado" ---------------- */
+const USER_FIELD_RE = /^(assigneduser|usuarioasignado|usuario|user|username|responsable|asignado|asignadoa|asignado_a|assignedto|assigned_to|owner|abogado|defensor|operator|operador|analista|gestor|createdby|created_by|updatedby|updated_by|responsable_actual)$/i;
+const BOOLEAN_VALUES = new Set(['sí','si','no','yes','true','false','verdadero','falso','n/a','na','—','-','ninguno','ninguna']);
+
+function isUserFieldKey(key){
+  const last = key.includes('.') ? key.split('.').pop() : key;
+  return USER_FIELD_RE.test(last);
+}
+
+function looksLikeBooleanField(entries){
+  if(!entries || entries.length === 0 || entries.length > 3) return false;
+  return entries.every(([k]) => BOOLEAN_VALUES.has(String(k).toLowerCase().trim()));
+}
+
+function getUserDistribution(ds, fieldKey){
+  const f = ds.fields[fieldKey];
+  if(f.type === 'categorical' && f.valueCounts){
+    return { total: f.presentCount, entries: f.valueCounts };
+  }
+  const freq = new Map();
+  for(const rec of ds.records){
+    const v = rec[fieldKey];
+    if(v === undefined || v === null || v === '') continue;
+    const s = String(v).trim();
+    if(!s) continue;
+    freq.set(s, (freq.get(s)||0)+1);
+  }
+  const entries = [...freq.entries()].sort((a,b)=>b[1]-a[1]);
+  return { total: entries.reduce((a,[,c])=>a+c,0), entries };
+}
+
+function detectUserFields(ds){
+  return ds.keys.filter(k => {
+    const f = ds.fields[k];
+    if(!isUserFieldKey(k)) return false;
+    if(f.type !== 'categorical' && f.type !== 'text') return false;
+    if(f.presentRatio < 0.1) return false;
+    if(f.uniqueCount < 2 || f.uniqueCount > 300) return false;
+    const entries = f.valueCounts || null;
+    if(entries && looksLikeBooleanField(entries)) return false;
+    return true;
+  });
+}
+
+function getDatasetsWithUsers(dsList){
+  const result = [];
+  for(const ds of dsList){
+    const userFields = detectUserFields(ds);
+    if(userFields.length){
+      const best = userFields
+        .slice()
+        .sort((a,b) => ds.fields[b].presentRatio - ds.fields[a].presentRatio)[0];
+      result.push({ ds, fieldKey: best });
+    }
+  }
+  return result;
+}
+
+/* ---------------- Narrativa automática ---------------- */
+function generateFileNarrative(ds){
+  const paras = [];
+  const catFields = relevantCategorical(ds, 3);
+  paras.push(`Este archivo aporta <strong>${ds.totalRecords.toLocaleString('es-AR')} registros</strong> con ${ds.keys.length} campos identificados en su estructura.`);
+
+  const dateFields = relevantDates(ds);
+  if(dateFields.length){
+    const f = dateFields[0];
+    paras.push(`El campo <strong>${f.label}</strong> permite ubicar temporalmente los registros: van desde el ${fmtDate(f.minDate)} hasta el ${fmtDate(f.maxDate)}, cubriendo ${f.monthlySeries.length} ${f.monthlySeries.length===1?'mes':'meses'} de actividad.`);
+  }
+
+  catFields.forEach(f => {
+    const top = f.valueCounts[0];
+    const topPct = top[1] / f.presentCount;
+    let sentence = `En el campo <strong>${f.label}</strong>, el valor más frecuente es <strong>“${escapeHtml(truncate(top[0],40))}”</strong>, presente en ${top[1].toLocaleString('es-AR')} registros (${pct(topPct)} del total con dato).`;
+    if(f.valueCounts.length > 1){
+      const second = f.valueCounts[1];
+      sentence += ` Le sigue “${escapeHtml(truncate(second[0],40))}” con ${second[1].toLocaleString('es-AR')} casos.`;
+    }
+    paras.push(sentence);
+  });
+
+  const arrFields = relevantArrays(ds);
+  if(arrFields.length){
+    const f = arrFields[0];
+    const top3 = f.topItems.slice(0,3).map(([w])=>`“${escapeHtml(w)}”`).join(', ');
+    paras.push(`Analizando el campo <strong>${f.label}</strong> como conjunto de etiquetas, los términos más repetidos son ${top3}.`);
+  }
+
+  const completeness = Object.values(ds.fields).filter(f=>f.type!=='empty' && f.type!=='id').reduce((a,f)=>a+f.presentRatio,0) / Math.max(1, ds.keys.filter(k=>ds.fields[k].type!=='id').length);
+  paras.push(`En promedio, los campos del archivo tienen un ${pct(completeness)} de completitud de datos, considerando vacíos y valores nulos.`);
+
+  return paras;
+}
+
+function generateGlobalNarrative(dsList){
+  const totalRecords = dsList.reduce((a,d)=>a+d.totalRecords,0);
+  const paras = [];
+  paras.push(`Se cargaron <strong>${dsList.length} archivo${dsList.length===1?'':'s'}</strong> con un total de <strong>${totalRecords.toLocaleString('es-AR')} registros</strong> analizados.`);
+  dsList.forEach(ds => {
+    const cats = relevantCategorical(ds, 1);
+    let extra = '';
+    if(cats.length){
+      const f = cats[0];
+      extra = ` — el campo “${f.label}” está dominado por “${escapeHtml(truncate(f.valueCounts[0][0],35))}” (${pct(f.valueCounts[0][1]/f.presentCount)}).`;
+    }
+    paras.push(`<strong>${escapeHtml(ds.name)}</strong>: ${ds.totalRecords.toLocaleString('es-AR')} registros, ${ds.keys.length} campos${extra}`);
+  });
+
+  const withUsers = getDatasetsWithUsers(dsList);
+  if(withUsers.length){
+    const userTotals = new Map();
+    for(const { ds, fieldKey } of withUsers){
+      const dist = getUserDistribution(ds, fieldKey);
+      for(const [user, count] of dist.entries){
+        userTotals.set(user, (userTotals.get(user)||0) + count);
+      }
+    }
+    const sorted = [...userTotals.entries()].sort((a,b)=>b[1]-a[1]);
+    if(sorted.length){
+      const top = sorted[0];
+      paras.push(`En cuanto a la distribución por usuario asignado, se detectaron <strong>${sorted.length} usuarios únicos</strong> con <strong>${[...userTotals.values()].reduce((a,b)=>a+b,0).toLocaleString('es-AR')} asignaciones</strong> en total. El usuario más activo es <strong>“${escapeHtml(truncate(top[0],35))}”</strong> con ${top[1].toLocaleString('es-AR')} casos.`);
+    }
+  }
+
+  return paras;
+}
+
+/* ---------------- Vista: Resumen general ---------------- */
+function buildOverviewHTML(dsList){
+  const totalRecords = dsList.reduce((a,d)=>a+d.totalRecords,0);
+  const totalFields = dsList.reduce((a,d)=>a+d.keys.length,0);
+  const allDateFields = dsList.flatMap(relevantDates);
+  let rangeStr = '—';
+  if(allDateFields.length){
+    const min = new Date(Math.min(...allDateFields.map(f=>f.minDate.getTime())));
+    const max = new Date(Math.max(...allDateFields.map(f=>f.maxDate.getTime())));
+    rangeStr = `${fmtDate(min)} – ${fmtDate(max)}`;
+  }
+
+  const barCanvasId = 'chart-overview-records';
+  const barValues = dsList.map(d=>d.totalRecords);
+  registerChart(barCanvasId, {
+    type:'bar',
+    data:{
+      labels: dsList.map(d=>truncate(d.name,22)),
+      datasets:[{
+        label:'Registros',
+        data: barValues,
+        backgroundColor: dsList.map((_,i)=>PALETTE[i%PALETTE.length]),
+        hoverBackgroundColor: dsList.map((_,i)=>PALETTE[i%PALETTE.length]),
+        borderRadius: 6,
+        borderSkipped: false,
+        maxBarThickness: 56
+      }]
+    },
+    options: baseChartOptions({ plugins:{ legend:{display:false}, tooltip: categoricalTooltip(barValues) } })
+  });
+
+  const cards = dsList.map(ds => {
+    const cats = relevantCategorical(ds, 1);
+    const dates = relevantDates(ds);
+    const userFields = detectUserFields(ds);
+    let sub = '';
+    if(cats.length) sub += `<div class="empty-note" style="font-style:normal;">Predomina <strong>${escapeHtml(truncate(cats[0].valueCounts[0][0],30))}</strong> en “${cats[0].label}”</div>`;
+    if(dates.length) sub += `<div class="empty-note" style="font-style:normal; margin-top:4px;">Del ${fmtDate(dates[0].minDate)} al ${fmtDate(dates[0].maxDate)}</div>`;
+    const userBtn = userFields.length
+      ? `<button class="btn small secondary" style="margin-top:12px; margin-right:8px;" data-goto-tab="users">Ver usuarios →</button>`
+      : '';
+    return `<div class="card ds-card" style="margin-bottom:16px;">
+      <div class="card-head">
+        <h3>${escapeHtml(ds.name)}</h3>
+        <div class="card-sub">${ds.totalRecords.toLocaleString('es-AR')} registros · ${ds.keys.length} campos${userFields.length ? ' · ' + userFields.length + ' campo(s) de usuario' : ''}</div>
+      </div>
+      <div class="card-body">
+        ${sub}
+        ${userBtn}
+        <button class="btn small secondary" style="margin-top:12px;" data-goto-tab="${ds.id}">Ver informe completo →</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="file-report active" data-report-id="overview">
+    <div class="topbar">
+      <div>
+        <div class="eyebrow-line">INFORME CONSOLIDADO</div>
+        <h1>Resumen general</h1>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-num">${dsList.length}</div><div class="stat-label">Archivos cargados</div></div>
+      <div class="stat-box"><div class="stat-num">${totalRecords.toLocaleString('es-AR')}</div><div class="stat-label">Registros totales</div></div>
+      <div class="stat-box"><div class="stat-num">${totalFields}</div><div class="stat-label">Campos detectados</div></div>
+      <div class="stat-box"><div class="stat-num" style="font-size:20px;">${rangeStr}</div><div class="stat-label">Rango temporal combinado</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Lectura general</h3>
+        <div class="card-sub">Generado automáticamente a partir del contenido de los archivos</div>
+      </div>
+      <div class="card-body">
+        <div class="narrative">${generateGlobalNarrative(dsList).map(p=>`<p>${p}</p>`).join('')}</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head">
+          <h3>Registros por archivo</h3>
+          <div class="card-sub">Comparación de volumen entre los conjuntos cargados</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-box tall"><canvas id="${barCanvasId}"></canvas></div>
+        </div>
+      </div>
+      <div>${cards}</div>
+    </div>
+  </div>`;
+}
+
+/* ---------------- Vista: Informe por archivo ---------------- */
+function buildFileReportHTML(ds){
+  const catFields = relevantCategorical(ds, 4);
+  const dateFields = relevantDates(ds);
+  const numFields = relevantNumeric(ds);
+  const arrFields = relevantArrays(ds);
+  const textFields = relevantText(ds, 3);
+
+  const mainCat = relevantCategorical(ds,1)[0];
+  const mainDate = dateFields[0];
+
+  let html = `<div class="file-report" data-report-id="${ds.id}">
+    <div class="topbar">
+      <div>
+        <div class="eyebrow-line">INFORME DETALLADO — ${escapeHtml(ds.name)}.json</div>
+        <h1>${escapeHtml(ds.name)}</h1>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-num">${ds.totalRecords.toLocaleString('es-AR')}</div><div class="stat-label">Registros</div></div>
+      <div class="stat-box"><div class="stat-num">${ds.keys.length}</div><div class="stat-label">Campos detectados</div></div>
+      <div class="stat-box"><div class="stat-num" style="font-size:17px;">${mainDate ? fmtDate(mainDate.minDate)+' → '+fmtDate(mainDate.maxDate) : '—'}</div><div class="stat-label">${mainDate ? mainDate.label : 'Sin campo de fecha'}</div></div>
+      <div class="stat-box"><div class="stat-num" style="font-size:17px;">${mainCat ? escapeHtml(truncate(mainCat.valueCounts[0][0],22)) : '—'}</div><div class="stat-label">${mainCat ? 'Valor más frecuente en '+mainCat.label : ''}</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Lectura del archivo</h3>
+        <div class="card-sub">Informe narrativo generado a partir de los datos cargados</div>
+      </div>
+      <div class="card-body">
+        <div class="narrative">${generateFileNarrative(ds).map(p=>`<p>${p}</p>`).join('')}</div>
+      </div>
+    </div>`;
+
+  if(catFields.length){
+    html += `<div class="section-title first">Distribuciones principales</div><div class="grid-2">`;
+    catFields.forEach((f, i) => {
+      const canvasId = `chart-${ds.id}-cat-${i}`;
+      const top = f.valueCounts.slice(0, 8);
+      const rest = f.valueCounts.slice(8).reduce((a,[,c])=>a+c,0);
+      const labels = top.map(([k])=>k).concat(rest>0?['Otros']:[]);
+      const dataVals = top.map(([,c])=>c).concat(rest>0?[rest]:[]);
+      const color = PALETTE[i%PALETTE.length];
+      registerChart(canvasId, {
+        type:'bar',
+        data:{
+          labels: labels.map(l=>truncate(l,26)),
+          datasets:[{
+            data:dataVals,
+            backgroundColor: color,
+            hoverBackgroundColor: color,
+            borderRadius: 5,
+            borderSkipped: false,
+            maxBarThickness: 26
+          }]
+        },
+        options: baseChartOptions({
+          indexAxis:'y',
+          plugins:{ legend:{display:false}, tooltip: categoricalTooltip(dataVals) },
+          scales:{
+            x:{ beginAtZero:true, grid:{color:'rgba(201,191,159,.35)'}, border:{display:false}, ticks:{font:{size:12.5}} },
+            y:{ grid:{display:false}, border:{color:'rgba(201,191,159,.7)'}, ticks:{font:{size:12.5}} }
+          }
+        })
+      });
+      html += `<div class="card">
+        <div class="card-head">
+          <h3>${escapeHtml(f.label)}</h3>
+          <div class="card-sub">${f.uniqueCount} valores distintos · ${pct(f.presentRatio)} de datos presentes</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-box"><canvas id="${canvasId}"></canvas></div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if(dateFields.length){
+    html += `<div class="section-title">Línea de tiempo</div><div class="grid-2">`;
+    dateFields.slice(0,2).forEach((f,i) => {
+      const canvasId = `chart-${ds.id}-date-${i}`;
+      const color = PALETTE[i%PALETTE.length];
+      registerChart(canvasId, {
+        type:'line',
+        data:{
+          labels: f.monthlySeries.map(m=>fmtMonth(m.month)),
+          datasets:[{
+            data: f.monthlySeries.map(m=>m.count),
+            borderColor: color,
+            backgroundColor: color + '22',
+            fill: true,
+            tension: .35,
+            pointRadius: 3.5,
+            pointBackgroundColor: color,
+            pointBorderColor: '#fbf9f3',
+            pointBorderWidth: 1.5,
+            pointHoverRadius: 6,
+            borderWidth: 2
+          }]
+        },
+        options: baseChartOptions({
+          plugins:{ legend:{display:false} }
+        })
+      });
+      html += `<div class="card">
+        <div class="card-head">
+          <h3>${escapeHtml(f.label)}</h3>
+          <div class="card-sub">${fmtDate(f.minDate)} – ${fmtDate(f.maxDate)}</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-box"><canvas id="${canvasId}"></canvas></div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if(numFields.length){
+    html += `<div class="section-title">Variables numéricas</div><div class="grid-2">`;
+    numFields.forEach((f,i) => {
+      const canvasId = `chart-${ds.id}-num-${i}`;
+      const color = PALETTE[(i+2)%PALETTE.length];
+      registerChart(canvasId, {
+        type:'bar',
+        data:{
+          labels: f.bucketLabels,
+          datasets:[{
+            data:f.buckets,
+            backgroundColor: color,
+            hoverBackgroundColor: color,
+            borderRadius: 5,
+            borderSkipped: false,
+            maxBarThickness: 48
+          }]
+        },
+        options: baseChartOptions()
+      });
+      html += `<div class="card">
+        <div class="card-head">
+          <h3>${escapeHtml(f.label)}</h3>
+          <div class="card-sub">Mín. ${fmtNum(f.min)} · Máx. ${fmtNum(f.max)} · Promedio ${fmtNum(f.avg)} · Mediana ${fmtNum(f.median)}</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-box"><canvas id="${canvasId}"></canvas></div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if(arrFields.length){
+    html += `<div class="section-title">Palabras clave y etiquetas</div><div class="grid-2">`;
+    arrFields.slice(0,2).forEach((f,i) => {
+      const canvasId = `chart-${ds.id}-arr-${i}`;
+      const top = f.topItems.slice(0,10);
+      const color = PALETTE[(i+4)%PALETTE.length];
+      const vals = top.map(([,c])=>c);
+      registerChart(canvasId, {
+        type:'bar',
+        data:{
+          labels: top.map(([k])=>truncate(k,22)),
+          datasets:[{
+            data: vals,
+            backgroundColor: color,
+            hoverBackgroundColor: color,
+            borderRadius: 5,
+            borderSkipped: false,
+            maxBarThickness: 24
+          }]
+        },
+        options: baseChartOptions({
+          indexAxis:'y',
+          plugins:{ legend:{display:false}, tooltip: categoricalTooltip(vals) },
+          scales:{
+            x:{ beginAtZero:true, grid:{color:'rgba(201,191,159,.35)'}, border:{display:false} },
+            y:{ grid:{display:false}, border:{color:'rgba(201,191,159,.7)'} }
+          }
+        })
+      });
+      html += `<div class="card">
+        <div class="card-head">
+          <h3>${escapeHtml(f.label)}</h3>
+          <div class="card-sub">${f.totalItems.toLocaleString('es-AR')} elementos en total · promedio ${f.avgLength.toFixed(1)} por registro</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-box"><canvas id="${canvasId}"></canvas></div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if(textFields.length){
+    html += `<div class="section-title">Análisis de texto libre</div><div class="grid-2">`;
+    textFields.forEach(f => {
+      html += `<div class="card">
+        <div class="card-head">
+          <h3>${escapeHtml(f.label)}</h3>
+          <div class="card-sub">Longitud promedio ${Math.round(f.avgLen)} caracteres · ${f.uniqueCount} valores distintos</div>
+        </div>
+        <div class="card-body">
+          <div class="kw-cloud">${f.topWords.map(([w,c])=>`<span class="kw-chip">${escapeHtml(w)} · ${c}</span>`).join('')}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += buildDataExplorerHTML(ds);
+
+  html += `</div>`;
+  return html;
+}
+
+/* ============================================================
+   Vista: Informe por usuario asignado (distribución + global)
+   ============================================================ */
+function buildUserReportHTML(dsList){
+  const withUsers = getDatasetsWithUsers(dsList);
+
+  if(!withUsers.length){
+    return `<div class="file-report" data-report-id="users">
+      <div class="topbar">
+        <div>
+          <div class="eyebrow-line">INFORME POR USUARIO ASIGNADO</div>
+          <h1>Distribución por usuario</h1>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Sin datos de usuario</h3>
+          <div class="card-sub">No se detectaron campos de usuario asignado en los archivos cargados</div>
+        </div>
+        <div class="card-body">
+          <p class="empty-note">Se buscan automáticamente campos como <span class="mono">assignedUser</span>, <span class="mono">usuarioAsignado</span>, <span class="mono">usuario</span>, <span class="mono">responsable</span>, <span class="mono">asignado</span>, <span class="mono">abogado</span>, <span class="mono">operador</span>, entre otros. Cargá un archivo que contenga alguno de estos campos para ver el informe de distribución por usuario.</p>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Agregación global
+  const userTotals = new Map();
+  const userPerDataset = new Map();
+  let totalAssignments = 0;
+  for(const { ds, fieldKey } of withUsers){
+    const dist = getUserDistribution(ds, fieldKey);
+    for(const [user, count] of dist.entries){
+      userTotals.set(user, (userTotals.get(user)||0) + count);
+      if(!userPerDataset.has(user)) userPerDataset.set(user, new Map());
+      userPerDataset.get(user).set(ds.name, (userPerDataset.get(user).get(ds.name)||0) + count);
+    }
+    totalAssignments += dist.total;
+  }
+  const sortedUsers = [...userTotals.entries()].sort((a,b)=>b[1]-a[1]);
+  const uniqueUsers = sortedUsers.length;
+  const topUser = sortedUsers[0];
+
+  // Gráfico global: top 15 usuarios
+  const top15 = sortedUsers.slice(0, 15);
+  const chartGlobalId = 'chart-users-global';
+  const valsGlobal = top15.map(([,c])=>c);
+  registerChart(chartGlobalId, {
+    type:'bar',
+    data:{
+      labels: top15.map(([u])=>truncate(u, 26)),
+      datasets:[{
+        data: valsGlobal,
+        backgroundColor: valsGlobal.map((_, i) => PALETTE[i % PALETTE.length]),
+        hoverBackgroundColor: valsGlobal.map((_, i) => PALETTE[i % PALETTE.length]),
+        borderRadius: 5,
+        borderSkipped: false,
+        maxBarThickness: 26
+      }]
+    },
+    options: baseChartOptions({
+      indexAxis:'y',
+      plugins:{ legend:{display:false}, tooltip: categoricalTooltip(valsGlobal) },
+      scales:{
+        x:{ beginAtZero:true, grid:{color:'rgba(201,191,159,.35)'}, border:{display:false}, ticks:{font:{size:12.5}} },
+        y:{ grid:{display:false}, border:{color:'rgba(201,191,159,.7)'}, ticks:{font:{size:12.5}} }
+      }
+    })
+  });
+
+  // Tarjetas por archivo
+  let dsCards = '';
+  withUsers.forEach(({ ds, fieldKey }, idx) => {
+    const dist = getUserDistribution(ds, fieldKey);
+    const chartIdDs = 'chart-users-' + ds.id;
+    const topDs = dist.entries.slice(0, 10);
+    const restCount = dist.entries.slice(10).reduce((a,[,c])=>a+c,0);
+    const labels = topDs.map(([u])=>truncate(u, 24)).concat(restCount>0?['Otros']:[]);
+    const data = topDs.map(([,c])=>c).concat(restCount>0?[restCount]:[]);
+    const color = PALETTE[(idx+2) % PALETTE.length];
+
+    registerChart(chartIdDs, {
+      type:'bar',
+      data:{
+        labels,
+        datasets:[{
+          data,
+          backgroundColor: color,
+          hoverBackgroundColor: color,
+          borderRadius: 5,
+          borderSkipped: false,
+          maxBarThickness: 24
+        }]
+      },
+      options: baseChartOptions({
+        indexAxis:'y',
+        plugins:{ legend:{display:false}, tooltip: categoricalTooltip(data) },
+        scales:{
+          x:{ beginAtZero:true, grid:{color:'rgba(201,191,159,.35)'}, border:{display:false} },
+          y:{ grid:{display:false}, border:{color:'rgba(201,191,159,.7)'} }
+        }
+      })
+    });
+
+    const topRow = dist.entries[0];
+    const secondRow = dist.entries[1];
+    const narrative = `En <strong>${escapeHtml(ds.name)}</strong>, el campo <strong>${escapeHtml(ds.fields[fieldKey].label)}</strong> registra <strong>${dist.total.toLocaleString('es-AR')}</strong> asignaciones distribuidas entre <strong>${dist.entries.length} usuarios</strong>. ${topRow ? `El más activo es <strong>“${escapeHtml(truncate(topRow[0], 40))}”</strong> con ${topRow[1].toLocaleString('es-AR')} casos (${pct(topRow[1]/dist.total)}).` : ''} ${secondRow ? `Le sigue <strong>“${escapeHtml(truncate(secondRow[0],40))}”</strong> con ${secondRow[1].toLocaleString('es-AR')}.` : ''}`;
+
+    // Mini lista top 5 con conteos
+    const miniList = dist.entries.slice(0, 5).map(([u, c]) => `
+      <div class="user-detail-row">
+        <span class="u-name">${escapeHtml(truncate(u, 45))}</span>
+        <span class="u-val">${c.toLocaleString('es-AR')} · ${pct(c/dist.total)}</span>
+      </div>`).join('');
+
+    dsCards += `<div class="card">
+      <div class="card-head">
+        <h3>${escapeHtml(ds.name)}</h3>
+        <div class="card-sub">${dist.entries.length} usuarios · ${dist.total.toLocaleString('es-AR')} asignaciones · campo “${escapeHtml(ds.fields[fieldKey].label)}”</div>
+      </div>
+      <div class="card-body">
+        <div class="narrative" style="margin-bottom:18px;"><p>${narrative}</p></div>
+        <div class="chart-box"><canvas id="${chartIdDs}"></canvas></div>
+        <div class="user-detail-list" style="margin-top:18px;">
+          ${miniList}
+        </div>
+      </div>
+    </div>`;
+  });
+
+  // Matriz usuario × archivo
+  let matrixTable = '';
+  if(withUsers.length > 1){
+    const dsNames = withUsers.map(x=>x.ds.name);
+    const header = `<tr><th>Usuario</th>${dsNames.map(n=>`<th>${escapeHtml(truncate(n,20))}</th>`).join('')}<th>Total</th></tr>`;
+    const rows = sortedUsers.slice(0, 30).map(([user, total]) => {
+      const cells = dsNames.map(n => {
+        const v = userPerDataset.get(user).get(n) || 0;
+        return `<td class="num">${v ? v.toLocaleString('es-AR') : '—'}</td>`;
+      }).join('');
+      return `<tr><td>${escapeHtml(user)}</td>${cells}<td class="num"><strong>${total.toLocaleString('es-AR')}</strong></td></tr>`;
+    }).join('');
+    matrixTable = `<div class="section-title">Matriz usuario × archivo</div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Distribución cruzada</h3>
+          <div class="card-sub">Cantidad de registros asignados a cada usuario en cada archivo${sortedUsers.length > 30 ? ' (top 30)' : ''}</div>
+        </div>
+        <div class="card-body">
+          <div style="overflow-x:auto;">
+            <table class="data-table"><thead>${header}</thead><tbody>${rows}</tbody></table>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Ranking completo
+  const rankRows = sortedUsers.slice(0, 50).map(([user, total], i) => {
+    const dsCounts = userPerDataset.get(user);
+    const dsBreakdown = [...dsCounts.entries()].map(([n,c])=>`${escapeHtml(truncate(n,22))}: ${c.toLocaleString('es-AR')}`).join(' · ');
+    const rankClass = i === 0 ? 'top1' : (i === 1 ? 'top2' : (i === 2 ? 'top3' : ''));
+    return `<tr>
+      <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td>${escapeHtml(user)}</td>
+      <td class="num">${total.toLocaleString('es-AR')}</td>
+      <td class="num">${pct(total/totalAssignments)}</td>
+      <td style="font-size:13.5px; color:var(--ink-soft);">${dsBreakdown}</td>
+    </tr>`;
+  }).join('');
+
+  const rankTable = `<div class="section-title">Ranking completo de usuarios</div>
+    <div class="card">
+      <div class="card-head">
+        <h3>Usuarios por volumen de asignaciones</h3>
+        <div class="card-sub">${uniqueUsers} usuarios detectados · ${totalAssignments.toLocaleString('es-AR')} asignaciones totales${sortedUsers.length > 50 ? ' (top 50)' : ''}</div>
+      </div>
+      <div class="card-body">
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Usuario</th><th>Asignaciones</th><th>% del total</th><th>Distribución por archivo</th></tr></thead>
+            <tbody>${rankRows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+
+  return `<div class="file-report" data-report-id="users">
+    <div class="topbar">
+      <div>
+        <div class="eyebrow-line">INFORME POR USUARIO ASIGNADO</div>
+        <h1>Distribución por usuario</h1>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-num">${uniqueUsers}</div><div class="stat-label">Usuarios únicos</div></div>
+      <div class="stat-box"><div class="stat-num">${totalAssignments.toLocaleString('es-AR')}</div><div class="stat-label">Asignaciones totales</div></div>
+      <div class="stat-box"><div class="stat-num">${withUsers.length}</div><div class="stat-label">Archivos con campo de usuario</div></div>
+      <div class="stat-box"><div class="stat-num" style="font-size:20px;">${topUser ? escapeHtml(truncate(topUser[0], 22)) : '—'}</div><div class="stat-label">${topUser ? 'Más activo · ' + topUser[1].toLocaleString('es-AR') + ' casos' : 'Sin datos'}</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Top usuarios por volumen (global)</h3>
+        <div class="card-sub">Los 15 usuarios con más asignaciones sumando todos los archivos</div>
+      </div>
+      <div class="card-body">
+        <div class="chart-box tall"><canvas id="${chartGlobalId}"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-title">Detalle por archivo</div>
+    ${dsCards}
+
+    ${matrixTable}
+    ${rankTable}
+  </div>`;
+}
+
+/* ---------------- Explorador de registros (tabla interactiva) ---------------- */
+function pickDisplayColumns(ds){
+  const priority = { categorical: 3, date: 2, id: 1, numeric: 2, text: 1, array: 0, object: 0, empty: -1 };
+  const cols = ds.keys
+    .filter(k => ds.fields[k].presentRatio > 0.05)
+    .sort((a,b) => (priority[ds.fields[b].type] - priority[ds.fields[a].type]) || (ds.fields[b].presentRatio - ds.fields[a].presentRatio))
+    .slice(0, 6);
+  return cols;
+}
+
+function buildDataExplorerHTML(ds){
+  const cols = pickDisplayColumns(ds);
+  return `<div class="section-title">Explorar registros</div>
+    <div class="card">
+      <div class="card-head">
+        <h3>Registros de ${escapeHtml(ds.name)}</h3>
+        <div class="card-sub">Buscá, paginá y exportá el detalle del conjunto de datos</div>
+      </div>
+      <div class="card-body">
+        <div class="toolbar-row">
+          <input type="text" class="search-input" placeholder="Buscar en todos los campos…" data-search="${ds.id}">
+          <select class="plain-select" data-pagesize="${ds.id}">
+            <option value="10">10 por página</option>
+            <option value="15" selected>15 por página</option>
+            <option value="30">30 por página</option>
+            <option value="50">50 por página</option>
+          </select>
+          <button class="btn small secondary" data-csv="${ds.id}">Exportar CSV</button>
+        </div>
+        <div id="tablewrap-${ds.id}"></div>
+        <div class="pagination" id="pagination-${ds.id}"></div>
+      </div>
+    </div>`;
+}
+
+const tableStates = {};
+
+function initDataTable(ds){
+  const cols = pickDisplayColumns(ds);
+  const searchIndex = ds.records.map(r => JSON.stringify(r).toLowerCase());
+  tableStates[ds.id] = { query:'', page:0, pageSize:15, cols, searchIndex };
+  renderDataTable(ds);
+
+  const searchEl = document.querySelector(`[data-search="${ds.id}"]`);
+  searchEl.addEventListener('input', () => {
+    tableStates[ds.id].query = searchEl.value.trim().toLowerCase();
+    tableStates[ds.id].page = 0;
+    renderDataTable(ds);
+  });
+  const pageSizeEl = document.querySelector(`[data-pagesize="${ds.id}"]`);
+  pageSizeEl.addEventListener('change', () => {
+    tableStates[ds.id].pageSize = parseInt(pageSizeEl.value, 10);
+    tableStates[ds.id].page = 0;
+    renderDataTable(ds);
+  });
+  const csvBtn = document.querySelector(`[data-csv="${ds.id}"]`);
+  csvBtn.addEventListener('click', () => exportCSV(ds));
+}
+
+function getFilteredIndices(ds){
+  const st = tableStates[ds.id];
+  if(!st.query) return ds.records.map((_,i)=>i);
+  const out = [];
+  st.searchIndex.forEach((s,i) => { if(s.includes(st.query)) out.push(i); });
+  return out;
+}
+
+function renderDataTable(ds){
+  const st = tableStates[ds.id];
+  const filtered = getFilteredIndices(ds);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / st.pageSize));
+  st.page = Math.min(st.page, totalPages - 1);
+  const start = st.page * st.pageSize;
+  const pageIdx = filtered.slice(start, start + st.pageSize);
+
+  const thead = `<tr>${st.cols.map(c => `<th>${escapeHtml(ds.fields[c].label)}</th>`).join('')}<th></th></tr>`;
+  const rows = pageIdx.map(i => {
+    const rec = ds.records[i];
+    const tds = st.cols.map(c => {
+      const f = ds.fields[c];
+      const v = rec[c];
+      return `<td>${formatCellValue(v, f)}</td>`;
+    }).join('');
+    return `<tr>${tds}<td><button class="btn small secondary" data-view="${ds.id}:${i}" style="padding:4px 10px;">Ver</button></td></tr>`;
+  }).join('');
+
+  const wrap = document.getElementById(`tablewrap-${ds.id}`);
+  if(filtered.length === 0){
+    wrap.innerHTML = `<p class="empty-note">No se encontraron registros para esta búsqueda.</p>`;
+  } else {
+    wrap.innerHTML = `<div style="overflow-x:auto;"><table class="data-table"><thead>${thead}</thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  const pag = document.getElementById(`pagination-${ds.id}`);
+  pag.innerHTML = `
+    <span>Mostrando ${filtered.length===0?0:start+1}–${Math.min(start+st.pageSize, filtered.length)} de ${filtered.length.toLocaleString('es-AR')} registros</span>
+    <span>
+      <button data-prev="${ds.id}" ${st.page<=0?'disabled':''}>← Anterior</button>
+      <span style="margin:0 8px;">Página ${st.page+1} de ${totalPages}</span>
+      <button data-next="${ds.id}" ${st.page>=totalPages-1?'disabled':''}>Siguiente →</button>
+    </span>`;
+
+  wrap.querySelectorAll('[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [dsId, idx] = btn.dataset.view.split(':');
+      showRecordModal(dsId, parseInt(idx,10));
+    });
+  });
+  pag.querySelectorAll('[data-prev]').forEach(btn => btn.addEventListener('click', () => { st.page--; renderDataTable(ds); }));
+  pag.querySelectorAll('[data-next]').forEach(btn => btn.addEventListener('click', () => { st.page++; renderDataTable(ds); }));
+}
+
+function formatCellValue(v, field){
+  if(v === undefined || v === null || v === '') return '<span class="empty-note">—</span>';
+  if(field.type === 'date'){ const d = toDateSafe(v); return d ? fmtDate(d) : escapeHtml(String(v)); }
+  if(Array.isArray(v)) return escapeHtml(truncate(v.map(x=>typeof x==='string'?x:JSON.stringify(x)).join(', '), 60));
+  if(typeof v === 'object') return escapeHtml(truncate(JSON.stringify(v), 60));
+  return escapeHtml(truncate(String(v), 80));
+}
+
+function exportCSV(ds){
+  const st = tableStates[ds.id];
+  const filtered = getFilteredIndices(ds);
+  const cols = st.cols;
+  const header = cols.map(c => `"${ds.fields[c].label.replace(/"/g,'""')}"`).join(',');
+  const lines = filtered.map(i => {
+    const rec = ds.records[i];
+    return cols.map(c => {
+      let v = rec[c];
+      const field = ds.fields[c];
+      if(v === undefined || v === null) v = '';
+      else if(field.type === 'date'){ const d = toDateSafe(v); v = d ? fmtDate(d) : String(v); }
+      else if(Array.isArray(v)) v = v.map(x => typeof x==='string'?x:JSON.stringify(x)).join(' | ');
+      else if(typeof v === 'object') v = JSON.stringify(v);
+      return `"${String(v).replace(/"/g,'""')}"`;
+    }).join(',');
+  });
+  const csv = [header, ...lines].join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${ds.name}_export.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ---------------- Cableado de botones "ir a pestaña" ---------------- */
+function wireInteractiveBits(){
+  document.querySelectorAll('[data-goto-tab]').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.gotoTab));
+  });
+  datasets.forEach(ds => initDataTable(ds));
+}
+
+
+/* ============================================================
+   ANALIZADOR DE LEGAJOS — aplicación (UI + orquestación)
+   ============================================================ */
+
+let pendingFiles = [];
+let datasets = [];
+let activeChartInstances = [];
+let currentTab = 'overview';
+
+/* ---------------- Pantalla de carga ---------------- */
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const filelistEl = document.getElementById('filelist');
+const generateBtn = document.getElementById('generateBtn');
+const pickFilesBtn = document.getElementById('pickFilesBtn');
+const loadExampleBtn = document.getElementById('loadExampleBtn');
+
+pickFilesBtn.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('click', (e) => { if(e.target === dropzone) fileInput.click(); });
+
+['dragenter','dragover'].forEach(evt => {
+  dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+});
+['dragleave','drop'].forEach(evt => {
+  dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); });
+});
+dropzone.addEventListener('drop', (e) => {
+  const files = [...(e.dataTransfer.files || [])].filter(f => /\.json$/i.test(f.name));
+  handleFiles(files);
+});
+fileInput.addEventListener('change', (e) => {
+  handleFiles([...e.target.files]);
+  fileInput.value = '';
+});
+
+function handleFiles(files){
+  files.forEach(file => {
+    const entry = { name: file.name, text: null, parsed: null, error: null, id: 'f_'+Math.random().toString(36).slice(2,8) };
+    pendingFiles.push(entry);
+    const reader = new FileReader();
+    reader.onload = () => {
+      entry.text = reader.result;
+      try{
+        entry.parsed = JSON.parse(entry.text);
+      }catch(err){
+        entry.error = 'JSON inválido: ' + err.message;
+      }
+      renderFileList();
+    };
+    reader.onerror = () => {
+      entry.error = 'No se pudo leer el archivo';
+      renderFileList();
+    };
+    reader.readAsText(file, 'utf-8');
+  });
+  renderFileList();
+}
+
+function renderFileList(){
+  filelistEl.innerHTML = pendingFiles.map(f => {
+    let meta;
+    if(f.error){
+      meta = `<span class="ferror">⚠ ${escapeHtml(f.error)}</span>`;
+    } else if(f.parsed === null){
+      meta = `<span class="fmeta">Leyendo…</span>`;
+    } else {
+      const arr = extractArray(f.parsed);
+      meta = `<span class="fmeta">✓ ${arr.length.toLocaleString('es-AR')} registros detectados</span>`;
+    }
+    return `<div class="filelist-item">
+      <div><div class="fname">${escapeHtml(f.name)}</div>${meta}</div>
+      <button class="remove" data-remove="${f.id}" title="Quitar">&times;</button>
+    </div>`;
+  }).join('');
+  filelistEl.querySelectorAll('[data-remove]').forEach(btn=>{
+    btn.addEventListener('click', () => {
+      pendingFiles = pendingFiles.filter(f => f.id !== btn.dataset.remove);
+      renderFileList();
+    });
+  });
+  const readyCount = pendingFiles.filter(f => f.parsed !== null && !f.error).length;
+  generateBtn.disabled = readyCount === 0;
+}
+
+generateBtn.addEventListener('click', () => {
+  const valid = pendingFiles.filter(f => f.parsed !== null && !f.error);
+  datasets = valid.map(f => buildDataset(f.name.replace(/\.json$/i,''), f.parsed));
+  launchDashboard();
+});
+
+loadExampleBtn.addEventListener('click', () => {
+  datasets = [
+    buildDataset('ejemplo_dictamenes', SAMPLE_DICTAMENES),
+    buildDataset('ejemplo_causas', SAMPLE_CAUSAS)
+  ];
+  launchDashboard();
+});
+
+/* ---------------- Lanzar dashboard ---------------- */
+function launchDashboard(){
+  document.getElementById('uploadScreen').style.display = 'none';
+  document.getElementById('app').classList.add('active');
+  currentTab = 'overview';
+  renderSidebar();
+  renderAll();
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if(!confirm('¿Cargar otros archivos? Se perderá el informe actual.')) return;
+  destroyCharts();
+  datasets = [];
+  pendingFiles = [];
+  renderFileList();
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('uploadScreen').style.display = 'flex';
+});
+
+document.getElementById('exportPdfBtn').addEventListener('click', () => window.print());
+
+document.getElementById('modalCloseBtn').addEventListener('click', () => {
+  document.getElementById('recordModal').classList.remove('active');
+});
+document.getElementById('recordModal').addEventListener('click', (e) => {
+  if(e.target.id === 'recordModal') e.currentTarget.classList.remove('active');
+});
+
+function showRecordModal(dsId, idx){
+  const ds = datasets.find(d => d.id === dsId);
+  if(!ds) return;
+  const rec = ds.rawRecords[idx];
+  document.getElementById('modalContent').textContent = JSON.stringify(rec, null, 2);
+  document.getElementById('recordModal').classList.add('active');
+}
+
+/* ---------------- Sidebar / tabs ---------------- */
+function renderSidebar(){
+  const tabList = document.getElementById('tabList');
+  const hasUsers = getDatasetsWithUsers(datasets).length > 0;
+
+  let html = `<div class="tab ${currentTab==='overview'?'active':''}" data-tab="overview">
+      <span class="tab-name">Resumen general</span>
+    </div>`;
+
+  if(hasUsers){
+    html += `<div class="tab tab-special ${currentTab==='users'?'active':''}" data-tab="users">
+        <span class="tab-name">Por usuario asignado</span>
+      </div>`;
+  }
+
+  html += `<div class="tab-group-label">— ARCHIVOS (${datasets.length}) —</div>`;
+
+  datasets.forEach(ds => {
+    html += `<div class="tab ${currentTab===ds.id?'active':''}" data-tab="${ds.id}">
+        <span class="tab-name" title="${escapeHtml(ds.name)}">${escapeHtml(ds.name)}</span>
+        <span class="tab-count">${ds.totalRecords}</span>
+      </div>`;
+  });
+
+  tabList.innerHTML = html;
+  tabList.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => switchTab(t.dataset.tab));
+  });
+}
+
+function showActiveReport(){
+  document.querySelectorAll('.file-report').forEach(el => {
+    el.classList.toggle('active', el.dataset.reportId === currentTab);
+  });
+}
+
+function switchTab(tabId){
+  currentTab = tabId;
+  renderSidebar();
+  showActiveReport();
+  window.scrollTo({ top:0, behavior:'smooth' });
+  document.getElementById('mainContent').scrollTop = 0;
+  requestAnimationFrame(() => {
+    activeChartInstances.forEach(c => { try{ c.resize(); }catch(e){} });
+  });
+}
+
+/* ---------------- Render principal ---------------- */
+function renderAll(){
+  destroyCharts();
+  const main = document.getElementById('mainContent');
+  main.innerHTML =
+    buildOverviewHTML(datasets) +
+    buildUserReportHTML(datasets) +
+    datasets.map(buildFileReportHTML).join('');
+  showActiveReport();
+  instantiateCharts();
+  wireInteractiveBits();
+}
+
+</script>
+</body>
+</html>
