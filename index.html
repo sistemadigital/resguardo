@@ -343,6 +343,22 @@
             background: #2e6f4b;
         }
 
+        /* ---------- Contenedor del Informe (iframe embebido) ---------- */
+        #informe-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #informe-iframe {
+            width: 100%;
+            height: calc(100vh - 160px);
+            border: none;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f0ecf7;
+        }
+
         @media (max-width: 768px) {
             .app-header {
                 flex-direction: column;
@@ -352,12 +368,16 @@
             .header-buttons {
                 width: 100%;
                 justify-content: flex-start;
+                flex-wrap: wrap;
             }
             .kpi-container {
                 grid-template-columns: 1fr;
             }
             .modal-contenido {
                 padding: 24px 18px 26px;
+            }
+            #informe-iframe {
+                height: calc(100vh - 220px);
             }
         }
 
@@ -409,6 +429,7 @@
             <div class="app-header">
                 <h1 class="app-title">Sistema de Resguardo Digital</h1>
                 <div class="header-buttons">
+                    <button class="btn btn-primary" id="btn-informe">Generador de Informe</button>
                     <button class="btn btn-primary" id="volver-btn">Volver al Inicio</button>
                 </div>
             </div>
@@ -496,6 +517,11 @@
                 </div>
                 <!-- FIN TARJETAS ADICIONALES -->
             </div>
+
+            <!-- Contenedor del informe (iframe dentro de la misma pantalla) -->
+            <div id="informe-container">
+                <iframe id="informe-iframe" src="" title="Generador de Informe"></iframe>
+            </div>
         </div>
     </div>
 
@@ -525,6 +551,14 @@
         const btnCerrar = document.getElementById('btn-cerrar-modal');
         const volverBtn = document.getElementById('volver-btn');
 
+        // Nuevos elementos del Generador de Informe
+        const btnInforme = document.getElementById('btn-informe');
+        const informeContainer = document.getElementById('informe-container');
+        const informeIframe = document.getElementById('informe-iframe');
+        const kpiContainer = document.querySelector('.kpi-container');
+        const URL_INFORME = "https://sistemadigital.github.io/resguardo/informe-JSON";
+        let informeActivo = false;
+
         // ---------- Funciones ----------
         function mostrarAplicacion() {
             paginaInicio.style.display = 'none';
@@ -534,6 +568,8 @@
         }
 
         function volverAlInicio() {
+            // Si el informe está abierto, lo cerramos al volver
+            if (informeActivo) cerrarInforme();
             paginaApp.style.display = 'none';
             paginaInicio.style.display = 'flex';
         }
@@ -548,6 +584,32 @@
         function cerrarModal() {
             modalToken.classList.remove('activo');
             tokenError.textContent = '';
+        }
+
+        // ---------- Generador de Informe (iframe embebido) ----------
+        function abrirInforme() {
+            if (!informeIframe.getAttribute('src')) {
+                informeIframe.setAttribute('src', URL_INFORME);
+            }
+            informeContainer.style.display = 'block';
+            kpiContainer.style.display = 'none';
+            btnInforme.textContent = 'Cerrar Informe';
+            informeActivo = true;
+        }
+
+        function cerrarInforme() {
+            informeContainer.style.display = 'none';
+            kpiContainer.style.display = '';
+            btnInforme.textContent = 'Generador de Informe';
+            informeActivo = false;
+        }
+
+        function toggleInforme() {
+            if (informeActivo) {
+                cerrarInforme();
+            } else {
+                abrirInforme();
+            }
         }
 
         // ---------- Verificación del token (Simple y Directa) ----------
@@ -576,7 +638,7 @@
                 }
 
                 const tokenCorrecto = docSnap.data().token;
-                
+
                 // Aseguramos que la validación ocurra como string
                 if (String(tokenCorrecto) === codigo) {
                     tokenError.textContent = 'Acceso concedido.';
@@ -611,6 +673,9 @@
             }
         });
         volverBtn.addEventListener('click', volverAlInicio);
+
+        // Nuevo botón: Generador de Informe
+        btnInforme.addEventListener('click', toggleInforme);
 
         // ---------- Botones de datos existentes (se mantienen) ----------
         document.getElementById('causas-datos').addEventListener('click', (e) => {
