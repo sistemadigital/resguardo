@@ -479,9 +479,10 @@
 
                 <!-- NUEVAS TARJETAS (solo con botón "Acceder a los Datos") -->
                 <div class="kpi-card fade-in">
-                    <h2 class="kpi-title">Partes</h2>
+                    <h2 class="kpi-title">Partes-Escritos</h2>
                     <p class="kpi-description">Acceder para descargar los registros.</p>
                     <a href="https://sistemadigital.github.io/resguardo/parte-exportar" class="btn-datos">Acceder a los Datos</a>
+                    <a href="https://sistemadigital.github.io/resguardo/escritos-json" class="btn-datos" id="escritos-json-btn">Acceder Escritos Json</a>
                 </div>
 
                 <div class="kpi-card fade-in">
@@ -557,6 +558,7 @@
         const informeIframe = document.getElementById('informe-iframe');
         const kpiContainer = document.querySelector('.kpi-container');
         const URL_INFORME = "https://sistemadigital.github.io/resguardo/informe-JSON";
+        const URL_ESCRITOS_JSON = "https://sistemadigital.github.io/resguardo/escritos-json";
         let informeActivo = false;
 
         // ---------- Funciones ----------
@@ -610,6 +612,15 @@
             } else {
                 abrirInforme();
             }
+        }
+
+        // ---------- Abrir recurso dentro del iframe (misma pantalla) ----------
+        function abrirRecursoEnIframe(url) {
+            informeIframe.setAttribute('src', url);
+            informeContainer.style.display = 'block';
+            kpiContainer.style.display = 'none';
+            btnInforme.textContent = 'Cerrar';
+            informeActivo = true;
         }
 
         // ---------- Verificación del token (Simple y Directa) ----------
@@ -676,6 +687,12 @@
 
         // Nuevo botón: Generador de Informe
         btnInforme.addEventListener('click', toggleInforme);
+
+        // Botón "Acceder Escritos Json": abre dentro de la misma pantalla (iframe embebido)
+        document.getElementById('escritos-json-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            abrirRecursoEnIframe(URL_ESCRITOS_JSON);
+        });
 
         // ---------- Botones de datos existentes (se mantienen) ----------
         document.getElementById('causas-datos').addEventListener('click', (e) => {
