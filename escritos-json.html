@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escritos Judiciales - Firebase + JSON</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            --text-color: #334155;
+            --text-light: #64748b;
+            --light-gray: #f8fafc;
+            --border-color: #e2e8f0;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 10px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1.2rem 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px;
+            border-radius: var(--radius-sm);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 0;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            opacity: 0.9;
+            text-align: center;
+            margin-top: 2px;
+            line-height: 1.1;
+        }
+
+        .monthly-stats {
+            display: none;
+            overflow-x: auto;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+        }
+
+        .monthly-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 5px;
+            min-width: 800px;
+        }
+
+        .month-stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            min-width: 50px;
+        }
+
+        .month-stat-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .month-stat-label {
+            font-size: 0.6rem;
+            opacity: 0.9;
+            text-align: center;
+            margin-top: 1px;
+            line-height: 1;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1;
+            padding: 0;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Barra de conexión */
+        .connection-bar {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            padding: 0.8rem 1.2rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+
+        .connection-bar .conn-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .connection-bar .conn-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--light-gray);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+        .status-pill.connected {
+            background: #d4f0e0;
+            color: var(--success-color);
+            border-color: #a7e0c0;
+        }
+        .status-pill.imported {
+            background: #fef3d7;
+            color: #b07a1a;
+            border-color: #f0d09c;
+        }
+        .status-pill i { font-size: 8px; }
+
+        .controls-container {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        select, input {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            background-color: white;
+            color: var(--text-color);
+            min-width: 180px;
+        }
+
+        .btn {
+            padding: 0.7rem 1.4rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-primary:hover { background-color: var(--primary-dark); }
+
+        .btn-secondary {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        .btn-secondary:hover { background-color: #d97706; }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        .btn-outline:hover { background-color: rgba(37, 99, 235, 0.08); }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        .btn-danger:hover { background-color: #dc2626; }
+
+        .btn-cyan {
+            background-color: var(--info-color);
+            color: white;
+        }
+        .btn-cyan:hover { background-color: #0891b2; }
+
+        .btn-purple {
+            background-color: #7c3aed;
+            color: white;
+        }
+        .btn-purple:hover { background-color: #6d28d9; }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .table-container {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        thead {
+            background-color: var(--light-gray);
+        }
+
+        th {
+            padding: 1.2rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .badge-varios { background-color: #e8f5e9; color: #2e7d32; }
+        .badge-patrocinio { background-color: #e3f2fd; color: #1565c0; }
+        .badge-proceso { background-color: #f3e5f5; color: #7b1fa2; }
+        .badge-default { background-color: #e0e0e0; color: #333; }
+
+        .quantity-cell {
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-align: center;
+            color: var(--primary-dark);
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-action {
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-edit { background-color: var(--primary-light); color: white; }
+        .btn-edit:hover { background-color: var(--primary-dark); }
+        .btn-view { background-color: #e8f5e9; color: var(--success-color); }
+        .btn-view:hover { background-color: #c8e6c9; }
+
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background-color: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            max-width: 100%;
+            padding-bottom: 5px;
+        }
+
+        .page-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background-color: white;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .page-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-ellipsis {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            color: var(--text-light);
+            flex-shrink: 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+
+        .modal {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body { padding: 1.5rem; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+
+        .form-control {
+            padding: 0.7rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+        }
+
+        .readonly-field { background-color: var(--light-gray); color: var(--text-light); }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-light);
+            display: none;
+        }
+
+        #loader {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        #loader.hidden { display: none; }
+
+        /* Alerta flotante */
+        .floating-alert {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(239, 68, 68, 0.96);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 60px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            z-index: 3000;
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 90vw;
+        }
+        .floating-alert.success { background: rgba(16, 185, 129, 0.96); }
+        .floating-alert.show { top: 20px; }
+
+        @media (min-width: 480px) {
+            body { padding: 15px; }
+            .container { padding: 15px; }
+            header { padding: 1.2rem; }
+            h1 { font-size: 1.6rem; }
+            .stats { gap: 10px; padding: 12px; }
+            .stat-item { padding: 8px 0; }
+            .stat-value { font-size: 1.3rem; }
+            .stat-label { font-size: 0.75rem; }
+            .monthly-stats { padding: 12px; }
+            .monthly-stats-grid { gap: 8px; }
+            .month-stat-item { padding: 5px 3px; min-width: 55px; }
+            .month-stat-value { font-size: 0.95rem; }
+            .month-stat-label { font-size: 0.65rem; }
+        }
+
+        @media (min-width: 768px) {
+            .container { padding: 20px; }
+            .header-content { flex-direction: row; align-items: center; }
+            h1 { text-align: left; font-size: 1.8rem; }
+            .monthly-stats { display: block; }
+            .monthly-stats-grid { min-width: 1000px; }
+        }
+
+        @media (min-width: 992px) {
+            .monthly-stats-grid { min-width: 1200px; }
+        }
+
+        @media (max-width: 479px) {
+            .stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+                padding: 8px;
+            }
+            .stat-item:nth-child(1) { grid-column: 1 / span 3; margin-bottom: 5px; }
+            .stat-value { font-size: 1.1rem; }
+            .stat-label { font-size: 0.65rem; }
+        }
+
+        @media (max-width: 320px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .stat-item:nth-child(1) { grid-column: 1 / span 2; }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-alert" id="floatingAlert">
+        <i class="fas fa-info-circle"></i>
+        <span id="floatingAlertText"></span>
+    </div>
+
+    <div id="loader" class="hidden">
+        <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--primary-color)"></i>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>Escritos</h1>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalRecords">0</span>
+                        <span class="stat-label">Total</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="trimestre1">0</span>
+                        <span class="stat-label">Ene-Mar</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="trimestre2">0</span>
+                        <span class="stat-label">Abr-Jun</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="trimestre3">0</span>
+                        <span class="stat-label">Jul-Sep</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="trimestre4">0</span>
+                        <span class="stat-label">Oct-Dic</span>
+                    </div>
+                </div>
+                <div class="monthly-stats" id="monthlyStats">
+                    <div class="monthly-stats-grid" id="monthlyStatsGrid"></div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Barra de conexión / import / export -->
+            <div class="connection-bar">
+                <div class="conn-info">
+                    <span id="statusConexion" class="status-pill">
+                        <i class="fas fa-circle"></i> Sin conexión
+                    </span>
+                    <span style="font-size:12px; color:var(--text-light);" id="registrosInfo"></span>
+                </div>
+                <div class="conn-actions">
+                    <button class="btn btn-cyan" id="btnConectar">
+                        <i class="fas fa-plug"></i> Conectar a Firestore
+                    </button>
+                    <button class="btn btn-purple" id="btnExportarJSON">
+                        <i class="fas fa-download"></i> Exportar JSON
+                    </button>
+                    <button class="btn btn-secondary" id="btnImportarJSON">
+                        <i class="fas fa-upload"></i> Importar JSON
+                    </button>
+                    <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none;" />
+                </div>
+            </div>
+
+            <div class="controls-container">
+                <div class="filters">
+                    <div class="filter-group">
+                        <label class="filter-label">Trimestre</label>
+                        <select id="filter-quarter">
+                            <option value="all">Todos</option>
+                            <option value="1">T1</option>
+                            <option value="2">T2</option>
+                            <option value="3">T3</option>
+                            <option value="4">T4</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Año</label>
+                        <select id="filter-year"><option value="all">Todos</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Tipo</label>
+                        <select id="filter-type">
+                            <option value="all">Todos</option>
+                            <option value="varios">Varios</option>
+                            <option value="patrocinio">Patrocinio</option>
+                            <option value="demanda">Demanda</option>
+                            <option value="contesta_demanda">Contesta demanda</option>
+                            <option value="defensor_ausente">Defensor Ausente</option>
+                            <option value="recurso">Recurso</option>
+                            <option value="contesta_recurso">Contesta Recurso</option>
+                            <option value="vinculacion">Vinculacion</option>
+                            <option value="asume_patrocinio">Asume patrocinio</option>
+                            <option value="recurso_revocatoria">Recurso de Revocatoria</option>
+                            <option value="recurso_apelacion">Recurso de Apelación</option>
+                            <option value="rec_rev_c_apelacion">Rec Rev c Apelación</option>
+                            <option value="otros">Otros</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Proceso</label>
+                        <select id="filter-process">
+                            <option value="all">Todos</option>
+                            <option value="familia">Familia</option>
+                            <option value="violencia">Violencia Familiar</option>
+                            <option value="civil">Civil</option>
+                            <option value="laboral">Laboral</option>
+                            <option value="penal">Penal</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="add-writ-btn"><i class="fas fa-plus"></i> Nuevo Escrito</button>
+                    <button class="btn btn-secondary" id="export-pdf-btn" type="button"><i class="fas fa-file-pdf"></i> PDF</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="writs-table">
+                    <thead>
+                        <tr>
+                            <th>Cant.</th>
+                            <th>Año</th>
+                            <th>Tipo</th>
+                            <th>Proceso</th>
+                            <th>Usuario</th>
+                            <th>Fecha y Hora</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="writs-table-body"></tbody>
+                </table>
+                <div id="empty-state" class="empty-state">
+                    <i class="fas fa-file-alt fa-3x"></i>
+                    <h3>No hay registros cargados</h3>
+                    <p style="font-size:13px; margin-top:8px;">
+                        Haga clic en "Conectar a Firestore" para cargar datos, o "Importar JSON" para cargar un archivo local.
+                    </p>
+                </div>
+            </div>
+
+            <div class="pagination-container">
+                <div class="pagination-info" id="pagination-info">Mostrando 0 escritos</div>
+                <div class="pagination-controls">
+                    <button class="page-btn" id="prev-page"><i class="fas fa-angle-left"></i></button>
+                    <div id="page-numbers" style="display: flex; gap: 0.5rem;"></div>
+                    <button class="page-btn" id="next-page"><i class="fas fa-angle-right"></i></button>
+                </div>
+            </div>
+        </main>
+
+        <div class="modal-overlay" id="writ-modal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="modal-title">Nuevo Escrito</h2>
+                    <button class="close-modal" id="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="writ-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Cantidad</label>
+                                <input type="text" id="writ-quantity" class="form-control readonly-field" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Año Registro</label>
+                                <input type="text" id="writ-year" class="form-control readonly-field" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Escrito *</label>
+                                <select id="writ-type" class="form-control" required>
+                                    <option value="varios">Varios</option>
+                                    <option value="patrocinio">Patrocinio</option>
+                                    <option value="demanda">Demanda</option>
+                                    <option value="contesta_demanda">Contesta demanda</option>
+                                    <option value="defensor_ausente">Defensor Ausente</option>
+                                    <option value="recurso">Recurso</option>
+                                    <option value="contesta_recurso">Contesta Recurso</option>
+                                    <option value="vinculacion">Vinculacion</option>
+                                    <option value="asume_patrocinio">Asume patrocinio</option>
+                                    <option value="recurso_revocatoria">Recurso de Revocatoria</option>
+                                    <option value="recurso_apelacion">Recurso de Apelación</option>
+                                    <option value="rec_rev_c_apelacion">Rec Rev c Apelación</option>
+                                    <option value="otros">Otros</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Proceso *</label>
+                                <select id="writ-process" class="form-control" required>
+                                    <option value="familia">Familia</option>
+                                    <option value="violencia">Violencia Familiar</option>
+                                    <option value="civil">Civil</option>
+                                    <option value="laboral">Laboral</option>
+                                    <option value="penal">Penal</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Usuario *</label>
+                                <select id="writ-user" class="form-control" required>
+                                    <option value="" disabled selected>Seleccione un usuario</option>
+                                    <option>Bazante Nadia Romina</option>
+                                    <option>Boillat Cesar Enrique</option>
+                                    <option>Cardozo Maria Raquel</option>
+                                    <option>Cedron Noelia Aurora</option>
+                                    <option>Corrales Alicia Mariela</option>
+                                    <option>Escobar Monica Graciela</option>
+                                    <option>Fioravante Rómulo</option>
+                                    <option>Gonzalez Alberto Misael</option>
+                                    <option>Gonzalez Juan Jose</option>
+                                    <option>Gudiño Natalia Esther</option>
+                                    <option>Magnani Enzo Luciano</option>
+                                    <option>Pablos Patricia</option>
+                                    <option>Palacios Ana Gabriela</option>
+                                    <option>Ortega Lucia Noemi</option>
+                                    <option>Ramos Marcelo Gustavo</option>
+                                    <option>Riveros Patricia Soledad</option>
+                                    <option>Sosa Rita Cecilia</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha y Hora</label>
+                                <input type="text" id="writ-date" class="form-control readonly-field" readonly>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" id="cancel-btn">Cancelar</button>
+                    <button class="btn btn-primary" id="save-btn">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+    <script>
+        // ============================================================
+        //  CONFIG FIREBASE
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmUQw10DFePlCVF3qqA72480fhQqbkaNM",
+            authDomain: "escritos-def6.firebaseapp.com",
+            projectId: "escritos-def6",
+            storageBucket: "escritos-def6.firebasestorage.app",
+            messagingSenderId: "115939688115",
+            appId: "1:115939688115:web:4d8818543aa8f11d0dbac6"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const escritosRef = db.collection('escritos');
+
+        // ============================================================
+        //  ESTADO GLOBAL
+        // ============================================================
+        let writsData = [];
+        let currentWritId = null;
+        let currentPage = 1;
+        const recordsPerPage = 10;
+
+        let conectadoFirestore = false;
+        let estadoDatos = null; // null | 'firestore' | 'importado'
+        let unsubscribe = null;
+
+        const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+        // ============================================================
+        //  UTILIDADES
+        // ============================================================
+        const $ = (id) => document.getElementById(id);
+
+        function mostrarAlerta(mensaje, tipo = 'danger') {
+            const el = $('floatingAlert');
+            const txt = $('floatingAlertText');
+            txt.textContent = mensaje;
+            el.classList.remove('success');
+            if (tipo === 'success') el.classList.add('success');
+            el.classList.add('show');
+            clearTimeout(el._timer);
+            el._timer = setTimeout(() => el.classList.remove('show'), 4000);
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatDateTime(timestamp) {
+            if (!timestamp) return '—';
+            const dateObj = new Date(timestamp);
+            if (isNaN(dateObj)) return '—';
+            const day = dateObj.getDate().toString().padStart(2, '0');
+            const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+            const year = dateObj.getFullYear();
+            const hours = dateObj.getHours().toString().padStart(2, '0');
+            const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        }
+
+        function getMonthFromTimestamp(timestamp) {
+            const dateObj = new Date(timestamp);
+            return dateObj.getMonth() + 1;
+        }
+
+        // ============================================================
+        //  NORMALIZACIÓN DE DATOS
+        // ============================================================
+        function normalizarWrit(w, index) {
+            const base = { ...w };
+            if (!base.id) base.id = 'import_' + Date.now() + '_' + index;
+            if (!base.timestamp) {
+                // Si no hay timestamp, intentar construirlo desde year
+                if (base.year) {
+                    base.timestamp = new Date(parseInt(base.year), 0, 1).getTime();
+                } else {
+                    base.timestamp = Date.now();
+                }
+            }
+            base.fechaHora = formatDateTime(base.timestamp);
+            return base;
+        }
+
+        function recomputeDisplayQuantity() {
+            // Ordenar por timestamp descendente (más reciente primero)
+            writsData.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            const total = writsData.length;
+            writsData.forEach((item, index) => {
+                item.displayQuantity = total - index;
+            });
+        }
+
+        // ============================================================
+        //  CONECTAR / DESCONECTAR FIRESTORE
+        // ============================================================
+        async function conectarFirestore() {
+            if (conectadoFirestore) {
+                // DESCONECTAR: detener listener, mantener datos en memoria
+                if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+                conectadoFirestore = false;
+                estadoDatos = writsData.length > 0 ? 'importado' : null;
+                actualizarBotonConectar();
+                actualizarEstadoConexionUI();
+                mostrarAlerta('Desconectado de Firestore. Los datos permanecen en memoria.', 'success');
+                return;
+            }
+
+            const btn = $('btnConectar');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+
+            try {
+                // Carga inicial desde Firestore
+                const snap = await escritosRef.get();
+                writsData = [];
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    writsData.push(normalizarWrit({ id: doc.id, ...data }, writsData.length));
+                });
+                recomputeDisplayQuantity();
+
+                conectadoFirestore = true;
+                estadoDatos = 'firestore';
+
+                // Suscripción en tiempo real
+                unsubscribe = escritosRef.onSnapshot(snapshot => {
+                    const remote = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        remote.push(normalizarWrit({ id: doc.id, ...data }, remote.length));
+                    });
+                    writsData = remote;
+                    recomputeDisplayQuantity();
+                    actualizarTodo();
+                }, err => {
+                    console.error('onSnapshot error:', err);
+                    mostrarAlerta('Error en tiempo real: ' + err.message, 'danger');
+                });
+
+                actualizarTodo();
+                actualizarBotonConectar();
+                actualizarEstadoConexionUI();
+                mostrarAlerta(`Conectado. ${writsData.length} escritos cargados desde Firestore.`, 'success');
+            } catch (e) {
+                console.error(e);
+                mostrarAlerta('Error al conectar: ' + e.message, 'danger');
+            } finally {
+                btn.disabled = false;
+                actualizarBotonConectar();
+            }
+        }
+
+        function actualizarBotonConectar() {
+            const btn = $('btnConectar');
+            if (conectadoFirestore) {
+                btn.innerHTML = '<i class="fas fa-plug"></i> Desconectar';
+                btn.classList.remove('btn-cyan');
+                btn.classList.add('btn-danger');
+            } else {
+                btn.innerHTML = '<i class="fas fa-plug"></i> Conectar a Firestore';
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-cyan');
+            }
+        }
+
+        function actualizarEstadoConexionUI() {
+            const pill = $('statusConexion');
+            if (conectadoFirestore) {
+                pill.className = 'status-pill connected';
+                pill.innerHTML = `<i class="fas fa-circle"></i> Firestore · ${writsData.length} escritos`;
+            } else if (estadoDatos === 'importado') {
+                pill.className = 'status-pill imported';
+                pill.innerHTML = `<i class="fas fa-circle"></i> Datos locales · ${writsData.length} escritos`;
+            } else {
+                pill.className = 'status-pill';
+                pill.innerHTML = `<i class="fas fa-circle"></i> Sin conexión`;
+            }
+            $('registrosInfo').textContent = writsData.length ? `${writsData.length} registros en memoria` : '';
+        }
+
+        // ============================================================
+        //  ACTUALIZAR TODO (tabla + KPIs + paginación)
+        // ============================================================
+        function actualizarTodo() {
+            updateStats();
+            updateTrimestreStats();
+            updateMonthlyStats();
+            renderTable();
+            actualizarEstadoConexionUI();
+        }
+
+        // ============================================================
+        //  EXPORTAR JSON (NO elimina nada en Firestore)
+        //  Formato: [{ id, data: {...} }, ...]
+        // ============================================================
+        async function exportarJSON() {
+            const btn = $('btnExportarJSON');
+            const textoOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exportando...';
+
+            try {
+                let registrosExport = [];
+
+                if (conectadoFirestore) {
+                    // Lectura directa desde Firestore para exportar SIEMPRE la base real
+                    const snap = await escritosRef.get();
+                    snap.forEach(doc => {
+                        registrosExport.push({ id: doc.id, data: doc.data() });
+                    });
+                } else {
+                    // Exportar desde memoria
+                    registrosExport = writsData.map(w => {
+                        const { id, fechaHora, displayQuantity, ...rest } = w;
+                        return { id: id || null, data: rest };
+                    });
+                }
+
+                if (registrosExport.length === 0) {
+                    mostrarAlerta('No hay registros para exportar.', 'danger');
+                    return;
+                }
+
+                const jsonString = JSON.stringify(registrosExport, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const fechaStr = new Date().toISOString().slice(0, 10);
+                const baseLabel = estadoDatos || 'memoria';
+                a.download = `escritos_${baseLabel}_${fechaStr}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                mostrarAlerta(`Exportación exitosa: ${registrosExport.length} registros. La base original en Firestore permanece intacta.`, 'success');
+            } catch (e) {
+                console.error(e);
+                mostrarAlerta('Error al exportar: ' + e.message, 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }
+        }
+
+        // ============================================================
+        //  IMPORTAR JSON (soporta varios formatos)
+        // ============================================================
+        function normalizarRegistroImportado(r, index) {
+            if (!r || typeof r !== 'object') return null;
+            // Formato Firestore: { id, data: {...} }
+            if (r.data && typeof r.data === 'object' && !Array.isArray(r.data)) {
+                const id = r.id || ('import_' + Date.now() + '_' + index);
+                return { id, ...r.data };
+            }
+            // Formato plano: { id, ...campos }
+            const copia = { ...r };
+            if (!copia.id) copia.id = 'import_' + Date.now() + '_' + index;
+            return copia;
+        }
+
+        function importarJSON(archivo) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const contenido = JSON.parse(e.target.result);
+                    let registros = [];
+                    if (contenido && Array.isArray(contenido.datos)) {
+                        registros = contenido.datos;
+                    } else if (Array.isArray(contenido)) {
+                        registros = contenido;
+                    } else if (contenido && typeof contenido === 'object') {
+                        // Objeto con ids como claves
+                        registros = Object.entries(contenido).map(([k, v]) => ({ id: k, ...v }));
+                    } else {
+                        throw new Error("Formato JSON inválido. Se esperaba un array o { datos: [...] }.");
+                    }
+
+                    registros = registros
+                        .map((r, i) => normalizarRegistroImportado(r, i))
+                        .filter(r => r !== null)
+                        .map((r, i) => normalizarWrit(r, i));
+
+                    if (registros.length === 0) {
+                        mostrarAlerta('El archivo JSON no contiene registros válidos.', 'danger');
+                        return;
+                    }
+
+                    // Si estábamos conectados a Firestore, desconectar listener
+                    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+                    conectadoFirestore = false;
+                    estadoDatos = 'importado';
+
+                    // Reemplazar memoria con los datos importados
+                    writsData = registros;
+                    recomputeDisplayQuantity();
+
+                    actualizarTodo();
+                    actualizarBotonConectar();
+                    mostrarAlerta(`Importación exitosa: ${registros.length} registros cargados en memoria. Firestore NO fue modificado.`, 'success');
+                } catch (err) {
+                    console.error(err);
+                    mostrarAlerta('Error al importar JSON: ' + err.message, 'danger');
+                }
+            };
+            reader.onerror = () => mostrarAlerta('Error al leer el archivo.', 'danger');
+            reader.readAsText(archivo);
+        }
+
+        // ============================================================
+        //  FILTRADO
+        // ============================================================
+        function getBaseFilteredData() {
+            const y = $('filter-year').value;
+            const t = $('filter-type').value;
+            const p = $('filter-process').value;
+
+            return writsData.filter(w => {
+                if (y !== 'all' && String(w.year) !== String(y)) return false;
+                if (t !== 'all' && w.type !== t) return false;
+                if (p !== 'all' && w.process !== p) return false;
+                return true;
+            });
+        }
+
+        function getFilteredData() {
+            const q = $('filter-quarter').value;
+            const y = $('filter-year').value;
+            const t = $('filter-type').value;
+            const p = $('filter-process').value;
+
+            return writsData.filter(w => {
+                const dateObj = new Date(w.timestamp);
+                const quarter = Math.floor(dateObj.getMonth() / 3) + 1;
+
+                if (q !== 'all' && quarter.toString() !== q) return false;
+                if (y !== 'all' && String(w.year) !== String(y)) return false;
+                if (t !== 'all' && w.type !== t) return false;
+                if (p !== 'all' && w.process !== p) return false;
+                return true;
+            });
+        }
+
+        // ============================================================
+        //  KPIs
+        // ============================================================
+        function updateStats() {
+            const baseFiltered = getBaseFilteredData();
+            $('totalRecords').textContent = baseFiltered.length;
+        }
+
+        function updateTrimestreStats() {
+            let trim1 = 0, trim2 = 0, trim3 = 0, trim4 = 0;
+            const baseFiltered = getBaseFilteredData();
+
+            baseFiltered.forEach(writ => {
+                const month = new Date(writ.timestamp).getMonth() + 1;
+                if (month >= 1 && month <= 3) trim1++;
+                else if (month >= 4 && month <= 6) trim2++;
+                else if (month >= 7 && month <= 9) trim3++;
+                else if (month >= 10 && month <= 12) trim4++;
+            });
+
+            $('trimestre1').textContent = trim1;
+            $('trimestre2').textContent = trim2;
+            $('trimestre3').textContent = trim3;
+            $('trimestre4').textContent = trim4;
+        }
+
+        function updateMonthlyStats() {
+            const grid = $('monthlyStatsGrid');
+            grid.innerHTML = '';
+            const monthCounts = Array(12).fill(0);
+            const baseFiltered = getBaseFilteredData();
+
+            baseFiltered.forEach(writ => {
+                const month = getMonthFromTimestamp(writ.timestamp);
+                if (month >= 1 && month <= 12) monthCounts[month - 1]++;
+            });
+
+            monthCounts.forEach((count, index) => {
+                const div = document.createElement('div');
+                div.className = 'month-stat-item';
+                div.innerHTML = `
+                    <span class="month-stat-value">${count}</span>
+                    <span class="month-stat-label">${monthNames[index]}</span>
+                `;
+                grid.appendChild(div);
+            });
+
+            const hasData = monthCounts.some(c => c > 0);
+            $('monthlyStats').style.display = hasData ? 'block' : 'none';
+        }
+
+        // ============================================================
+        //  TABLA
+        // ============================================================
+        function renderTable() {
+            const filtered = getFilteredData();
+            const totalPages = Math.ceil(filtered.length / recordsPerPage) || 1;
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const start = (currentPage - 1) * recordsPerPage;
+            const pageData = filtered.slice(start, start + recordsPerPage);
+
+            const bodyTable = $('writs-table-body');
+            bodyTable.innerHTML = '';
+            $('empty-state').style.display = filtered.length ? 'none' : 'block';
+
+            pageData.forEach(writ => {
+                let badgeClass = 'badge-default';
+                if (writ.type === 'varios') badgeClass = 'badge-varios';
+                else if (writ.type === 'patrocinio') badgeClass = 'badge-patrocinio';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="quantity-cell">${writ.displayQuantity || ''}</td>
+                    <td>${escapeHtml(writ.year)}</td>
+                    <td><span class="badge ${badgeClass}">${escapeHtml((writ.type || '').toUpperCase())}</span></td>
+                    <td><span class="badge badge-proceso">${escapeHtml((writ.process || '').toUpperCase())}</span></td>
+                    <td>${escapeHtml(writ.user)}</td>
+                    <td>${escapeHtml(writ.fechaHora)}</td>
+                    <td class="actions-cell">
+                        <button class="btn-action btn-view" onclick="viewWrit('${writ.id}')"><i class="fas fa-eye"></i></button>
+                        <button class="btn-action btn-edit" onclick="editWrit('${writ.id}')"><i class="fas fa-edit"></i></button>
+                    </td>
+                `;
+                bodyTable.appendChild(tr);
+            });
+
+            updatePagination(filtered.length, totalPages);
+        }
+
+        // ============================================================
+        //  MODAL Y FORMULARIO
+        // ============================================================
+        window.editWrit = (id) => {
+            const writ = writsData.find(w => w.id === id);
+            if (!writ) return;
+            currentWritId = id;
+            $('modal-title').textContent = "Editar Escrito";
+            fillForm(writ);
+            $('writ-modal').classList.add('active');
+            $('save-btn').style.display = 'block';
+        };
+
+        window.viewWrit = (id) => {
+            const writ = writsData.find(w => w.id === id);
+            if (!writ) return;
+            currentWritId = id;
+            $('modal-title').textContent = "Detalle Escrito";
+            fillForm(writ);
+            $('writ-modal').classList.add('active');
+            $('save-btn').style.display = 'none';
+        };
+
+        function fillForm(w) {
+            $('writ-quantity').value = w.displayQuantity || (writsData.length + 1);
+            $('writ-year').value = w.year || '';
+            $('writ-type').value = w.type || 'varios';
+            $('writ-process').value = w.process || 'familia';
+            $('writ-user').value = w.user || '';
+            $('writ-date').value = w.fechaHora || formatDateTime(w.timestamp);
+        }
+
+        $('add-writ-btn').onclick = () => {
+            currentWritId = null;
+            $('writ-form').reset();
+            $('modal-title').textContent = "Nuevo Escrito";
+            const now = new Date();
+            $('writ-year').value = now.getFullYear();
+            $('writ-date').value = formatDateTime(now.getTime());
+            $('writ-quantity').value = writsData.length + 1;
+            $('save-btn').style.display = 'block';
+            $('writ-modal').classList.add('active');
+        };
+
+        async function saveToFirebase(data) {
+            try {
+                if (conectadoFirestore) {
+                    // Guardar en Firestore
+                    if (currentWritId) {
+                        await escritosRef.doc(currentWritId).update(data);
+                    } else {
+                        const id = Date.now().toString();
+                        await escritosRef.doc(id).set({
+                            ...data,
+                            timestamp: Date.now()
+                        });
+                    }
+                    // onSnapshot refresca la tabla
+                } else {
+                    // Guardar solo en memoria
+                    if (currentWritId) {
+                        const idx = writsData.findIndex(w => w.id === currentWritId);
+                        if (idx !== -1) {
+                            const prev = writsData[idx];
+                            writsData[idx] = normalizarWrit({ ...prev, ...data }, idx);
+                        }
+                    } else {
+                        const id = 'local_' + Date.now();
+                        writsData.push(normalizarWrit({
+                            id,
+                            ...data,
+                            timestamp: Date.now()
+                        }, writsData.length));
+                        estadoDatos = 'importado';
+                    }
+                    recomputeDisplayQuantity();
+                    actualizarTodo();
+                    actualizarBotonConectar();
+                }
+                closeModal();
+                mostrarAlerta('Escrito guardado correctamente.', 'success');
+            } catch (e) {
+                console.error("Error al guardar: ", e);
+                mostrarAlerta('Error al guardar: ' + e.message, 'danger');
+            }
+        }
+
+        $('save-btn').onclick = async () => {
+            const userSelect = $('writ-user');
+            if (!userSelect.value) {
+                mostrarAlerta("Por favor, seleccione un usuario.", 'danger');
+                return;
+            }
+
+            const data = {
+                year: $('writ-year').value,
+                type: $('writ-type').value,
+                process: $('writ-process').value,
+                user: userSelect.value
+            };
+            await saveToFirebase(data);
+        };
+
+        const closeModal = () => $('writ-modal').classList.remove('active');
+        $('close-modal').onclick = closeModal;
+        $('cancel-btn').onclick = closeModal;
+
+        // ============================================================
+        //  PAGINACIÓN
+        // ============================================================
+        function updatePagination(total, totalPages) {
+            $('pagination-info').textContent = `Total: ${total} escritos`;
+            const container = $('page-numbers');
+            container.innerHTML = '';
+
+            const createPageBtn = (pageNum) => {
+                const btn = document.createElement('button');
+                btn.className = `page-btn ${pageNum === currentPage ? 'active' : ''}`;
+                btn.textContent = pageNum;
+                btn.onclick = () => { currentPage = pageNum; renderTable(); };
+                return btn;
+            };
+
+            if (totalPages === 0) {
+                $('prev-page').disabled = true;
+                $('next-page').disabled = true;
+                return;
+            }
+
+            if (totalPages === 1) {
+                container.appendChild(createPageBtn(1));
+                $('prev-page').disabled = true;
+                $('next-page').disabled = true;
+                return;
+            }
+
+            container.appendChild(createPageBtn(1));
+
+            let start = Math.max(2, currentPage - 2);
+            let end = Math.min(totalPages - 1, currentPage + 2);
+
+            const maxVisible = 5;
+            const visibleCount = end - start + 1;
+            if (visibleCount < maxVisible - 2) {
+                if (start === 2) {
+                    end = Math.min(totalPages - 1, end + (maxVisible - 2 - visibleCount));
+                } else if (end === totalPages - 1) {
+                    start = Math.max(2, start - (maxVisible - 2 - visibleCount));
+                }
+            }
+
+            if (start > 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'pagination-ellipsis';
+                ellipsis.textContent = '...';
+                container.appendChild(ellipsis);
+            }
+
+            for (let i = start; i <= end; i++) {
+                container.appendChild(createPageBtn(i));
+            }
+
+            if (end < totalPages - 1) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'pagination-ellipsis';
+                ellipsis.textContent = '...';
+                container.appendChild(ellipsis);
+            }
+
+            container.appendChild(createPageBtn(totalPages));
+
+            $('prev-page').disabled = currentPage <= 1;
+            $('next-page').disabled = currentPage >= totalPages;
+        }
+
+        $('prev-page').addEventListener('click', () => {
+            if (currentPage > 1) { currentPage--; renderTable(); }
+        });
+
+        $('next-page').addEventListener('click', () => {
+            const filtered = getFilteredData();
+            const totalPages = Math.ceil(filtered.length / recordsPerPage);
+            if (currentPage < totalPages) { currentPage++; renderTable(); }
+        });
+
+        // ============================================================
+        //  FILTROS
+        // ============================================================
+        document.querySelectorAll('.filters select').forEach(s => {
+            s.onchange = () => {
+                currentPage = 1;
+                renderTable();
+                updateStats();
+                updateTrimestreStats();
+                updateMonthlyStats();
+            };
+        });
+
+        // Cargar años en el filtro
+        const yearSelect = $('filter-year');
+        const curY = new Date().getFullYear();
+        for (let y = 2026; y <= curY + 4; y++) {
+            const opt = document.createElement('option');
+            opt.value = y; opt.textContent = y;
+            yearSelect.appendChild(opt);
+        }
+
+        // ============================================================
+        //  EXPORTAR PDF
+        // ============================================================
+        $('export-pdf-btn').addEventListener('click', () => {
+            const filteredData = getFilteredData();
+
+            if (filteredData.length === 0) {
+                mostrarAlerta("No hay datos para exportar con los filtros actuales.", 'danger');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 15;
+            const tableWidth = pageWidth - (margin * 2);
+
+            doc.setFontSize(18);
+            doc.setFont("helvetica", "bold");
+            doc.text("REPORTE DE ESCRITOS JUDICIALES", pageWidth / 2, 20, { align: "center" });
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            const filters = {
+                trimestre: $('filter-quarter').value !== 'all' ? `T${$('filter-quarter').value}` : 'Todos',
+                año: $('filter-year').value !== 'all' ? $('filter-year').value : 'Todos',
+                tipo: $('filter-type').value !== 'all' ? $('filter-type').value : 'Todos',
+                proceso: $('filter-process').value !== 'all' ? $('filter-process').value : 'Todos'
+            };
+
+            let yPos = 30;
+            doc.text("Filtros aplicados:", margin, yPos);
+            yPos += 5;
+            doc.text(`Trimestre: ${filters.trimestre} | Año: ${filters.año} | Tipo: ${filters.tipo} | Proceso: ${filters.proceso}`, margin, yPos);
+
+            const now = new Date();
+            const fechaGen = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+            yPos += 5;
+            doc.text(`Generado: ${fechaGen} | Total registros: ${filteredData.length}`, margin, yPos);
+
+            const tableData = filteredData.map(w => [
+                w.displayQuantity ? w.displayQuantity.toString() : '',
+                w.year,
+                (w.type || '').toUpperCase(),
+                (w.process || '').toUpperCase(),
+                w.user,
+                w.fechaHora
+            ]);
+
+            yPos += 10;
+            doc.autoTable({
+                head: [['Cant.', 'Año', 'Tipo', 'Proceso', 'Usuario', 'Fecha y Hora']],
+                body: tableData,
+                startY: yPos,
+                margin: { left: margin, right: margin },
+                tableWidth: tableWidth,
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 3,
+                    overflow: 'linebreak',
+                    valign: 'middle'
+                },
+                headStyles: {
+                    fillColor: [37, 99, 235],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 10
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 249, 250]
+                },
+                columnStyles: {
+                    0: { cellWidth: 20, halign: 'center' },
+                    1: { cellWidth: 25, halign: 'center' },
+                    2: { cellWidth: 30, halign: 'center' },
+                    3: { cellWidth: 35, halign: 'center' },
+                    4: { cellWidth: 50 },
+                    5: { cellWidth: 40, halign: 'center' }
+                },
+                didDrawPage: function(data) {
+                    doc.setFontSize(8);
+                    doc.setTextColor(128, 128, 128);
+                    const pageCount = doc.internal.getNumberOfPages();
+                    for (let i = 1; i <= pageCount; i++) {
+                        doc.setPage(i);
+                        doc.text(
+                            `Página ${i} de ${pageCount}`,
+                            pageWidth / 2,
+                            doc.internal.pageSize.getHeight() - 10,
+                            { align: "center" }
+                        );
+                        doc.text(
+                            "Sistema de Gestión de Escritos Judiciales",
+                            margin,
+                            doc.internal.pageSize.getHeight() - 10
+                        );
+                    }
+                }
+            });
+
+            const fileName = `reporte_escritos_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.pdf`;
+            doc.save(fileName);
+        });
+
+        // ============================================================
+        //  EVENTOS GENERALES
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            $('btnConectar').addEventListener('click', conectarFirestore);
+            $('btnExportarJSON').addEventListener('click', exportarJSON);
+            $('btnImportarJSON').addEventListener('click', () => $('importJsonInput').click());
+            $('importJsonInput').addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    importarJSON(e.target.files[0]);
+                    e.target.value = '';
+                }
+            });
+
+            // Cerrar modal al hacer click fuera
+            $('writ-modal').addEventListener('click', (e) => {
+                if (e.target === $('writ-modal')) closeModal();
+            });
+
+            // Estado inicial
+            actualizarBotonConectar();
+            actualizarEstadoConexionUI();
+            actualizarTodo();
+        });
+    </script>
+</body>
+</html>
