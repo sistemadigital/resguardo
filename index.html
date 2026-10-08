@@ -517,6 +517,26 @@
                     <a href="https://sistemadigital.github.io/resguardo/cejume-json" class="btn-datos">Acceder a los Datos</a>
                 </div>
                 <!-- FIN TARJETAS ADICIONALES -->
+
+                <!-- TARJETAS SECRETARÍAS (Exportar datos, se abren dentro de la misma pantalla) -->
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Sec Corrales</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="https://sistemadigital.github.io/resguardo/corrales/corralesexportar" class="btn-datos abrir-en-app">Exportar datos</a>
+                </div>
+
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Sec Magnani</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="https://sistemadigital.github.io/resguardo/magnani/magnaniexportar" class="btn-datos abrir-en-app">Exportar datos</a>
+                </div>
+
+                <div class="kpi-card fade-in">
+                    <h2 class="kpi-title">Sec Riveros</h2>
+                    <p class="kpi-description">Acceder para descargar los registros.</p>
+                    <a href="https://sistemadigital.github.io/resguardo/riveros/riverosexportar" class="btn-datos abrir-en-app">Exportar datos</a>
+                </div>
+                <!-- FIN TARJETAS SECRETARÍAS -->
             </div>
 
             <!-- Contenedor del informe (iframe dentro de la misma pantalla) -->
@@ -692,6 +712,14 @@
         document.getElementById('escritos-json-btn').addEventListener('click', (e) => {
             e.preventDefault();
             abrirRecursoEnIframe(URL_ESCRITOS_JSON);
+        });
+
+        // Tarjetas de Secretarías (Corrales, Magnani, Riveros): abren dentro de la misma pantalla
+        document.querySelectorAll('.abrir-en-app').forEach((enlace) => {
+            enlace.addEventListener('click', (e) => {
+                e.preventDefault();
+                abrirRecursoEnIframe(enlace.getAttribute('href'));
+            });
         });
 
         // ---------- Botones de datos existentes (se mantienen) ----------
