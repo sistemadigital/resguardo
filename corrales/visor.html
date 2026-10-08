@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Bloquea TODA conexión de red: la página no puede contactar a Firebase ni a nadie -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<title>Visor local de causas (sin conexión)</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:system-ui,Arial,sans-serif;margin:0;color:#222;background:#f4f6f8}
+  header{background:#1a3a5c;color:#fff;padding:12px 20px}
+  header h1{margin:0;font-size:1.2rem}
+  header small{opacity:.85}
+  main{max-width:1250px;margin:0 auto;padding:16px}
+  .card{background:#fff;border:1px solid #d5dbe1;border-radius:8px;padding:14px 16px;margin-bottom:14px}
+  .tabs{display:flex;gap:6px;margin-bottom:12px}
+  .tab{padding:9px 16px;border:1px solid #c5ccd3;background:#e9edf1;border-radius:6px 6px 0 0;cursor:pointer;font-weight:600}
+  .tab.on{background:#fff;border-bottom-color:#fff;color:#1a3a5c}
+  .fila{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  input[type=text],select{padding:7px 9px;font-size:.95rem;border:1px solid #bbb;border-radius:5px}
+  input[type=text]{min-width:260px}
+  button{padding:8px 14px;font-size:.92rem;border:0;border-radius:5px;background:#1565c0;color:#fff;cursor:pointer}
+  button.sec{background:#607d8b}
+  .tw{overflow:auto;max-height:62vh;border:1px solid #ddd;border-radius:6px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;background:#fff}
+  th,td{border-bottom:1px solid #e3e6ea;padding:6px 8px;text-align:left;vertical-align:top}
+  th{background:#eef1f4;position:sticky;top:0;cursor:pointer;white-space:nowrap}
+  tr.dato:hover{background:#eaf3ff;cursor:pointer}
+  .chip{display:inline-block;padding:1px 8px;border-radius:10px;font-size:.75rem;background:#e0e7ee}
+  .muted{color:#667}
+  #modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10;overflow:auto;padding:30px 12px}
+  #modal .in{background:#fff;max-width:900px;margin:0 auto;border-radius:8px;padding:18px 22px;position:relative}
+  #cerrar{position:absolute;right:14px;top:10px;background:#c62828}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px 18px;margin:10px 0}
+  .campo b{display:block;font-size:.75rem;text-transform:uppercase;color:#667}
+  h3{margin:18px 0 6px;font-size:1rem;border-bottom:2px solid #1a3a5c;padding-bottom:3px}
+  .obs{border:1px solid #ddd;border-radius:5px;padding:8px 10px;background:#fafafa}
+</style>
+</head>
+<body>
+<header>
+  <h1>Visor local de causas y control de causas</h1>
+  <small>Modo 100 % local: no usa Firebase ni internet. Los datos no salen de tu PC.</small>
+</header>
+<main>
+  <div class="card">
+    <div class="fila">
+      <b>Cargar JSON:</b>
+      <input type="file" id="archivos" accept=".json,application/json" multiple>
+      <button class="sec" id="btnLimpiar">Limpiar todo</button>
+      <span id="estado" class="muted">Sin datos cargados.</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-vista="mis">Registro de causas</div>
+    <div class="tab" data-vista="control">Control de causas</div>
+  </div>
+
+  <div class="card">
+    <div class="fila">
+      <input type="text" id="buscar" placeholder="Buscar en cualquier campo...">
+      <select id="fJuzgado"><option value="">Todos los juzgados</option></select>
+      <select id="fEmpleado"><option value="">Todos los empleados</option></select>
+      <select id="fTipo"><option value="">Todos los tipos de proceso</option></select>
+      <span id="contador" class="muted"></span>
+    </div>
+  </div>
+
+  <div class="tw"><table>
+    <thead><tr id="thead"></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table></div>
+</main>
+
+<div id="modal"><div class="in"><button id="cerrar">Cerrar ✕</button><div id="detalle"></div></div></div>
+
+<script>
+// ================= Utilidades =================
+const $ = id => document.getElementById(id);
+const s = v => (v === undefined || v === null) ? "" : String(v).trim();
+const esc = v => String(v ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cap = v => { v = s(v); return v ? v[0].toUpperCase() + v.slice(1).toLowerCase() : ""; };
+const partir = fh => { fh = s(fh); if (!fh) return {fecha:"",horario:""}; const [f,h]=fh.split("T"); return {fecha:f||"",horario:(h||"").slice(0,5)}; };
+const unir = (f,h) => f ? `${f}T${h||"00:00"}` : "";
+const fmtFecha = v => { v = s(v); if (!v) return ""; const d = new Date(v); return isNaN(d) ? v : (v.includes("T") ? d.toLocaleString("es-AR") : v.split("-").reverse().join("/")); };
+
+// Sanea HTML del editor de observaciones (quita scripts, eventos on*, javascript:)
+function sanear(html) {
+  const doc = new DOMParser().parseFromString(`<div>${html || ""}</div>`, "text/html");
+  doc.querySelectorAll("script,iframe,object,embed,link,style,meta,form").forEach(n => n.remove());
+  doc.querySelectorAll("*").forEach(n => [...n.attributes].forEach(a => {
+    if (/^on/i.test(a.name) || /^\s*javascript:/i.test(a.value)) n.removeAttribute(a.name);
+  }));
+  return doc.body.innerHTML;
+}
+
+// ================= Detección y normalización =================
+function formato(r) {
+  if (!r || typeof r !== "object") return null;
+  if (r.numCausa !== undefined) return "expediente";
+  if (r.numeroCaratula !== undefined) return "mis";
+  if (r.expediente !== undefined || r.empleadoAsignado !== undefined) return "control";
+  return null;
+}
+const textoExp = r => `${s(r.numCausa)} - ${s(r.caratula)}`;
+
+// → estructura de "Registro de causas" (miscausas)
+function aMis(r, fmt) {
+  if (fmt === "mis") return { ...r };
+  const b = { numeroCaratula:"", tipoProceso:s(r.tipoProceso), juzgado:s(r.juzgado), empleado:"",
+    documentosPresentados:"", estadoDocumental:"", modoIntervencion:"", prioridadTarea:"",
+    estadoProcesal:"", fechaEstado:"", observacionesGenerales:"", fechaActualizacion:s(r.fechaActualizacion) };
+  if (fmt === "expediente") {
+    b.numeroCaratula = textoExp(r); b.empleado = s(r.usuarioAsignado); b.modoIntervencion = s(r.intervencion);
+    return b;
+  }
+  b.numeroCaratula = s(r.expediente) || s(r.caratula);
+  b.empleado = s(r.empleadoAsignado); b.modoIntervencion = s(r.modoIntervencion);
+  b.documentosPresentados = s(r.documentacion); b.observacionesGenerales = s(r.situacionProcesal);
+  if (Array.isArray(r.historial) && r.historial.length)
+    b.firmaDigital = r.historial.map(h => ({ piezaProcesal:s(h.piezaProcesal), fechaFirma:"",
+      firmaDe: h.firmaDefensor==="si" ? "Defensor" : (h.firmaSecretario==="si" ? "Secretario" : ""),
+      tipoDefensor:cap(h.tipoDefensor), detalleSubrogante:s(h.subroganteDetalle) }));
+  const act = a => a.map(x => ({ fechaHora:unir(x.fecha,x.horario), detalle:s(x.detalle) }));
+  if (Array.isArray(r.audiencias) && r.audiencias.length) b.audiencias = act(r.audiencias);
+  if (Array.isArray(r.vencimientos) && r.vencimientos.length) b.vencimientos = act(r.vencimientos);
+  if (Array.isArray(r.otrasActividades) && r.otrasActividades.length) b.actividades = act(r.otrasActividades);
+  return b;
+}
+
+// → estructura de "Control de causas" (causas en control.html)
+function aControl(r, fmt) {
+  if (fmt === "control") return { ...r };
+  const b = { expediente:"", caratula:"", tipoProceso:s(r.tipoProceso), juzgado:s(r.juzgado),
+    empleadoAsignado:"", modoIntervencion:"", documentacion:"", situacionProcesal:"", fechaActualizacion:s(r.fechaActualizacion) };
+  if (fmt === "expediente") {
+    b.expediente = b.caratula = textoExp(r); b.empleadoAsignado = s(r.usuarioAsignado); b.modoIntervencion = s(r.intervencion);
+    return b;
+  }
+  b.expediente = b.caratula = s(r.numeroCaratula);
+  b.empleadoAsignado = s(r.empleado); b.modoIntervencion = s(r.modoIntervencion);
+  b.documentacion = s(r.documentosPresentados); b.situacionProcesal = s(r.observacionesGenerales);
+  if (Array.isArray(r.firmaDigital) && r.firmaDigital.length)
+    b.historial = r.firmaDigital.map(f => ({ piezaProcesal:s(f.piezaProcesal), control:"",
+      firmaSecretario:f.firmaDe==="Secretario"?"si":"", firmaDefensor:f.firmaDe==="Defensor"?"si":"",
+      tipoDefensor:s(f.tipoDefensor).toLowerCase(), subroganteDetalle:s(f.detalleSubrogante) }));
+  const act = a => a.filter(x => s(x.fechaHora)).map(x => ({ ...partir(x.fechaHora), detalle:s(x.detalle) }));
+  if (Array.isArray(r.audiencias) && r.audiencias.length) b.audiencias = act(r.audiencias);
+  if (Array.isArray(r.vencimientos) && r.vencimientos.length) b.vencimientos = act(r.vencimientos);
+  if (Array.isArray(r.actividades) && r.actividades.length) b.otrasActividades = act(r.actividades);
+  return b;
+}
+
+// ================= Estado =================
+// registros: { clave, fmt, origen, id, mis, control }
+let registros = [];
+let vista = "mis";
+let orden = { col: null, asc: true };
+let omitidos = 0, duplicados = 0;
+const prioridad = { expediente: 0, mis: 1, control: 1 };
+const clave = r => s(r.numeroCaratula || r.expediente || r.caratula || (r.numCausa !== undefined ? textoExp(r) : "")).toLowerCase().replace(/\s+/g, " ");
+
+async function cargarArchivos(files) {
+  for (const f of files) {
+    let datos;
+    try { datos = JSON.parse(await f.text()); }
+    catch (e) { alert(`"${f.name}" no es un JSON válido:\n${e.message}`); continue; }
+    if (!Array.isArray(datos)) datos = Array.isArray(datos.data) ? datos.data : Object.values(datos);
+    for (const r of datos) {
+      const fmt = formato(r);
+      const k = fmt ? clave(r) : "";
+      if (!fmt || !k) { omitidos++; continue; }
+      const nuevo = { clave:k, fmt, origen:f.name, id:s(r.id), mis:aMis(r,fmt), control:aControl(r,fmt) };
+      const i = registros.findIndex(x => x.clave === k);
+      if (i === -1) registros.push(nuevo);
+      else { duplicados++; if (prioridad[fmt] > prioridad[registros[i].fmt]) registros[i] = nuevo; } // se queda el más detallado
+    }
+  }
+  poblarFiltros(); render();
+}
+
+// ================= Columnas por vista =================
+const COLS = {
+  mis: [
+    ["Expediente / Carátula", d => d.numeroCaratula], ["Tipo proceso", d => d.tipoProceso], ["Juzgado", d => d.juzgado],
+    ["Empleado", d => d.empleado], ["Intervención", d => d.modoIntervencion], ["Estado procesal", d => d.estadoProcesal],
+    ["Prioridad", d => d.prioridadTarea], ["Actualización", d => fmtFecha(d.fechaActualizacion)]
+  ],
+  control: [
+    ["Expediente", d => d.expediente], ["Tipo proceso", d => d.tipoProceso], ["Juzgado", d => d.juzgado],
+    ["Empleado asignado", d => d.empleadoAsignado], ["Intervención", d => d.modoIntervencion],
+    ["Documentación", d => d.documentacion], ["Piezas", d => (d.historial || []).length || ""], ["Actualización", d => fmtFecha(d.fechaActualizacion)]
+  ]
+};
+const dat = r => r[vista];
+const empleadoDe = r => s(vista === "mis" ? r.mis.empleado : r.control.empleadoAsignado);
+
+function poblarFiltros() {
+  const llenar = (sel, vals, etiqueta) => {
+    const actual = sel.value;
+    sel.innerHTML = `<option value="">${etiqueta}</option>` + [...new Set(vals.filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")).map(v => `<option>${esc(v)}</option>`).join("");
+    sel.value = [...sel.options].some(o => o.value === actual) ? actual : "";
+  };
+  llenar($("fJuzgado"), registros.map(r => s(r.mis.juzgado)), "Todos los juzgados");
+  llenar($("fEmpleado"), registros.map(r => empleadoDe(r)), "Todos los empleados");
+  llenar($("fTipo"), registros.map(r => s(r.mis.tipoProceso)), "Todos los tipos de proceso");
+}
+
+// ================= Render =================
+function filtrados() {
+  const q = $("buscar").value.trim().toLowerCase();
+  const j = $("fJuzgado").value, e = $("fEmpleado").value, t = $("fTipo").value;
+  let lista = registros.filter(r => {
+    if (j && s(r.mis.juzgado) !== j) return false;
+    if (e && empleadoDe(r) !== e) return false;
+    if (t && s(r.mis.tipoProceso) !== t) return false;
+    if (q && !JSON.stringify(dat(r)).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if (orden.col !== null) {
+    const fn = COLS[vista][orden.col][1];
+    lista.sort((a, b) => String(fn(dat(a)) ?? "").localeCompare(String(fn(dat(b)) ?? ""), "es", { numeric: true }) * (orden.asc ? 1 : -1));
+  }
+  return lista;
+}
+
+function render() {
+  $("thead").innerHTML = COLS[vista].map((c, i) => `<th data-i="${i}">${c[0]}${orden.col === i ? (orden.asc ? " ▲" : " ▼") : ""}</th>`).join("") + "<th>Origen</th>";
+  const lista = filtrados();
+  $("tbody").innerHTML = lista.slice(0, 1000).map(r => {
+    const d = dat(r);
+    return `<tr class="dato" data-k="${esc(r.clave)}">` +
+      COLS[vista].map(c => `<td>${esc(c[1](d))}</td>`).join("") +
+      `<td><span class="chip">${esc(r.fmt)}</span> <span class="muted">${esc(r.origen)}</span></td></tr>`;
+  }).join("") || `<tr><td colspan="9" class="muted">Sin resultados. Cargá uno o más archivos JSON.</td></tr>`;
+  $("contador").textContent = `${lista.length} de ${registros.length} registros` + (lista.length > 1000 ? " (se muestran 1000)" : "");
+  $("estado").textContent = registros.length
+    ? `${registros.length} registros únicos · ${duplicados} duplicados fusionados · ${omitidos} sin formato reconocido`
+    : "Sin datos cargados.";
+}
+
+// ================= Detalle =================
+const campo = (t, v) => `<div class="campo"><b>${esc(t)}</b>${esc(v) || '<span class="muted">—</span>'}</div>`;
+function tablaSimple(titulo, cols, filas) {
+  if (!filas || !filas.length) return "";
+  return `<h3>${esc(titulo)}</h3><div class="tw"><table><thead><tr>${cols.map(c => `<th>${esc(c[0])}</th>`).join("")}</tr></thead><tbody>` +
+    filas.map(f => `<tr>${cols.map(c => `<td>${esc(c[1](f))}</td>`).join("")}</tr>`).join("") + `</tbody></table></div>`;
+}
+function abrirDetalle(k) {
+  const r = registros.find(x => x.clave === k); if (!r) return;
+  const d = dat(r); let h = "";
+  if (vista === "mis") {
+    h = `<h2>${esc(d.numeroCaratula)}</h2><div class="grid">` +
+      campo("Tipo de proceso", d.tipoProceso) + campo("Juzgado", d.juzgado) + campo("Empleado", d.empleado) +
+      campo("Modo de intervención", d.modoIntervencion) + campo("Prioridad", d.prioridadTarea) +
+      campo("Estado procesal", d.estadoProcesal) + campo("Fecha del estado", fmtFecha(d.fechaEstado)) +
+      campo("Estado documental", d.estadoDocumental) + campo("Documentos presentados", d.documentosPresentados) +
+      campo("Última actualización", fmtFecha(d.fechaActualizacion)) + `</div>` +
+      `<h3>Observaciones generales</h3><div class="obs">${sanear(d.observacionesGenerales) || '<span class="muted">—</span>'}</div>` +
+      tablaSimple("Firma digital", [["Pieza procesal", x=>x.piezaProcesal],["Fecha firma", x=>fmtFecha(x.fechaFirma)],["Firma de", x=>x.firmaDe],["Defensor", x=>x.tipoDefensor],["Detalle subrogante", x=>x.detalleSubrogante]], d.firmaDigital) +
+      tablaSimple("Seguimiento", [["Fecha", x=>fmtFecha(x.fecha)],["Detalles", x=>x.detalles]], d.seguimiento) +
+      tablaSimple("Audiencias", [["Fecha y hora", x=>fmtFecha(x.fechaHora)],["Detalle", x=>x.detalle]], d.audiencias) +
+      tablaSimple("Vencimientos", [["Fecha y hora", x=>fmtFecha(x.fechaHora)],["Detalle", x=>x.detalle]], d.vencimientos) +
+      tablaSimple("Otras actividades", [["Fecha y hora", x=>fmtFecha(x.fechaHora)],["Detalle", x=>x.detalle]], d.actividades);
+  } else {
+    const f3 = [["Fecha", x=>fmtFecha(x.fecha)],["Horario", x=>x.horario],["Detalle", x=>x.detalle]];
+    h = `<h2>${esc(d.expediente)}</h2><div class="grid">` +
+      campo("Tipo de proceso", d.tipoProceso) + campo("Juzgado", d.juzgado) + campo("Empleado asignado", d.empleadoAsignado) +
+      campo("Modo de intervención", d.modoIntervencion) + campo("Documentación", d.documentacion) +
+      campo("Última actualización", fmtFecha(d.fechaActualizacion)) + `</div>` +
+      `<h3>Situación procesal</h3><div class="obs">${sanear(d.situacionProcesal) || '<span class="muted">—</span>'}</div>` +
+      tablaSimple("Historial de piezas y control", [["Pieza procesal", x=>x.piezaProcesal],["Control", x=>x.control],["Firma secretario", x=>x.firmaSecretario],["Firma defensor", x=>x.firmaDefensor],["Defensor", x=>x.tipoDefensor],["Detalle subrogante", x=>x.subroganteDetalle]], d.historial) +
+      tablaSimple("Audiencias", f3, d.audiencias) + tablaSimple("Vencimientos", f3, d.vencimientos) +
+      tablaSimple("Otras actividades", f3, d.otrasActividades);
+  }
+  h += `<p class="muted">Origen: ${esc(r.origen)} (formato ${esc(r.fmt)})${r.id ? " · ID original: " + esc(r.id) : ""}</p>`;
+  $("detalle").innerHTML = h;
+  $("modal").style.display = "block";
+}
+
+// ================= Eventos =================
+$("archivos").addEventListener("change", e => { cargarArchivos([...e.target.files]); e.target.value = ""; });
+$("btnLimpiar").addEventListener("click", () => { registros = []; omitidos = duplicados = 0; poblarFiltros(); render(); });
+["buscar", "fJuzgado", "fEmpleado", "fTipo"].forEach(id => $(id).addEventListener("input", render));
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("on")); t.classList.add("on");
+  vista = t.dataset.vista; orden = { col: null, asc: true }; poblarFiltros(); render();
+}));
+$("thead").addEventListener("click", e => {
+  const th = e.target.closest("th[data-i]"); if (!th) return;
+  const i = +th.dataset.i; orden = { col: i, asc: orden.col === i ? !orden.asc : true }; render();
+});
+$("tbody").addEventListener("click", e => { const tr = e.target.closest("tr.dato"); if (tr) abrirDetalle(tr.dataset.k); });
+$("cerrar").addEventListener("click", () => $("modal").style.display = "none");
+$("modal").addEventListener("click", e => { if (e.target === $("modal")) $("modal").style.display = "none"; });
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("modal").style.display = "none"; });
+render();
+</script>
+</body>
+</html>
