@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Control de Personal - Feria Judicial 2026/2027 · Respaldo</title>
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --accent: #3498db;
+      --accent-hover: #2980b9;
+      --success: #2ecc71;
+      --warning: #f1c40f;
+      --danger: #e74c3c;
+      --bg-body: #f4f6f9;
+      --bg-card: #ffffff;        /* Fondo blanco para todos los paneles */
+      --bg-table-card: #cce0f5;  /* Fondo azul para el contenedor de la tabla */
+      --text-main: #333333;
+      --text-muted: #7f8c8d;
+      --border-color: #dcdde1;
+      --radius: 10px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Encabezado – fondo azul oscuro (ya definido por --primary) */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .badge-info {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    @media (min-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: 450px 1fr;
+      }
+    }
+
+    /* Tarjetas: por defecto fondo blanco */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      border: 1px solid rgba(0,0,0,0.03);
+    }
+
+    /* Contenedor de la tabla: fondo azul */
+    #tablaCard {
+      background: var(--bg-table-card);
+    }
+
+    .card-title {
+      font-size: 18px;
+      color: var(--primary);
+      margin-bottom: 20px;
+      font-weight: 700;
+      border-bottom: 2px solid var(--bg-body);
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--primary);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--text-main);
+      background-color: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: white;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background-color: #e2e8f0;
+      color: #4a5568;
+    }
+
+    .btn-secondary:hover {
+      background-color: #cbd5e1;
+    }
+
+    .btn-danger {
+      background-color: var(--danger);
+      color: white;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .btn-danger:hover {
+      background-color: #c0392b;
+    }
+
+    .btn-print {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .btn-print:hover {
+      background-color: #5a6268;
+    }
+
+    .feria-window-box {
+      background-color: #ebf5fb;
+      border-left: 4px solid var(--accent);
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    /* Tabla de Datos */
+    .table-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      max-width: 300px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background-color: var(--primary);
+      color: white;
+      padding: 12px 16px;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    tr:hover td {
+      background-color: #f8fafc;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-julio { background-color: #d4e6f1; color: #1b4f72; }
+    .status-verano { background-color: #d5f5e3; color: #114b30; }
+
+    /* Reportes */
+    .reports-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    @media (min-width: 768px) {
+      .reports-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .report-block {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .report-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
+    }
+
+    .report-item:last-child {
+      border-bottom: none;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: none;
+      z-index: 1000;
+      font-size: 14px;
+    }
+
+    /* Estilos para impresión */
+    @media print {
+      body {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 12px;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .container {
+        max-width: 100% !important;
+        padding: 20px !important;
+        gap: 10px !important;
+      }
+      header {
+        background: var(--primary) !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        padding: 16px !important;
+      }
+      #tablaCard {
+        background: var(--bg-table-card) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .dashboard-grid {
+        display: block !important;
+      }
+      .dashboard-grid .card {
+        margin-bottom: 16px !important;
+      }
+      .reports-grid {
+        display: block !important;
+      }
+      .report-block {
+        max-height: none !important;
+        overflow: visible !important;
+        margin-bottom: 12px !important;
+      }
+      .table-container {
+        overflow: visible !important;
+      }
+      table {
+        font-size: 11px !important;
+      }
+      th {
+        background-color: var(--primary) !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .status-badge {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .btn, .btn-print, .btn-primary, .btn-secondary, .btn-danger {
+        display: none !important;
+      }
+      .table-actions .search-input {
+        display: none !important;
+      }
+      #printTimestamp {
+        display: block !important;
+        text-align: right;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 16px;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .card-title {
+        border-bottom: 2px solid #ccc !important;
+      }
+      /* Ocultar paginación en impresión */
+      .pagination-controls {
+        display: none !important;
+      }
+    }
+
+    .print-only {
+      display: none;
+    }
+
+    #printTimestamp {
+      display: none;
+    }
+
+    /* ----- Estilos para paginación ----- */
+    .pagination-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 16px 0 20px 0;
+      font-size: 14px;
+    }
+
+    .pagination-controls .page-info {
+      font-weight: 600;
+      color: var(--primary);
+      background: white;
+      padding: 4px 14px;
+      border-radius: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      white-space: nowrap;
+    }
+
+    .pagination-controls button {
+      background: white;
+      border: 1px solid var(--border-color);
+      padding: 6px 18px;
+      border-radius: 30px;
+      font-weight: 600;
+      color: var(--primary);
+      cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s;
+      font-size: 13px;
+      min-width: 80px;
+    }
+
+    .pagination-controls button:hover:not(:disabled) {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(52,152,219,0.3);
+    }
+
+    .pagination-controls button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    @media (max-width: 480px) {
+      .pagination-controls {
+        gap: 8px;
+      }
+      .pagination-controls button {
+        min-width: 60px;
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      .pagination-controls .page-info {
+        font-size: 13px;
+        padding: 4px 10px;
+      }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Firebase SDKs (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Encabezado (no se imprime) – fondo azul oscuro -->
+    <header class="no-print">
+      <div>
+        <h1>Personal en Feria Judicial</h1>
+        <p>Sistema Digital</p>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+        <div class="badge-info" id="modeBadge">Firebase · en línea</div>
+        <div class="badge-info">DEFENSORIA CIVIL Y COMERCIAL 6</div>
+      </div>
+    </header>
+
+    <!-- Elemento para fecha de impresión (solo visible al imprimir) -->
+    <div id="printTimestamp" class="print-only"></div>
+
+    <div class="dashboard-grid">
+      <!-- Formulario (no se imprime) – panel blanco -->
+      <div class="card no-print">
+        <div class="card-title" id="formTitle">Registrar Servicio en Feria</div>
+        
+        <div class="feria-window-box">
+          <strong>Períodos de Feria Oficiales Año 2026-2027</strong><br/>
+          • Julio: desde 13 hasta 24 Julio 2026<br/>
+          • Diciembre: 28 diciembre hasta 31 Enero 2027
+        </div>
+
+        <form id="feriaForm">
+          <input type="hidden" id="recordId" />
+          
+          <div class="form-group">
+            <label for="periodoFeria">Período de Feria</label>
+            <select id="periodoFeria" required>
+              <!-- Las opciones se generarán dinámicamente con JavaScript -->
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="defensoriaNumero">Defensoría de Feria N°</label>
+              <input type="number" id="defensoriaNumero" required min="1" placeholder="Ej: 3" />
+            </div>
+            <div class="form-group">
+              <label for="personalNombre">Nombre del Agente/Funcionario</label>
+              <select id="personalNombre" required>
+                <option value="">-- Seleccionar --</option>
+                <option>Bazante Nadia Romina</option>
+                <option>Boillat Cesar Enrique</option>
+                <option>Cardozo Maria Raquel</option>
+                <option>Cedron Noelia Aurora</option>
+                <option>Corrales Alicia Mariela</option>
+                <option>Fioravante Romulo</option>
+                <option>Gonzalez Alberto Misael</option>
+                <option>Gonzalez Juan Jose</option>
+                <option>Gudiño Natalia Esther</option>
+                <option>Magnani Enzo Luciano</option>
+                <option>Martinis Carlos Esteban</option>                
+                <option>Pablos Patricia</option>
+                <option>Palacios Ana Gabriela</option>
+                <option>Ortega Lucia Noemi</option>
+                <option>Ramos Marcelo Gustavo</option>
+                <option>Riveros Patricia Soledad</option>
+                <option>Sosa Rita Cecilia</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="defensorFeria">Defensor de Feria (Funcionario)</label>
+            <input type="text" id="defensorFeria" required placeholder="Nombre del Defensor" />
+          </div>
+
+          <div class="form-group">
+            <label for="encargadoFeria">Encargado de Feria</label>
+            <input type="text" id="encargadoFeria" required placeholder="Nombre del Encargado" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fechaInicio">Fecha Inicio</label>
+              <input type="date" id="fechaInicio" required />
+            </div>
+            <div class="form-group">
+              <label for="fechaFin">Fecha Fin</label>
+              <input type="date" id="fechaFin" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="diasCalculados">Días Solicitados</label>
+              <input type="number" id="diasCalculados" readonly placeholder="Auto" style="background:#f1f5f9;" />
+            </div>
+            <div class="form-group">
+              <label for="diasCumplidos">Días Cumplidos (opcional)</label>
+              <input type="number" id="diasCumplidos" min="0" placeholder="Efectivos" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="inasistencias">Inasistencias / Licencias en la Feria (opcional)</label>
+              <input type="number" id="inasistencias" min="0" value="0" />
+            </div>
+            <div class="form-group">
+              <label for="observaciones">Detalle Licencia</label>
+              <input type="text" id="observaciones" placeholder="Ej: Médico (en Feria)" />
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button type="submit" class="btn btn-primary" id="submitBtn">Guardar Registro</button>
+            <button type="button" class="btn btn-secondary" id="clearBtn">Limpiar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Panel de métricas y reportes – panel blanco -->
+      <div class="card">
+        <div class="card-title">
+          Métricas y Reportes Consolidados
+          <span style="float:right; font-size:14px; font-weight:400;">
+            <button class="btn btn-print btn-small no-print" onclick="imprimirReporteCompleto()">🖨️ Imprimir Reporte Completo</button>
+          </span>
+        </div>
+        
+        <div style="height: 220px; position: relative;">
+          <canvas id="metricsChart"></canvas>
+        </div>
+
+        <div class="reports-grid">
+          <div class="report-block">
+            <h4 style="font-size:14px; margin-bottom:8px; color:var(--primary);">Reporte por Empleado</h4>
+            <div id="reporteEmpleadosContainer"></div>
+          </div>
+          <div class="report-block">
+            <h4 style="font-size:14px; margin-bottom:8px; color:var(--primary);">Reporte por Funcionario (Defensor/Encargado)</h4>
+            <div id="reporteFuncionariosContainer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de registros – contenedor con fondo azul (id="tablaCard") -->
+    <div class="card" id="tablaCard">
+      <div class="table-actions">
+        <div class="card-title" style="margin-bottom:0; border:none; padding:0;">Registros Vigentes</div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <input type="text" id="tableSearch" class="search-input no-print" placeholder="Buscar por agente, defensor o feria..." />
+          <button class="btn btn-print btn-small no-print" onclick="imprimirTabla()">🖨️ Imprimir Tabla</button>
+          <button class="btn btn-secondary btn-small no-print" id="exportBtn" title="Descarga todos los registros en un único archivo JSON">Exportar JSON</button>
+          <button class="btn btn-secondary btn-small no-print" id="importBtn" title="Carga un JSON exportado en el respaldo local (no modifica Firebase)">Importar JSON</button>
+          <button class="btn btn-secondary btn-small no-print" id="modeBtn">Ver respaldo local</button>
+        </div>
+      </div>
+
+      <!-- CONTROLES DE PAGINACIÓN (arriba de la tabla) -->
+      <div class="pagination-controls no-print" id="paginationControls">
+        <button id="prevPageBtn" class="btn-secondary" disabled>◀ Anterior</button>
+        <span class="page-info" id="pageInfo">Página 1 de 1</span>
+        <button id="nextPageBtn" class="btn-secondary" disabled>Siguiente ▶</button>
+      </div>
+
+      <div class="table-container" id="tablaImprimible">
+        <table>
+          <thead>
+            <tr>
+              <th>Feria</th>
+              <th>Defensoria en Feria</th>
+              <th>Empleado en Feria</th>
+              <th>Funcionario de Feria</th>
+              <th>Periodo Asignado</th>
+              <th>Días (Sol./Cumpl./Inas.)</th>
+              <th style="text-align: center;" class="no-print">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="recordsTableBody">
+            </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toastMessage"></div>
+  <input type="file" id="importFile" accept=".json,application/json" hidden>
+
+  <script>
+    // ----- CONFIGURACIÓN DE FIREBASE -----
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxct5wrF6yGrGyWCwcI5J6F_bbzTOcr4w",
+      authDomain: "feriajudicial6.firebaseapp.com",
+      projectId: "feriajudicial6",
+      storageBucket: "feriajudicial6.firebasestorage.app",
+      messagingSenderId: "426494712242",
+      appId: "1:426494712242:web:a04a98a5f7f088ac656cab"
+    };
+    let db = null;
+    try {
+      if (typeof firebase !== "undefined") {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+      }
+    } catch (err) {
+      console.error("Firebase no disponible:", err);
+      db = null;
+    }
+
+    // ----- FIN CONFIGURACIÓN -----
+
+    // Estado de la Aplicación
+    let records = JSON.parse(localStorage.getItem("feria_records")) || [];
+
+    // ----- MODO RESPALDO LOCAL (clave propia: no se mezcla con la caché de Firebase) -----
+    const LOCAL_KEY = "feria_respaldo_local_v1";
+    let mode = "online";          // "online" (Firebase) | "local" (respaldo)
+    let onlineBackup = [];
+    let localRecords = loadLocal();
+    let chartInstance = null;
+
+    // ----- VARIABLES DE PAGINACIÓN -----
+    let currentPage = 1;
+    const pageSize = 10;
+
+    // Elementos del DOM
+    const form = document.getElementById("feriaForm");
+    const recordIdInput = document.getElementById("recordId");
+    const periodoSelect = document.getElementById("periodoFeria");
+    const defensoriaInput = document.getElementById("defensoriaNumero");
+    const personalSelect = document.getElementById("personalNombre");
+    const defensorInput = document.getElementById("defensorFeria");
+    const encargadoInput = document.getElementById("encargadoFeria");
+    const inicioInput = document.getElementById("fechaInicio");
+    const finInput = document.getElementById("fechaFin");
+    const diasCalculadosInput = document.getElementById("diasCalculados");
+    const diasCumplidosInput = document.getElementById("diasCumplidos");
+    const inasistenciasInput = document.getElementById("inasistencias");
+    const observacionesInput = document.getElementById("observaciones");
+    
+    const tableBody = document.getElementById("recordsTableBody");
+    const tableSearch = document.getElementById("tableSearch");
+    const submitBtn = document.getElementById("submitBtn");
+
+    // Controles de paginación
+    const prevPageBtn = document.getElementById("prevPageBtn");
+    const nextPageBtn = document.getElementById("nextPageBtn");
+    const pageInfo = document.getElementById("pageInfo");
+
+    // ----- GENERACIÓN DE OPCIONES DEL SELECT PERÍODO (hasta 2040) -----
+    function populatePeriodOptions() {
+      const startYear = 2026;
+      const endYear = 2040;
+      periodoSelect.innerHTML = '';
+      for (let year = startYear; year <= endYear; year++) {
+        // Opción Julio
+        const optJulio = document.createElement('option');
+        optJulio.value = `Julio ${year}`;
+        optJulio.textContent = `Feria de Julio ${year}`;
+        periodoSelect.appendChild(optJulio);
+
+        // Opción Diciembre-Enero
+        const optVerano = document.createElement('option');
+        optVerano.value = `Diciembre-Enero ${year}/${year+1}`;
+        optVerano.textContent = `Feria Dic-Ene ${year}/${year+1}`;
+        periodoSelect.appendChild(optVerano);
+      }
+    }
+
+    // ----- FUNCIONES DE SINCRONIZACIÓN CON FIRESTORE -----
+    async function cargarDesdeFirestore() {
+      try {
+        const snapshot = await db.collection("ferias").get();
+        if (snapshot.empty) {
+          records = [];
+        } else {
+          records = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              periodo: data.periodo || '',
+              defensoria: data.defensoria || '',
+              personal: data.personal || '',
+              defensor: data.defensor || '',
+              encargado: data.encargado || '',
+              inicio: data.inicio || '',
+              fin: data.fin || '',
+              diasSolicitados: data.diasSolicitados || 0,
+              diasCumplidos: data.diasCumplidos || 0,
+              inasistencias: data.inasistencias || 0,
+              observaciones: data.observaciones || ''
+            };
+          });
+        }
+        localStorage.setItem("feria_records", JSON.stringify(records));
+        if (mode === "local") { onlineBackup = records; records = localRecords; }
+        renderAll();
+        return true;
+      } catch (error) {
+        console.error("Error cargando desde Firestore:", error);
+        const local = localStorage.getItem("feria_records");
+        if (local) {
+          records = JSON.parse(local);
+          renderAll();
+        }
+        return false;
+      }
+    }
+
+    async function guardarEnFirestore(record) {
+      try {
+        await db.collection("ferias").doc(record.id).set({
+          periodo: record.periodo,
+          defensoria: record.defensoria,
+          personal: record.personal,
+          defensor: record.defensor,
+          encargado: record.encargado,
+          inicio: record.inicio,
+          fin: record.fin,
+          diasSolicitados: record.diasSolicitados,
+          diasCumplidos: record.diasCumplidos,
+          inasistencias: record.inasistencias,
+          observaciones: record.observaciones
+        });
+        return true;
+      } catch (error) {
+        console.error("Error guardando en Firestore:", error);
+        showToast("Error al guardar en la nube. Los datos se guardaron localmente.", "danger");
+        return false;
+      }
+    }
+
+    async function eliminarEnFirestore(id) {
+      try {
+        await db.collection("ferias").doc(id).delete();
+        return true;
+      } catch (error) {
+        console.error("Error eliminando en Firestore:", error);
+        showToast("Error al eliminar en la nube. Intente nuevamente.", "danger");
+        return false;
+      }
+    }
+
+    // ----- FIN FUNCIONES FIRESTORE -----
+
+    // ----- RESPALDO LOCAL / EXPORTAR / IMPORTAR -----
+    function loadLocal() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]");
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) { return []; }
+    }
+
+    function saveLocal() {
+      try {
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(localRecords));
+        return true;
+      } catch (e) {
+        showToast("No se pudo guardar en el navegador. Exporte el JSON para no perder los datos.", "warning");
+        return false;
+      }
+    }
+
+    async function persistirRegistro(record) {
+      if (mode === "local") {
+        localRecords = records;
+        saveLocal();
+        return;
+      }
+      await guardarEnFirestore(record);
+      localStorage.setItem("feria_records", JSON.stringify(records));
+    }
+
+    async function persistirEliminacion(id) {
+      if (mode === "local") {
+        localRecords = records;
+        saveLocal();
+        return;
+      }
+      localStorage.setItem("feria_records", JSON.stringify(records));
+      await eliminarEnFirestore(id);
+    }
+
+    function setMode(m) {
+      if (m === "online" && !db) return;
+      if (mode === "online") onlineBackup = records; else localRecords = records;
+      mode = m;
+      records = (m === "local") ? localRecords : onlineBackup;
+      currentPage = 1;
+      resetForm();
+      updateModeUI();
+      renderAll();
+      if (m === "online") cargarDesdeFirestore(); // refresca desde Firebase
+    }
+
+    function updateModeUI() {
+      const local = mode === "local";
+      const badge = document.getElementById("modeBadge");
+      badge.textContent = local ? "Respaldo local" : "Firebase · en línea";
+      badge.style.background = local ? "rgba(243, 156, 18, 0.55)" : "rgba(46, 204, 113, 0.40)";
+      const modeBtn = document.getElementById("modeBtn");
+      modeBtn.textContent = local ? "Volver a Firebase" : "Ver respaldo local";
+      modeBtn.style.display = db ? "" : "none";
+      document.getElementById("exportBtn").title = local
+        ? "Descarga el respaldo local en un archivo JSON"
+        : "Lee Firebase (sin modificarlo) y descarga todos los registros en un único JSON";
+    }
+
+    function descargarJSON(obj, filename) {
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function exportarJSON() {
+      const desdeFirebase = mode === "online";
+      let lista;
+
+      if (desdeFirebase) {
+        try {
+          // Solo lectura: no escribe ni elimina nada en Firebase
+          const snapshot = await Promise.race([
+            db.collection("ferias").get(),
+            new Promise((_, rej) => setTimeout(() => rej(new Error("tiempo de espera agotado")), 10000))
+          ]);
+          lista = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        } catch (err) {
+          showToast("No se pudo leer Firebase: " + err.message, "danger");
+          return;
+        }
+      } else {
+        localRecords = records;
+        lista = localRecords;
+      }
+
+      if (!lista.length) {
+        showToast("No hay registros para exportar.", "warning");
+        return;
+      }
+
+      const t = new Date();
+      const pad = n => String(n).padStart(2, "0");
+      const stamp = `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}_${pad(t.getHours())}${pad(t.getMinutes())}`;
+
+      descargarJSON({
+        app: "feriajudicial",
+        version: 1,
+        exportedAt: t.toISOString(),
+        origen: desdeFirebase ? "firebase" : "local",
+        total: lista.length,
+        registros: lista
+      }, `respaldo-feria-judicial_${stamp}.json`);
+
+      showToast(`Exportados ${lista.length} registros.`);
+    }
+
+    function normalizarImportados(raw) {
+      let arr = [];
+      if (Array.isArray(raw)) arr = raw;
+      else if (raw && Array.isArray(raw.registros)) arr = raw.registros;
+      else if (raw && raw.registros && typeof raw.registros === "object") arr = Object.values(raw.registros);
+      else if (raw && typeof raw === "object") arr = Object.values(raw);
+
+      const limpiar = v => String(v == null ? "" : v).replace(/[<>"]/g, "").trim();
+      const num = v => Math.max(0, parseInt(v) || 0);
+      const fechaOk = v => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+      const validos = [];
+      const vistos = new Set();
+      let omitidos = 0;
+
+      arr.forEach(r => {
+        const ok = r && typeof r === "object" &&
+                   limpiar(r.periodo) && limpiar(r.personal) &&
+                   fechaOk(r.inicio) && fechaOk(r.fin);
+        if (!ok) { omitidos++; return; }
+
+        let id = (typeof r.id === "string" && /^[\w-]+$/.test(r.id))
+          ? r.id : "id_" + Date.now() + "_" + Math.floor(Math.random() * 1e6);
+        if (vistos.has(id)) id = "id_" + Date.now() + "_" + Math.floor(Math.random() * 1e6);
+        vistos.add(id);
+
+        validos.push({
+          id,
+          periodo: limpiar(r.periodo),
+          defensoria: limpiar(r.defensoria),
+          personal: limpiar(r.personal),
+          defensor: limpiar(r.defensor),
+          encargado: limpiar(r.encargado),
+          inicio: r.inicio,
+          fin: r.fin,
+          diasSolicitados: num(r.diasSolicitados),
+          diasCumplidos: num(r.diasCumplidos),
+          inasistencias: num(r.inasistencias),
+          observaciones: limpiar(r.observaciones)
+        });
+      });
+      return { validos, omitidos };
+    }
+
+    document.getElementById("exportBtn").addEventListener("click", exportarJSON);
+    document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+    document.getElementById("modeBtn").addEventListener("click", () => {
+      setMode(mode === "local" ? "online" : "local");
+      if (mode === "local" && !localRecords.length) {
+        showToast("El respaldo local está vacío. Use «Importar JSON».", "warning");
+      }
+    });
+
+    document.getElementById("importFile").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onerror = () => showToast("No se pudo leer el archivo.", "danger");
+      reader.onload = () => {
+        let raw;
+        try { raw = JSON.parse(reader.result); }
+        catch (err) { showToast("El archivo no es un JSON válido.", "danger"); return; }
+
+        const { validos, omitidos } = normalizarImportados(raw);
+        if (!validos.length) {
+          showToast("El archivo no contiene registros válidos.", "danger");
+          return;
+        }
+
+        if (mode === "local") localRecords = records;
+        const msg =
+          `Se encontraron ${validos.length} registros válidos` +
+          (omitidos ? ` (${omitidos} omitidos por datos incompletos)` : "") + ".\n\n" +
+          (localRecords.length ? `Esto reemplazará los ${localRecords.length} registros del respaldo local actual.\n` : "") +
+          "Firebase no se modifica.\n\n¿Cargar en modo respaldo local?";
+        if (!confirm(msg)) return;
+
+        localRecords = validos;
+        saveLocal();
+        if (mode === "local") {
+          records = localRecords;
+          currentPage = 1;
+          renderAll();
+        } else {
+          setMode("local");
+        }
+        showToast(`Respaldo cargado: ${validos.length} registros.`);
+      };
+      reader.readAsText(file);
+    });
+
+    // Inicialización
+    document.addEventListener("DOMContentLoaded", async () => {
+      populatePeriodOptions(); // Llenar el select con años hasta 2040
+      const local = localStorage.getItem("feria_records");
+      if (local) {
+        records = JSON.parse(local);
+        renderAll();
+      }
+      if (db) {
+        await cargarDesdeFirestore();
+      } else {
+        setMode("local");
+        showToast("Sin conexión a Firebase: trabajando con el respaldo local.", "warning");
+      }
+      updateModeUI();
+      setupDateListeners();
+
+      // Eventos de paginación
+      prevPageBtn.addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderAll();
+        }
+      });
+      nextPageBtn.addEventListener("click", () => {
+        const totalPages = getTotalPages(getFilteredData());
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderAll();
+        }
+      });
+    });
+
+    // Manejo automatizado de fechas
+    function setupDateListeners() {
+      [inicioInput, finInput].forEach(input => {
+        input.addEventListener("change", () => {
+          if (inicioInput.value && finInput.value) {
+            const start = new Date(inicioInput.value + "T00:00:00");
+            const end = new Date(finInput.value + "T00:00:00");
+            
+            if (end >= start) {
+              const diffTime = Math.abs(end - start);
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+              diasCalculadosInput.value = diffDays;
+            } else {
+              diasCalculadosInput.value = 0;
+            }
+          }
+        });
+      });
+    }
+
+    // Validar que las fechas se encuentren dentro de los rangos legales de la feria seleccionada
+    function validateFeriaDates(periodo, startStr, endStr) {
+      // periodo ejemplo: "Julio 2026" o "Diciembre-Enero 2026/2027"
+      let year, type;
+      if (periodo.includes("Julio")) {
+        type = "invierno";
+        year = parseInt(periodo.replace("Julio ", ""));
+      } else if (periodo.includes("Diciembre-Enero")) {
+        type = "verano";
+        const parts = periodo.split(" ");
+        const yearRange = parts[1]; // "2026/2027"
+        year = parseInt(yearRange.split("/")[0]);
+      } else {
+        return "Período no reconocido.";
+      }
+
+      // Calcular fechas de inicio y fin según tipo
+      let startDate, endDate;
+      if (type === "invierno") {
+        startDate = new Date(year, 6, 13); // Julio (mes 6)
+        endDate = new Date(year, 6, 24);
+      } else { // verano
+        startDate = new Date(year, 11, 28); // Diciembre (mes 11)
+        endDate = new Date(year + 1, 0, 31); // Enero del año siguiente
+      }
+
+      const selectedStart = new Date(startStr + "T00:00:00");
+      const selectedEnd = new Date(endStr + "T00:00:00");
+
+      if (selectedStart < startDate || selectedStart > endDate) {
+        return `La fecha de inicio debe estar entre el ${startDate.toLocaleDateString('es-AR')} y el ${endDate.toLocaleDateString('es-AR')}`;
+      }
+      if (selectedEnd < startDate || selectedEnd > endDate) {
+        return `La fecha de finalización debe estar entre el ${startDate.toLocaleDateString('es-AR')} y el ${endDate.toLocaleDateString('es-AR')}`;
+      }
+      if (selectedEnd < selectedStart) {
+        return "La fecha de fin no puede ser anterior a la fecha de inicio.";
+      }
+      return null;
+    }
+
+    // CRUD: Guardar / Editar Registro
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const periodo = periodoSelect.value;
+      const startStr = inicioInput.value;
+      const endStr = finInput.value;
+
+      const dateValidationError = validateFeriaDates(periodo, startStr, endStr);
+      if (dateValidationError) {
+        showToast(dateValidationError, "danger");
+        return;
+      }
+
+      const id = recordIdInput.value || 'id_' + Date.now();
+      
+      const diasCumplidosVal = parseInt(diasCumplidosInput.value) || 0;
+      const inasistenciasVal = parseInt(inasistenciasInput.value) || 0;
+
+      const recordData = {
+        id,
+        periodo,
+        defensoria: defensoriaInput.value,
+        personal: personalSelect.value.trim(),
+        defensor: defensorInput.value.trim(),
+        encargado: encargadoInput.value.trim(),
+        inicio: startStr,
+        fin: endStr,
+        diasSolicitados: parseInt(diasCalculadosInput.value) || 0,
+        diasCumplidos: diasCumplidosVal,
+        inasistencias: inasistenciasVal,
+        observaciones: observacionesInput.value.trim()
+      };
+
+      const existingIndex = records.findIndex(r => r.id === id);
+      if (existingIndex > -1) {
+        records[existingIndex] = recordData;
+        showToast("Registro actualizado correctamente.");
+      } else {
+        records.push(recordData);
+        showToast("Personal registrado con éxito.");
+        // Al agregar nuevo, ir a la última página
+        const filtered = getFilteredData();
+        const totalPages = Math.ceil(filtered.length / pageSize);
+        currentPage = totalPages || 1;
+      }
+
+      await persistirRegistro(recordData);
+
+      resetForm();
+      renderAll();
+    });
+
+    // Cargar datos en formulario para edición
+    window.editRecord = (id) => {
+      const record = records.find(r => r.id === id);
+      if (!record) return;
+
+      recordIdInput.value = record.id;
+      periodoSelect.value = record.periodo;
+      defensoriaInput.value = record.defensoria;
+      personalSelect.value = record.personal;
+      defensorInput.value = record.defensor;
+      encargadoInput.value = record.encargado;
+      inicioInput.value = record.inicio;
+      finInput.value = record.fin;
+      diasCalculadosInput.value = record.diasSolicitados;
+      diasCumplidosInput.value = record.diasCumplidos;
+      inasistenciasInput.value = record.inasistencias;
+      observacionesInput.value = record.observaciones;
+
+      document.getElementById("formTitle").textContent = "Modificar Registro de Feria";
+      submitBtn.textContent = "Actualizar Registro";
+      submitBtn.style.backgroundColor = "var(--success)";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Eliminar Registro
+    window.deleteRecord = async (id) => {
+      if(confirm("¿Está seguro de eliminar este registro de feria?")) {
+        records = records.filter(r => r.id !== id);
+        await persistirEliminacion(id);
+        showToast("Registro eliminado.", "danger");
+        // Ajustar página si nos quedamos sin registros en la página actual
+        const filtered = getFilteredData();
+        const totalPages = Math.ceil(filtered.length / pageSize);
+        if (currentPage > totalPages && totalPages > 0) {
+          currentPage = totalPages;
+        } else if (totalPages === 0) {
+          currentPage = 1;
+        }
+        renderAll();
+      }
+    };
+
+    // Limpieza de formulario
+    document.getElementById("clearBtn").addEventListener("click", resetForm);
+
+    function resetForm() {
+      form.reset();
+      recordIdInput.value = "";
+      diasCalculadosInput.value = "";
+      document.getElementById("formTitle").textContent = "Registrar Servicio en Feria";
+      submitBtn.textContent = "Guardar Registro";
+      submitBtn.style.backgroundColor = "var(--accent)";
+    }
+
+    // Buscador en Tiempo Real - reinicia a página 1
+    tableSearch.addEventListener("input", () => {
+      currentPage = 1;
+      renderAll();
+    });
+
+    // ----- FUNCIONES DE PAGINACIÓN -----
+    function getFilteredData() {
+      const filterText = tableSearch.value.toLowerCase();
+      return records.filter(r => {
+        return r.personal.toLowerCase().includes(filterText) || 
+               r.defensor.toLowerCase().includes(filterText) || 
+               r.encargado.toLowerCase().includes(filterText) ||
+               r.periodo.toLowerCase().includes(filterText);
+      });
+    }
+
+    function getTotalPages(filteredData) {
+      return Math.ceil(filteredData.length / pageSize) || 1;
+    }
+
+    function updatePaginationControls(filteredData) {
+      const totalPages = getTotalPages(filteredData);
+      pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+      prevPageBtn.disabled = (currentPage <= 1);
+      nextPageBtn.disabled = (currentPage >= totalPages);
+    }
+
+    // Renderizado Unificado de la Interfaz
+    function renderAll() {
+      renderTable();
+      renderMetricsAndCharts();
+    }
+
+    function renderTable() {
+      const filtered = getFilteredData();
+      const totalPages = getTotalPages(filtered);
+      
+      // Asegurar que currentPage esté dentro de los límites
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      // Obtener los registros de la página actual
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const pageData = filtered.slice(start, end);
+
+      tableBody.innerHTML = "";
+
+      if (pageData.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No se encontraron asignaciones registradas.</td></tr>`;
+        updatePaginationControls(filtered);
+        return;
+      }
+
+      pageData.forEach(r => {
+        const badgeClass = r.periodo.includes("Julio") ? "status-julio" : "status-verano";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><span class="status-badge ${badgeClass}">${r.periodo}</span></td>
+          <td><strong>N° ${r.defensoria}</strong></td>
+          <td>
+            <strong>${r.personal}</strong><br/>
+            <small style="color:var(--text-muted)">Obs: ${r.observaciones || 'Ninguna'}</small>
+          </td>
+          <td>
+            <div style="font-size:13px;"><strong>Def:</strong> ${r.defensor}</div>
+            <div style="font-size:12px; color:var(--text-muted);"><strong>Enc:</strong> ${r.encargado}</div>
+          </td>
+          <td>
+            <small>${formatDisplayDate(r.inicio)} al ${formatDisplayDate(r.fin)}</small>
+          </td>
+          <td>
+            <span style="color:var(--accent); font-weight:bold;">${r.diasSolicitados}</span> / 
+            <span style="color:var(--success); font-weight:bold;">${r.diasCumplidos}</span> / 
+            <span style="color:var(--danger); font-weight:bold;">${r.inasistencias}</span>
+          </td>
+          <td style="text-align: center;" class="no-print">
+            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="editRecord('${r.id}')">✏️</button>
+            <button class="btn btn-danger" onclick="deleteRecord('${r.id}')">🗑️</button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      updatePaginationControls(filtered);
+    }
+
+    // Lógica Analítica de Reportes y Gráficos
+    function renderMetricsAndCharts() {
+      const empleadoMetrics = {};
+      const funcionarioMetrics = {};
+      
+      let totalCumplidos = 0;
+      let totalInasistencias = 0;
+
+      records.forEach(r => {
+        totalCumplidos += r.diasCumplidos;
+        totalInasistencias += r.inasistencias;
+
+        if (!empleadoMetrics[r.personal]) {
+          empleadoMetrics[r.personal] = { cumplidos: 0, licencias: 0 };
+        }
+        empleadoMetrics[r.personal].cumplidos += r.diasCumplidos;
+        empleadoMetrics[r.personal].licencias += r.inasistencias;
+
+        const defKey = `Def. ${r.defensor}`;
+        if (!funcionarioMetrics[defKey]) funcionarioMetrics[defKey] = 0;
+        funcionarioMetrics[defKey] += r.diasCumplidos;
+
+        const encKey = `Enc. ${r.encargado}`;
+        if (!funcionarioMetrics[encKey]) funcionarioMetrics[encKey] = 0;
+        funcionarioMetrics[encKey] += r.diasCumplidos;
+      });
+
+      const empContainer = document.getElementById("reporteEmpleadosContainer");
+      empContainer.innerHTML = Object.keys(empleadoMetrics).length ? "" : '<p style="color:var(--text-muted); font-size:13px;">Sin datos en este período.</p>';
+      Object.entries(empleadoMetrics).forEach(([name, data]) => {
+        empContainer.innerHTML += `
+          <div class="report-item">
+            <span><strong>${name}</strong></span>
+            <span>Cump: <strong style="color:var(--success)">${data.cumplidos} d</strong> | Inas: <strong style="color:var(--danger)">${data.licencias} d</strong></span>
+          </div>
+        `;
+      });
+
+      const funcContainer = document.getElementById("reporteFuncionariosContainer");
+      funcContainer.innerHTML = Object.keys(funcionarioMetrics).length ? "" : '<p style="color:var(--text-muted); font-size:13px;">Sin datos en este período.</p>';
+      Object.entries(funcionarioMetrics).forEach(([func, dias]) => {
+        funcContainer.innerHTML += `
+          <div class="report-item">
+            <span><strong>${func}</strong></span>
+            <span>Días bajo su coordinación: <strong>${dias} d</strong></span>
+          </div>
+        `;
+      });
+
+      if (typeof Chart === "undefined") return;
+      const ctx = document.getElementById('metricsChart').getContext('2d');
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Días Efectivos Cumplidos', 'Días de Inasistencia / Licencia en Feria'],
+          datasets: [{
+            data: [totalCumplidos, totalInasistencias],
+            backgroundColor: ['#2ecc71', '#e74c3c'],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 12, font: { size: 12 } }
+            }
+          }
+        }
+      });
+    }
+
+    // Auxiliares de formato e interfaz de usuario
+    function formatDisplayDate(dateStr) {
+      if (!dateStr) return "";
+      const [year, month, day] = dateStr.split("-");
+      return `${day}/${month}/${year}`;
+    }
+
+    function showToast(message, type = "success") {
+      const toast = document.getElementById("toastMessage");
+      toast.textContent = message;
+      toast.style.backgroundColor = type === "success" ? "var(--success)" : (type === "warning" ? "#f39c12" : "var(--danger)");
+      toast.style.display = "block";
+      setTimeout(() => { toast.style.display = "none"; }, 3500);
+    }
+
+    // Funciones de impresión
+    function imprimirReporteCompleto() {
+      const now = new Date();
+      const timestamp = now.toLocaleString('es-AR', { 
+        day: '2-digit', month: '2-digit', year: 'numeric', 
+        hour: '2-digit', minute: '2-digit', second: '2-digit' 
+      });
+      document.getElementById('printTimestamp').textContent = `Fecha de impresión: ${timestamp}`;
+      window.print();
+    }
+
+    function imprimirTabla() {
+      document.body.classList.add('print-table-only');
+      const now = new Date();
+      const timestamp = now.toLocaleString('es-AR', { 
+        day: '2-digit', month: '2-digit', year: 'numeric', 
+        hour: '2-digit', minute: '2-digit', second: '2-digit' 
+      });
+      document.getElementById('printTimestamp').textContent = `Fecha de impresión: ${timestamp}`;
+      
+      window.print();
+      
+      setTimeout(() => {
+        document.body.classList.remove('print-table-only');
+      }, 500);
+    }
+  </script>
+
+  <style>
+    /* Estilos adicionales para impresión solo tabla */
+    @media print {
+      body.print-table-only .container > header,
+      body.print-table-only .dashboard-grid .card:first-child,
+      body.print-table-only .dashboard-grid .card:last-child .reports-grid,
+      body.print-table-only .dashboard-grid .card:last-child canvas,
+      body.print-table-only .table-actions .search-input,
+      body.print-table-only .table-actions .btn-print,
+      body.print-table-only .no-print {
+        display: none !important;
+      }
+      body.print-table-only .dashboard-grid .card:last-child {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+      body.print-table-only .table-container {
+        margin-top: 0 !important;
+      }
+      body.print-table-only .card-title {
+        display: block !important;
+      }
+      body.print-table-only #printTimestamp {
+        display: block !important;
+        text-align: right;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 16px;
+      }
+      /* Ocultar paginación en impresión */
+      body.print-table-only .pagination-controls {
+        display: none !important;
+      }
+    }
+  </style>
+</body>
+</html>
