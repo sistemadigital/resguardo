@@ -1,0 +1,2099 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Inasistencias y Licencias · Respaldo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef2f7;
+    --surface:#ffffff;
+    --surface-2:#f8fafc;
+    --surface-3:#f1f5f9;
+    --border:#e2e8f0;
+    --border-strong:#cbd5e1;
+    --text:#0f172a;
+    --text-muted:#64748b;
+    --text-soft:#94a3b8;
+    --primary:#2563eb;
+    --primary-dark:#1d4ed8;
+    --primary-light:#eff6ff;
+    --success:#10b981;
+    --warning:#f59e0b;
+    --danger:#ef4444;
+    --danger-light:#fef2f2;
+    --radius:16px;
+    --radius-sm:10px;
+    --radius-xs:8px;
+    --shadow-sm:0 1px 2px rgba(15,23,42,.05);
+    --shadow:0 4px 20px rgba(15,23,42,.06);
+    --shadow-lg:0 14px 40px rgba(15,23,42,.10);
+    --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{height:100%;width:100%;}
+  body{
+    font-family:var(--font);
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #dbeafe 0%, transparent 55%),
+      radial-gradient(900px 500px at 100% 0%, #e0e7ff 0%, transparent 50%),
+      var(--bg);
+    color:var(--text);
+    font-size:14px;
+    line-height:1.5;
+    min-height:100vh;
+    min-height:100dvh;
+    width:100%;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  .app{
+    height:100vh;
+    height:100dvh;
+    width:100%;
+    max-width:100vw;
+    display:flex;
+    flex-direction:column;
+    padding:14px 18px 16px;
+    gap:12px;
+    overflow:hidden;
+  }
+
+  .app-header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    flex-wrap:wrap;
+    flex-shrink:0;
+    width:100%;
+  }
+  .brand{display:flex;align-items:center;gap:12px;min-width:0;}
+  .brand-logo{
+    width:12px;height:12px;border-radius:4px;flex-shrink:0;
+    background:linear-gradient(135deg,var(--primary) 0%,#4f46e5 100%);
+    box-shadow:0 2px 8px rgba(37,99,235,.45);
+  }
+  .brand-title{
+    font-size:17px;font-weight:800;letter-spacing:-.02em;
+    line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .brand-sub{
+    font-size:11.5px;color:var(--text-muted);font-weight:500;
+    letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+
+  .tabs{
+    display:flex;
+    gap:4px;
+    background:var(--surface);
+    padding:5px;
+    border-radius:14px;
+    box-shadow:var(--shadow-sm);
+    border:1px solid var(--border);
+    margin-left:auto;
+    overflow-x:auto;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    max-width:100%;
+  }
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{
+    appearance:none;border:none;background:transparent;
+    font-family:inherit;font-size:13px;font-weight:600;
+    color:var(--text-muted);
+    padding:9px 16px;border-radius:10px;cursor:pointer;
+    display:flex;align-items:center;gap:7px;
+    transition:all .18s ease;white-space:nowrap;
+    flex-shrink:0;
+  }
+  .tab:hover{color:var(--text);background:var(--surface-3);}
+  .tab.active{
+    background:linear-gradient(135deg,var(--primary) 0%,#4f46e5 100%);
+    color:#fff;
+    box-shadow:0 4px 12px rgba(37,99,235,.30);
+  }
+
+  .app-body{flex:1;min-height:0;position:relative;width:100%;}
+  .panel{
+    position:absolute;inset:0;
+    display:none;
+    animation:fade .22s ease;
+  }
+  .panel.active{display:flex;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  .surface{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+
+  /* ============ FORM PANEL ============ */
+  #panel-registro{
+    justify-content:center;
+    align-items:flex-start;
+    overflow-y:auto;
+    padding:4px;
+  }
+  .form-card{
+    width:100%;
+    max-width:760px;
+    margin:0 auto;
+    padding:26px 28px 24px;
+  }
+  .card-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);
+    gap:12px;
+  }
+  .card-head h2{
+    font-size:16px;font-weight:700;letter-spacing:-.01em;
+    display:flex;align-items:center;gap:10px;
+  }
+  .card-head h2::before{
+    content:"";width:4px;height:18px;border-radius:4px;
+    background:linear-gradient(180deg,var(--primary),#4f46e5);
+    flex-shrink:0;
+  }
+  .card-head .hint{font-size:12px;color:var(--text-muted);font-weight:500;white-space:nowrap;}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;font-size:12.5px;font-weight:600;
+    color:var(--text);margin-bottom:7px;letter-spacing:.01em;
+  }
+  .field label .req{color:var(--danger);margin-left:2px;}
+
+  input,select{
+    width:100%;
+    font-family:inherit;font-size:13.5px;font-weight:500;
+    color:var(--text);
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:11px 13px;
+    outline:none;
+    transition:all .16s ease;
+    max-width:100%;
+  }
+  input::placeholder{color:var(--text-soft);font-weight:400;}
+  input:hover,select:hover{border-color:var(--border-strong);}
+  input:focus,select:focus{
+    background:#fff;
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+  }
+  select{
+    cursor:pointer;
+    appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+    padding-right:34px;
+  }
+  input[type="color"]{padding:5px;height:46px;cursor:pointer;}
+  input[type="color"]::-webkit-color-swatch-wrapper{padding:0;}
+  input[type="color"]::-webkit-color-swatch{border:none;border-radius:7px;}
+
+  .input-error{
+    border-color:var(--danger)!important;
+    background:var(--danger-light)!important;
+    box-shadow:0 0 0 4px rgba(239,68,68,.10)!important;
+  }
+  .error-message{
+    display:none;font-size:11.5px;font-weight:600;
+    color:var(--danger);margin-top:6px;
+  }
+  .error-message.show{display:block;}
+
+  .form-actions{
+    display:flex;gap:10px;justify-content:flex-end;
+    margin-top:22px;padding-top:18px;border-top:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+
+  /* ============ BUTTONS ============ */
+  .btn{
+    appearance:none;border:none;cursor:pointer;
+    font-family:inherit;font-size:13px;font-weight:600;
+    border-radius:var(--radius-sm);
+    padding:10px 18px;
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    transition:all .16s ease;white-space:nowrap;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{
+    background:linear-gradient(135deg,var(--primary) 0%,#4f46e5 100%);
+    color:#fff;
+    box-shadow:0 4px 12px rgba(37,99,235,.28);
+  }
+  .btn-primary:hover{box-shadow:0 6px 18px rgba(37,99,235,.38);}
+  .btn-secondary{
+    background:var(--surface-2);
+    color:var(--text);
+    border:1px solid var(--border);
+  }
+  .btn-secondary:hover{background:var(--surface-3);border-color:var(--border-strong);}
+  .btn-sm{padding:7px 12px;font-size:12.5px;border-radius:8px;}
+  .btn-icon{
+    width:34px;height:34px;padding:0;border-radius:9px;
+    background:var(--surface-2);border:1px solid var(--border);
+    color:var(--text-muted);font-size:13px;
+    display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;font-family:inherit;transition:all .16s ease;flex-shrink:0;
+  }
+  .btn-icon:hover{background:var(--primary-light);color:var(--primary);border-color:#bfdbfe;}
+
+  /* ============ CALENDAR PANEL ============ */
+  #panel-calendario{flex-direction:column;}
+  .cal-card{
+    flex:1;min-height:0;
+    display:flex;flex-direction:column;
+    padding:18px 20px;width:100%;
+  }
+  .cal-top{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;margin-bottom:14px;flex-shrink:0;
+  }
+  .cal-title{
+    font-size:20px;font-weight:800;letter-spacing:-.02em;
+    text-transform:capitalize;
+  }
+  .cal-title span{color:var(--text-muted);font-weight:600;}
+  .cal-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .cal-controls select{
+    width:auto;padding:8px 30px 8px 12px;font-size:12.5px;
+    border-radius:9px;font-weight:600;
+  }
+
+  .cal-weekdays{
+    display:grid;grid-template-columns:repeat(7,1fr);
+    gap:8px;margin-bottom:8px;flex-shrink:0;
+  }
+  .cal-weekday{
+    text-align:center;font-size:11px;font-weight:700;
+    color:var(--text-soft);text-transform:uppercase;letter-spacing:.08em;
+    padding:4px 0;
+  }
+
+  .cal-grid{
+    flex:1;min-height:0;
+    display:grid;grid-template-columns:repeat(7,1fr);
+    grid-template-rows:repeat(6,1fr);
+    gap:8px;
+  }
+  .cal-day{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:7px 8px;
+    display:flex;flex-direction:column;gap:4px;
+    overflow:hidden;position:relative;
+    transition:all .16s ease;
+    min-height:0;min-width:0;
+  }
+  .cal-day:hover{background:#fff;border-color:#bfdbfe;box-shadow:0 4px 12px rgba(37,99,235,.08);}
+  .cal-day.other{opacity:.35;background:transparent;border-style:dashed;}
+  .cal-day.other:hover{opacity:.6;box-shadow:none;border-color:var(--border);}
+  .cal-day.today{
+    background:linear-gradient(180deg,#eff6ff,#ffffff);
+    border-color:var(--primary);
+    box-shadow:0 0 0 3px rgba(37,99,235,.10);
+  }
+  .cal-day .num{
+    font-size:12.5px;font-weight:700;color:var(--text);
+    line-height:1;display:flex;align-items:center;justify-content:space-between;
+  }
+  .cal-day.today .num{
+    color:#fff;background:var(--primary);
+    width:22px;height:22px;border-radius:7px;
+    display:grid;place-items:center;font-size:11.5px;
+  }
+  .cal-events{
+    display:flex;flex-direction:column;gap:3px;
+    overflow:hidden;flex:1;min-height:0;
+  }
+  .cal-chip{
+    display:flex;align-items:center;gap:5px;
+    font-size:10px;font-weight:600;
+    padding:3px 6px;border-radius:6px;
+    background:var(--surface-3);color:var(--text);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    line-height:1.2;
+  }
+  .cal-chip .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .cal-more{font-size:9.5px;font-weight:700;color:var(--text-muted);padding-left:4px;}
+
+  .cal-legend{
+    display:flex;flex-wrap:wrap;gap:8px 14px;
+    margin-top:12px;padding-top:12px;
+    border-top:1px solid var(--border);
+    flex-shrink:0;max-height:56px;overflow-y:auto;
+  }
+  .legend-item{
+    display:flex;align-items:center;gap:6px;
+    font-size:11.5px;font-weight:600;color:var(--text-muted);
+  }
+  .legend-item .dot{width:8px;height:8px;border-radius:50%;}
+
+  /* ============ REPORTES PANEL ============ */
+  #panel-reportes{flex-direction:column;gap:12px;overflow:hidden;}
+  .filters-bar{
+    padding:14px 16px;flex-shrink:0;
+    display:grid;
+    grid-template-columns:repeat(7,minmax(0,1fr)) auto;
+    gap:10px;align-items:end;
+  }
+  .filters-bar .field{margin:0;min-width:0;}
+  .filters-bar label{font-size:11px;margin-bottom:5px;color:var(--text-muted);}
+  .filters-bar input,.filters-bar select{padding:8px 10px;font-size:12.5px;border-radius:9px;}
+  .filters-bar select{padding-right:28px;}
+  .filters-actions{
+    display:flex;gap:8px;
+  }
+  .filters-actions .btn{flex:1;}
+
+  .kpis{
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:12px;flex-shrink:0;
+  }
+  .kpi{
+    padding:16px 18px;
+    display:flex;flex-direction:column;gap:2px;
+    position:relative;overflow:hidden;min-width:0;
+  }
+  .kpi::after{
+    content:"";position:absolute;right:-20px;top:-20px;
+    width:80px;height:80px;border-radius:50%;
+    background:radial-gradient(circle,rgba(37,99,235,.10),transparent 70%);
+  }
+  .kpi-label{
+    font-size:11px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--text-soft);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .kpi-value{
+    font-size:28px;font-weight:800;letter-spacing:-.03em;
+    line-height:1.1;color:var(--text);
+  }
+  .kpi-value small{font-size:13px;font-weight:600;color:var(--text-muted);margin-left:4px;}
+  .kpi.accent .kpi-value{color:var(--primary);}
+  .kpi.licencias .kpi-value{color:#7c3aed;}
+  .kpi.inasistencias .kpi-value{color:#ea580c;}
+
+  .ranking-card{
+    flex:1;min-height:0;
+    display:flex;flex-direction:column;
+    padding:18px 20px;overflow:hidden;
+  }
+  .ranking-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:14px;flex-shrink:0;gap:12px;flex-wrap:wrap;
+  }
+  .ranking-head h3{font-size:14px;font-weight:700;letter-spacing:-.01em;}
+  .ranking-head .sub{font-size:11.5px;color:var(--text-muted);font-weight:500;}
+  .ranking-list{
+    flex:1;min-height:0;overflow-y:auto;
+    display:flex;flex-direction:column;gap:8px;
+    padding-right:6px;
+  }
+  .rank-row{
+    display:grid;
+    grid-template-columns:minmax(150px,220px) 1fr 56px;
+    align-items:center;gap:14px;
+    padding:9px 12px;border-radius:10px;
+    transition:background .15s;
+  }
+  .rank-row:hover{background:var(--surface-2);}
+  .rank-name{
+    font-size:12.5px;font-weight:600;color:var(--text);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    display:flex;align-items:center;gap:8px;
+  }
+  .rank-pos{
+    width:20px;height:20px;border-radius:6px;flex-shrink:0;
+    display:grid;place-items:center;
+    font-size:10px;font-weight:800;color:var(--text-muted);
+    background:var(--surface-3);
+  }
+  .rank-row:nth-child(1) .rank-pos{background:#fef3c7;color:#b45309;}
+  .rank-row:nth-child(2) .rank-pos{background:#e2e8f0;color:#475569;}
+  .rank-row:nth-child(3) .rank-pos{background:#fed7aa;color:#c2410c;}
+  .rank-track{
+    height:9px;background:var(--surface-3);border-radius:99px;
+    overflow:hidden;position:relative;
+  }
+  .rank-bar{
+    height:100%;border-radius:99px;
+    background:linear-gradient(90deg,var(--primary),#6366f1);
+    transition:width .6s cubic-bezier(.4,0,.2,1);
+  }
+  .rank-value{
+    text-align:right;font-size:13px;font-weight:800;color:var(--text);
+    font-variant-numeric:tabular-nums;
+  }
+  .rank-value small{font-size:10px;color:var(--text-muted);font-weight:600;margin-left:2px;}
+  .empty{
+    flex:1;display:grid;place-items:center;
+    color:var(--text-soft);font-size:13px;font-weight:500;
+    padding:20px;text-align:center;
+  }
+
+  /* ============ REGISTROS PANEL ============ */
+  #panel-registros{flex-direction:column;}
+  .table-card{
+    flex:1;min-height:0;
+    display:flex;flex-direction:column;
+    padding:18px 20px;overflow:hidden;
+  }
+  .table-head{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;margin-bottom:14px;flex-shrink:0;
+  }
+  .table-head h3{font-size:15px;font-weight:700;letter-spacing:-.01em;}
+  .table-head .sub{font-size:11.5px;color:var(--text-muted);font-weight:500;margin-top:2px;}
+  .table-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .search{position:relative;flex:1;min-width:0;}
+  .search input{min-width:200px;background:var(--surface-2);}
+
+  .table-scroll{
+    flex:1;min-height:0;overflow:auto;
+    border:1px solid var(--border);border-radius:12px;
+    background:#fff;
+    -webkit-overflow-scrolling:touch;
+  }
+  table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:640px;}
+  thead th{
+    position:sticky;top:0;z-index:2;
+    background:var(--surface-2);
+    font-size:10.5px;font-weight:700;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--text-soft);
+    padding:12px 16px;text-align:left;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+    color:var(--text);vertical-align:middle;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr{transition:background .13s;}
+  tbody tr:hover{background:var(--primary-light);}
+
+  .cell-name{font-weight:600;font-size:13px;}
+  .cell-date{
+    font-weight:600;font-variant-numeric:tabular-nums;
+    color:var(--text);white-space:nowrap;
+  }
+  .cell-art{
+    font-size:12px;color:var(--text-muted);
+    max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:34px;padding:3px 9px;border-radius:99px;
+    background:var(--primary-light);color:var(--primary-dark);
+    font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;
+  }
+  .badge-lic{background:#f3e8ff;color:#7c3aed;}
+  .swatch{
+    width:22px;height:22px;border-radius:7px;
+    border:2px solid #fff;
+    box-shadow:0 0 0 1px var(--border);
+    display:inline-block;vertical-align:middle;
+  }
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
+
+  .pagination{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;flex-wrap:wrap;
+    padding-top:14px;margin-top:12px;
+    border-top:1px solid var(--border);flex-shrink:0;
+  }
+  .page-info{font-size:12px;color:var(--text-muted);font-weight:500;}
+  .page-info strong{color:var(--text);font-weight:700;}
+  .page-ctrl{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
+  .page-btn{
+    min-width:32px;height:32px;padding:0 10px;
+    border-radius:8px;border:1px solid var(--border);
+    background:var(--surface-2);color:var(--text-muted);
+    font-family:inherit;font-size:12.5px;font-weight:600;
+    cursor:pointer;transition:all .15s;
+  }
+  .page-btn:hover:not(:disabled){background:#fff;color:var(--primary);border-color:#bfdbfe;}
+  .page-btn.active{
+    background:linear-gradient(135deg,var(--primary),#4f46e5);
+    color:#fff;border-color:transparent;
+    box-shadow:0 3px 10px rgba(37,99,235,.28);
+  }
+  .page-btn:disabled{opacity:.45;cursor:not-allowed;}
+
+  /* ============ MODO RESPALDO ============ */
+  .mode-badge{
+    display:inline-flex;align-items:center;gap:6px;flex-shrink:0;
+    font-size:11px;font-weight:700;letter-spacing:.02em;
+    padding:4px 10px;border-radius:99px;white-space:nowrap;
+  }
+  .mode-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .mode-badge.online{background:#dcfce7;color:#15803d;}
+  .mode-badge.local{background:#fef3c7;color:#b45309;}
+
+  /* ============ NOTIFICATION ============ */
+  #formNotification{
+    position:fixed;top:18px;right:18px;
+    padding:13px 18px 13px 16px;border-radius:12px;
+    color:#fff;font-weight:600;font-size:13px;
+    z-index:2000;opacity:0;transform:translateY(-16px) scale(.97);
+    transition:all .28s cubic-bezier(.4,0,.2,1);
+    max-width:340px;
+    box-shadow:0 12px 32px rgba(15,23,42,.20);
+    display:flex;align-items:center;gap:10px;
+  }
+  #formNotification::before{
+    content:"";width:8px;height:8px;border-radius:50%;
+    background:rgba(255,255,255,.9);flex-shrink:0;
+  }
+
+  /* ============ SCROLLBARS ============ */
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{
+    background:#cbd5e1;border-radius:99px;
+    border:2px solid transparent;background-clip:padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover{background:#94a3b8;background-clip:padding-box;}
+
+  /* =====================================================
+     PRINT CONTAINER (oculto en pantalla)
+     ===================================================== */
+  #print-container{display:none;}
+
+  /* =====================================================
+     RESPONSIVE
+     ===================================================== */
+  @media (min-width:1440px){
+    .app{padding:18px 28px 20px;gap:14px;}
+    .brand-title{font-size:19px;}
+    .brand-sub{font-size:12.5px;}
+    .tab{font-size:13.5px;padding:10px 20px;}
+    .form-card{max-width:820px;padding:32px 36px;}
+    .cal-card{padding:22px 26px;}
+    .table-card{padding:22px 26px;}
+    .ranking-card{padding:22px 26px;}
+  }
+
+  @media (max-width:1280px){
+    .filters-bar{grid-template-columns:repeat(4,minmax(0,1fr));}
+    .filters-bar .filters-actions{grid-column:span 4;}
+  }
+
+  @media (max-width:1023px){
+    .app{padding:12px;gap:10px;}
+    .brand-title{font-size:15.5px;}
+    .brand-sub{font-size:11px;}
+    .tabs{width:100%;margin-left:0;justify-content:flex-start;}
+    .tab{padding:9px 14px;font-size:12.5px;}
+
+    .kpis{grid-template-columns:repeat(5,1fr);gap:8px;}
+    .kpi{padding:12px 12px;}
+    .kpi-value{font-size:20px;}
+    .kpi-label{font-size:10px;letter-spacing:.05em;}
+
+    .filters-bar{grid-template-columns:repeat(3,minmax(0,1fr));}
+    .filters-bar .filters-actions{grid-column:span 3;}
+
+    .cal-day{padding:5px 6px;border-radius:10px;}
+    .cal-chip{font-size:9.5px;padding:2px 5px;}
+    .cal-day .num{font-size:11.5px;}
+
+    .rank-row{grid-template-columns:minmax(120px,180px) 1fr 50px;gap:10px;}
+
+    .form-card{padding:22px 22px;}
+    .card-head h2{font-size:15px;}
+  }
+
+  @media (max-width:900px){
+    html,body{height:auto;min-height:100%;}
+    body{overflow-y:auto;overflow-x:hidden;}
+
+    .app{
+      height:auto;
+      min-height:100vh;
+      min-height:100dvh;
+      width:100%;
+      padding:10px;
+      gap:10px;
+      overflow:visible;
+    }
+
+    .app-header{
+      flex-direction:column;
+      align-items:stretch;
+      gap:10px;
+    }
+    .brand{justify-content:flex-start;}
+    .brand-title{font-size:16px;}
+    .brand-sub{font-size:11.5px;}
+
+    .tabs{
+      width:100%;margin-left:0;
+      overflow-x:auto;
+      justify-content:flex-start;
+      padding:4px;
+    }
+    .tab{padding:9px 14px;font-size:12.5px;}
+
+    .app-body{
+      position:static;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .panel{
+      position:static;
+      inset:auto;
+      display:none;
+    }
+    .panel.active{display:flex;flex-direction:column;}
+
+    #panel-registro{padding:0;overflow:visible;align-items:stretch;justify-content:flex-start;}
+    .form-card{max-width:100%;padding:18px 16px;}
+    .grid-2{grid-template-columns:1fr;gap:0;}
+    .form-actions{flex-direction:column-reverse;}
+    .form-actions .btn{width:100%;}
+    .card-head{flex-direction:column;align-items:flex-start;gap:6px;}
+
+    .cal-card{padding:14px 12px;min-height:520px;}
+    .cal-top{flex-direction:column;align-items:stretch;gap:10px;}
+    .cal-title{font-size:17px;text-align:left;}
+    .cal-controls{justify-content:space-between;width:100%;}
+    .cal-controls select{flex:1;min-width:0;}
+    .cal-weekdays{gap:3px;}
+    .cal-weekday{font-size:9.5px;padding:2px 0;letter-spacing:.04em;}
+    .cal-grid{
+      grid-template-rows:repeat(6,minmax(58px,1fr));
+      gap:4px;
+    }
+    .cal-day{padding:4px;border-radius:8px;gap:2px;}
+    .cal-day .num{font-size:10.5px;}
+    .cal-day.today .num{width:18px;height:18px;font-size:10px;border-radius:5px;}
+    .cal-chip{font-size:9px;padding:2px 4px;gap:3px;border-radius:4px;}
+    .cal-chip .dot{width:5px;height:5px;}
+    .cal-more{font-size:8.5px;}
+
+    .filters-bar{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      padding:12px;
+      gap:8px;
+    }
+    .filters-bar .filters-actions{grid-column:span 2;}
+
+    .kpis{grid-template-columns:repeat(3,1fr);gap:8px;}
+    .kpi{padding:12px 12px;}
+    .kpi-value{font-size:18px;}
+    .kpi-value small{font-size:10px;}
+    .kpi-label{font-size:9.5px;}
+
+    .ranking-card{padding:14px 12px;}
+    .ranking-head{flex-direction:column;align-items:flex-start;gap:8px;}
+    .ranking-head .btn{width:100%;}
+    .rank-row{
+      grid-template-columns:1fr auto;
+      gap:8px;
+      padding:8px 10px;
+    }
+    .rank-track{display:none;}
+    .rank-name{font-size:12px;}
+    .rank-value{font-size:12px;}
+
+    .table-card{padding:14px 12px;}
+    .table-head{flex-direction:column;align-items:stretch;gap:10px;}
+    .table-tools{width:100%;flex-direction:column;align-items:stretch;}
+    .search input{min-width:0;width:100%;}
+    .table-tools .btn{width:100%;}
+    table{font-size:12px;min-width:560px;}
+    thead th{padding:10px 12px;font-size:10px;}
+    tbody td{padding:10px 12px;}
+    .cell-art{max-width:160px;}
+    .row-actions{flex-direction:column;}
+    .row-actions .btn{width:100%;}
+
+    .pagination{flex-direction:column;align-items:stretch;gap:10px;}
+    .page-ctrl{justify-content:center;}
+    .page-info{text-align:center;}
+
+    #formNotification{
+      top:10px;right:10px;left:10px;
+      max-width:none;
+    }
+  }
+
+  @media (max-width:600px){
+    .app{padding:8px;gap:8px;}
+    .brand-logo{width:10px;height:10px;border-radius:3px;}
+    .brand-title{font-size:15px;}
+    .brand-sub{font-size:11px;line-height:1.3;}
+
+    .tabs{border-radius:12px;padding:3px;}
+    .tab{padding:8px 12px;font-size:12px;border-radius:8px;}
+
+    .form-card{padding:16px 14px;border-radius:14px;}
+    .card-head h2{font-size:14px;}
+    .card-head .hint{font-size:11px;}
+
+    input,select{font-size:13px;padding:10px 12px;}
+    input[type="color"]{height:42px;}
+
+    .cal-card{padding:12px 10px;min-height:480px;}
+    .cal-title{font-size:16px;}
+    .cal-controls{flex-wrap:wrap;gap:6px;}
+    .cal-controls select{font-size:11.5px;padding:7px 24px 7px 10px;flex:1 1 42%;}
+    .btn-icon{width:32px;height:32px;font-size:12px;}
+    .cal-controls .btn-sm{padding:7px 10px;font-size:11.5px;}
+
+    .cal-grid{grid-template-rows:repeat(6,minmax(52px,1fr));gap:3px;}
+    .cal-day{padding:3px;border-radius:7px;}
+    .cal-day .num{font-size:10px;}
+    .cal-day.today .num{width:16px;height:16px;font-size:9px;}
+    .cal-chip{font-size:8.5px;padding:1px 4px;gap:3px;}
+    .cal-chip .dot{width:4px;height:4px;}
+    .cal-more{font-size:8px;}
+
+    .filters-bar{grid-template-columns:1fr;padding:10px;gap:8px;}
+    .filters-bar .filters-actions{grid-column:span 1;}
+
+    .kpis{grid-template-columns:repeat(2,1fr);gap:8px;}
+    .kpi{padding:12px;}
+    .kpi-label{font-size:9.5px;}
+    .kpi-value{font-size:17px;}
+    .kpi-value small{font-size:10px;}
+
+    .ranking-card{padding:12px 10px;}
+    .ranking-head h3{font-size:13px;}
+
+    .table-card{padding:12px 10px;}
+    .table-head h3{font-size:14px;}
+    table{font-size:11.5px;min-width:520px;}
+    thead th{padding:9px 10px;font-size:9.5px;}
+    tbody td{padding:9px 10px;}
+    .badge{min-width:28px;padding:2px 7px;font-size:11px;}
+    .swatch{width:18px;height:18px;}
+
+    .pagination{gap:8px;}
+    .page-btn{min-width:30px;height:30px;font-size:11.5px;padding:0 8px;}
+
+    #formNotification{font-size:12px;padding:11px 14px;}
+  }
+
+  @media (max-width:380px){
+    .app{padding:6px;gap:6px;}
+    .brand-title{font-size:14px;}
+    .brand-sub{font-size:10.5px;}
+
+    .tab{padding:7px 10px;font-size:11px;}
+
+    .cal-card{padding:10px 8px;min-height:440px;}
+    .cal-title{font-size:14.5px;}
+    .cal-grid{grid-template-rows:repeat(6,minmax(46px,1fr));gap:2px;}
+    .cal-day{padding:2px;border-radius:6px;}
+    .cal-day .num{font-size:9px;}
+    .cal-day.today .num{width:14px;height:14px;font-size:8.5px;}
+    .cal-chip{font-size:8px;padding:1px 3px;gap:2px;}
+    .cal-chip .dot{width:3px;height:3px;}
+
+    .kpi-value{font-size:15px;}
+    .kpi{padding:10px;}
+
+    table{min-width:460px;font-size:11px;}
+    thead th, tbody td{padding:8px 8px;}
+  }
+
+  @media (max-height:560px) and (min-width:900px){
+    .app{padding:8px 12px;gap:8px;}
+    .brand-title{font-size:14px;}
+    .brand-sub{font-size:10.5px;}
+    .tab{padding:7px 12px;font-size:12px;}
+    .form-card{padding:16px 18px;}
+    .card-head{margin-bottom:12px;padding-bottom:10px;}
+    .field{margin-bottom:10px;}
+    input,select{padding:8px 11px;font-size:13px;}
+    .cal-card{padding:12px 14px;}
+    .cal-top{margin-bottom:8px;}
+    .cal-grid{gap:5px;}
+    .cal-day{min-height:0;padding:4px 5px;}
+    .table-card{padding:12px 14px;}
+    .table-head{margin-bottom:8px;}
+  }
+
+  /* =====================================================
+     PRINT · solo se imprime #print-container
+     ===================================================== */
+  @media print{
+    @page{margin:12mm;}
+
+    html,body{
+      height:auto !important;
+      overflow:visible !important;
+      background:#fff !important;
+    }
+    body > *:not(#print-container){
+      display:none !important;
+    }
+    #print-container{
+      display:block !important;
+      width:100% !important;
+    }
+    #print-container .print-target{
+      display:block !important;
+      width:100% !important;
+      max-width:100% !important;
+      height:auto !important;
+      max-height:none !important;
+      overflow:visible !important;
+      box-shadow:none !important;
+      border:none !important;
+      border-radius:0 !important;
+      background:#fff !important;
+      padding:0 !important;
+      margin:0 !important;
+      flex:none !important;
+      position:static !important;
+    }
+
+    /* Expandir contenedores con scroll */
+    #print-container .print-target .ranking-list,
+    #print-container .print-target .table-scroll,
+    #print-container .print-target .cal-legend{
+      overflow:visible !important;
+      max-height:none !important;
+      height:auto !important;
+      flex:none !important;
+      min-height:0 !important;
+      padding-right:0 !important;
+    }
+    #print-container .print-target .cal-grid{
+      grid-template-rows:repeat(6,minmax(72px,auto)) !important;
+      overflow:visible !important;
+      height:auto !important;
+    }
+    #print-container .print-target .cal-day{
+      min-height:72px !important;
+      page-break-inside:avoid;
+      break-inside:avoid;
+    }
+
+    /* Ocultar controles/botones dentro del área impresa */
+    #print-container .print-target .cal-controls,
+    #print-container .print-target .ranking-head .btn,
+    #print-container .print-target .table-head .btn,
+    #print-container .print-target .row-actions,
+    #print-container .print-target .pagination{
+      display:none !important;
+    }
+
+    /* Tabla sin min-width para adaptarse al ancho de la hoja */
+    #print-container .print-target table{
+      min-width:0 !important;
+      width:100% !important;
+    }
+    #print-container .print-target thead th{
+      position:static !important;
+    }
+
+    /* Conservar colores en impresión */
+    #print-container .print-target .dot,
+    #print-container .print-target .swatch,
+    #print-container .print-target .rank-bar,
+    #print-container .print-target .badge,
+    #print-container .print-target .cal-chip,
+    #print-container .print-target .rank-pos{
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+    }
+
+    /* Añadir un pequeño título para la impresión */
+    #print-container .print-target::before{
+      display:block;
+      content:attr(data-print-title);
+      font-family:'Inter',system-ui,sans-serif;
+      font-size:15px;
+      font-weight:800;
+      letter-spacing:-.01em;
+      color:#0f172a;
+      margin-bottom:12px;
+      padding-bottom:8px;
+      border-bottom:1px solid #e2e8f0;
+    }
+  }
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+<div class="app">
+
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo" aria-hidden="true"></div>
+      <div style="min-width:0;">
+        <div class="brand-title">Inasistencias y Licencias</div>
+        <div class="brand-sub">Personal de la Defensoría Civil y Comercial 6</div>
+      </div>
+      <span class="mode-badge online" id="modeBadge">Firebase · en línea</span>
+    </div>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="registro">Registrar</button>
+      <button class="tab" data-tab="calendario">Calendario</button>
+      <button class="tab" data-tab="reportes">Reportes</button>
+      <button class="tab" data-tab="registros">Registros</button>
+    </nav>
+  </header>
+
+  <main class="app-body">
+
+    <!-- ============ PANEL: REGISTRO ============ -->
+    <section class="panel active" id="panel-registro">
+      <div class="form-card surface">
+        <div class="card-head">
+          <h2>Registrar Días Concedidos</h2>
+          <span class="hint" id="formHint">Nuevo registro</span>
+        </div>
+
+        <form id="form" autocomplete="off">
+          <div class="field">
+            <label for="nombre">Nombre y apellido <span class="req">*</span></label>
+            <select id="nombre" required>
+              <option value="">— Seleccionar empleado —</option>
+              <option>Bazante Nadia Romina</option>
+              <option>Boillat Cesar Enrique</option>
+              <option>Cardozo Maria Raquel</option>
+              <option>Cedron Noelia Aurora</option>
+              <option>Corrales Alicia Mariela</option>
+              <option>Fioravante Romulo</option>
+              <option>Gonzalez Alberto Misael</option>
+              <option>Gonzalez Juan Jose</option>
+              <option>Gudiño Natalia Esther</option>
+              <option>Magnani Enzo Luciano</option>
+              <option>Martinis Carlos Esteban</option>
+              <option>Pablos Patricia</option>
+              <option>Palacios Ana Gabriela</option>
+              <option>Ortega Lucia Noemi</option>
+              <option>Ramos Marcelo Gustavo</option>
+              <option>Riveros Patricia Soledad</option>
+              <option>Sosa Rita Cecilia</option>
+            </select>
+            <div id="nombreError" class="error-message"></div>
+          </div>
+
+          <div class="field">
+            <label for="articulo">Artículo del Reglamento <span class="req">*</span></label>
+            <input id="articulo" required placeholder="Ej: Art. 10 — Licencia Ordinaria" />
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="dias">Cantidad de días <span class="req">*</span></label>
+              <input id="dias" type="number" min="1" step="1" required placeholder="Mínimo 1 día" />
+            </div>
+            <div class="field">
+              <label for="inicio">Fecha de inicio <span class="req">*</span></label>
+              <input id="inicio" type="date" required />
+              <div id="inicioError" class="error-message"></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="color">Color de identificación</label>
+              <input id="color" type="color" value="#2563eb" />
+            </div>
+            <div class="field" style="display:flex;align-items:flex-end;">
+              <div style="width:100%;padding:11px 13px;border-radius:10px;background:var(--surface-2);border:1px dashed var(--border);font-size:12px;color:var(--text-muted);font-weight:500;">
+                El color se usa para identificar visualmente los días en el calendario.
+              </div>
+            </div>
+          </div>
+
+          <input type="hidden" id="editingId" />
+
+          <div class="form-actions">
+            <button class="btn btn-secondary" type="button" id="resetBtn">Limpiar</button>
+            <button class="btn btn-primary" type="submit" id="submitBtn">Agregar registro</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ PANEL: CALENDARIO ============ -->
+    <section class="panel" id="panel-calendario">
+      <div class="cal-card surface" id="calendarPrintArea">
+        <div class="cal-top">
+          <div class="cal-title" id="calTitle">Calendario</div>
+          <div class="cal-controls">
+            <select id="monthPicker"></select>
+            <select id="yearPicker"></select>
+            <button class="btn-icon" id="prevBtn" title="Mes anterior">◀</button>
+            <button class="btn btn-secondary btn-sm" id="todayBtn">Hoy</button>
+            <button class="btn-icon" id="nextBtn" title="Mes siguiente">▶</button>
+            <button class="btn btn-secondary btn-sm" id="printCalBtn">Imprimir</button>
+          </div>
+        </div>
+
+        <div class="cal-weekdays" id="weekdays"></div>
+        <div class="cal-grid" id="calendarGrid"></div>
+
+        <div class="cal-legend" id="legend"></div>
+      </div>
+    </section>
+
+    <!-- ============ PANEL: REPORTES ============ -->
+    <section class="panel" id="panel-reportes">
+      <div class="filters-bar surface">
+        <div class="field">
+          <label for="filterDateStart">Desde</label>
+          <input type="date" id="filterDateStart">
+        </div>
+        <div class="field">
+          <label for="filterDateEnd">Hasta</label>
+          <input type="date" id="filterDateEnd">
+        </div>
+        <div class="field">
+          <label for="filterUser">Empleados</label>
+          <select id="filterUser">
+            <option value="">Todos</option>
+            <option>Bazante Nadia Romina</option>
+            <option>Boillat Cesar Enrique</option>
+            <option>Cardozo Maria Raquel</option>
+            <option>Cedron Noelia Aurora</option>
+            <option>Corrales Alicia Mariela</option>
+            <option>Fioravante Romulo</option>
+            <option>Gonzalez Alberto Misael</option>
+            <option>Gonzalez Juan Jose</option>
+            <option>Gudiño Natalia Esther</option>
+            <option>Magnani Enzo Luciano</option>
+            <option>Martinis Carlos Esteban</option>
+            <option>Pablos Patricia</option>
+            <option>Palacios Ana Gabriela</option>
+            <option>Ortega Lucia Noemi</option>
+            <option>Ramos Marcelo Gustavo</option>
+            <option>Riveros Patricia Soledad</option>
+            <option>Sosa Rita Cecilia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="filterDays">Días mínimos</label>
+          <input id="filterDays" type="number" min="0" placeholder="Todos">
+        </div>
+        <div class="field">
+          <label for="filterMonth">Mes</label>
+          <select id="filterMonth">
+            <option value="">Todos</option>
+            <option value="1">Enero</option>
+            <option value="2">Febrero</option>
+            <option value="3">Marzo</option>
+            <option value="4">Abril</option>
+            <option value="5">Mayo</option>
+            <option value="6">Junio</option>
+            <option value="7">Julio</option>
+            <option value="8">Agosto</option>
+            <option value="9">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="filterYear">Año</label>
+          <select id="filterYear">
+            <option value="">Todos</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+            <option value="2028">2028</option>
+            <option value="2029">2029</option>
+            <option value="2030">2030</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="filters-actions">
+            <button class="btn btn-secondary" id="clearFiltersBtn">Limpiar</button>
+            <button class="btn btn-primary" id="applyFiltersBtn">Aplicar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi surface">
+          <div class="kpi-label">Registros</div>
+          <div class="kpi-value" id="kpiRecords">0</div>
+        </div>
+        <div class="kpi surface accent">
+          <div class="kpi-label">Días totales</div>
+          <div class="kpi-value" id="kpiDays">0</div>
+        </div>
+        <div class="kpi surface">
+          <div class="kpi-label">Empleados</div>
+          <div class="kpi-value" id="kpiUsers">0</div>
+        </div>
+        <div class="kpi surface licencias">
+          <div class="kpi-label">Licencias</div>
+          <div class="kpi-value" id="kpiLicencias">0</div>
+        </div>
+        <div class="kpi surface inasistencias">
+          <div class="kpi-label">Inasistencias</div>
+          <div class="kpi-value" id="kpiInasistencias">0</div>
+        </div>
+      </div>
+
+      <div class="ranking-card surface" id="reportPrintArea">
+        <div class="ranking-head">
+          <div>
+            <h3>Ranking de días por empleado</h3>
+            <div class="sub" id="rankingSub">Sin filtros aplicados</div>
+          </div>
+          <button id="printStatsBtn" class="btn btn-secondary btn-sm">Imprimir</button>
+        </div>
+        <div class="ranking-list" id="userStatsDetails">
+          <div class="empty">Cargando estadísticas…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PANEL: REGISTROS ============ -->
+    <section class="panel" id="panel-registros">
+      <div class="table-card surface" id="tablePrintArea">
+        <div class="table-head">
+          <div>
+            <h3>Registros de Días Concedidos</h3>
+            <div class="sub" id="tableSub">—</div>
+          </div>
+          <div class="table-tools">
+            <div class="search">
+              <input id="search" placeholder="Buscar por nombre o artículo…" />
+            </div>
+            <button class="btn btn-secondary btn-sm" id="printTableBtn">Imprimir</button>
+            <button class="btn btn-secondary btn-sm" id="exportBtn" title="Descarga todos los registros en un único archivo JSON">Exportar JSON</button>
+            <button class="btn btn-secondary btn-sm" id="importBtn" title="Carga un JSON exportado en el respaldo local (no modifica Firebase)">Importar JSON</button>
+            <button class="btn btn-secondary btn-sm" id="modeBtn">Ver respaldo local</button>
+          </div>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:120px;">Inicio</th>
+                <th>Nombre</th>
+                <th>Artículo</th>
+                <th style="width:80px;">Días</th>
+                <th style="width:70px;">Color</th>
+                <th style="width:180px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTable"></tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <div class="page-info" id="paginationInfo"></div>
+          <div class="page-ctrl" id="paginationControls"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+
+<script>
+/* ============================================================
+   FIREBASE
+   ============================================================ */
+const FIREBASE_OK = typeof firebase !== "undefined";
+let db = null;
+if(FIREBASE_OK){
+firebase.initializeApp({
+  apiKey: "AIzaSyDDIbbbuorx96B02O-gmZ60oAs7bb7fjfM",
+  authDomain: "defensoria6rpj.firebaseapp.com",
+  projectId: "defensoria6rpj",
+  storageBucket: "defensoria6rpj.appspot.com",
+  messagingSenderId: "388530292853",
+  appId: "1:388530292853:web:3161b40c0f7b1eb01fd03c",
+  databaseURL: "https://defensoria6rpj-default-rtdb.firebaseio.com/"
+});
+db = firebase.database().ref("registros");
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  mode: "online",          // "online" (Firebase) | "local" (respaldo)
+  onlineRecords: [],
+  localRecords: [],
+  records: [],
+  currentMonth: new Date().getMonth(),
+  currentYear: new Date().getFullYear(),
+  searchFilter: "",
+  currentPage: 1,
+  recordsPerPage: 10,
+  reportFilters: {
+    dateStart: "", dateEnd: "", user: "", minDays: 0, month: "", year: ""
+  }
+};
+
+const monthNames = [
+  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
+];
+
+/* ============================================================
+   ARTÍCULOS CONSIDERADOS LICENCIAS
+   ============================================================ */
+const LICENSE_ARTICLES = [312, 293, 295, 323, 319];
+
+function isLicencia(articulo){
+  if(!articulo) return false;
+  return LICENSE_ARTICLES.some(n => new RegExp(`\\b${n}\\b`).test(articulo));
+}
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+const uuid = () => "id" + Math.random().toString(16).slice(2);
+const daysInMonth = (m, y) => new Date(y, m + 1, 0).getDate();
+const firstDayOfMonth = (m, y) => new Date(y, m, 1).getDay();
+
+function formatDate(dateString){
+  if(!dateString) return "";
+  const d = new Date(dateString + "T00:00:00");
+  return d.toLocaleDateString("es-AR", { day:"2-digit", month:"2-digit", year:"numeric" });
+}
+
+function checkDuplicate(nombre, inicio, editingId = ""){
+  return state.records.some(r =>
+    r.id !== editingId && r.nombre === nombre && r.inicio === inicio
+  );
+}
+
+function checkDateOverlap(nombre, inicio, dias, editingId = ""){
+  const startDate = new Date(inicio + "T00:00:00");
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + dias - 1);
+
+  return state.records.some(r => {
+    if(r.id === editingId) return false;
+    if(r.nombre !== nombre) return false;
+    const rs = new Date(r.inicio + "T00:00:00");
+    const re = new Date(rs);
+    re.setDate(rs.getDate() + r.dias - 1);
+    return (startDate <= re && endDate >= rs);
+  });
+}
+
+function showNotification(message, type = "success"){
+  let n = document.getElementById("formNotification");
+  if(!n){
+    n = document.createElement("div");
+    n.id = "formNotification";
+    document.body.appendChild(n);
+  }
+  const colors = {
+    success: "linear-gradient(135deg,#10b981,#059669)",
+    error:   "linear-gradient(135deg,#ef4444,#dc2626)",
+    warning: "linear-gradient(135deg,#f59e0b,#d97706)",
+    info:    "linear-gradient(135deg,#2563eb,#4f46e5)"
+  };
+  n.style.background = colors[type] || colors.info;
+  n.textContent = message;
+
+  requestAnimationFrame(() => {
+    n.style.opacity = "1";
+    n.style.transform = "translateY(0) scale(1)";
+  });
+
+  clearTimeout(n._t);
+  n._t = setTimeout(() => {
+    n.style.opacity = "0";
+    n.style.transform = "translateY(-16px) scale(.97)";
+  }, 3000);
+}
+
+/* ============================================================
+   PRINT · imprime únicamente un elemento sin scroll
+   ============================================================ */
+function printOnly(elementId, title){
+  const el = document.getElementById(elementId);
+  if(!el) return;
+
+  // Limpiar contenedores previos
+  document.querySelectorAll("#print-container").forEach(c => c.remove());
+
+  // Clonar el elemento para imprimir solo su contenido
+  const clone = el.cloneNode(true);
+  clone.classList.add("print-target");
+  clone.setAttribute("data-print-title", title || "");
+
+  const container = document.createElement("div");
+  container.id = "print-container";
+  container.appendChild(clone);
+  document.body.appendChild(container);
+
+  const originalTitle = document.title;
+  document.title = title || originalTitle;
+
+  const cleanup = () => {
+    document.title = originalTitle;
+    const c = document.getElementById("print-container");
+    if(c) c.remove();
+  };
+
+  window.addEventListener("afterprint", cleanup, { once: true });
+
+  setTimeout(() => {
+    window.print();
+    // Fallback por si afterprint no dispara
+    setTimeout(cleanup, 1500);
+  }, 60);
+}
+
+/* ============================================================
+   FIREBASE OPS
+   ============================================================ */
+const LOCAL_KEY = "faltas_licencias_respaldo_v1";
+let firstSnapshot = false;
+
+function loadLocal(){
+  try{
+    const arr = JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]");
+    return Array.isArray(arr) ? arr : [];
+  }catch(e){ return []; }
+}
+function saveLocal(){
+  try{
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(state.localRecords));
+    return true;
+  }catch(e){
+    showNotification("No se pudo guardar en el navegador. Exporte el JSON para no perder los datos.", "warning");
+    return false;
+  }
+}
+
+function upsertRecord(obj){
+  if(state.mode === "local"){
+    const i = state.localRecords.findIndex(r => r.id === obj.id);
+    if(i >= 0) state.localRecords[i] = obj; else state.localRecords.push(obj);
+    saveLocal();
+    state.records = state.localRecords;
+    renderAll();
+    return Promise.resolve();
+  }
+  return db.child(obj.id).set(obj);
+}
+function removeRecord(id){
+  if(state.mode === "local"){
+    state.localRecords = state.localRecords.filter(r => r.id !== id);
+    saveLocal();
+    state.records = state.localRecords;
+    renderAll();
+    return Promise.resolve();
+  }
+  return db.child(id).remove();
+}
+
+if(db){
+  db.on("value", snap => {
+    firstSnapshot = true;
+    state.onlineRecords = Object.values(snap.val() || {});
+    if(state.mode === "online"){
+      state.records = state.onlineRecords;
+      renderAll();
+    }
+  });
+  setTimeout(() => {
+    if(!firstSnapshot){
+      showNotification("Sin respuesta de Firebase. Puede usar el respaldo local desde Registros.", "warning");
+    }
+  }, 8000);
+}
+
+/* ============================================================
+   MODO RESPALDO · cambiar entre Firebase y copia local
+   ============================================================ */
+function setMode(mode){
+  if(mode === "online" && !db) return;
+  state.mode = mode;
+  state.records = mode === "local" ? state.localRecords : state.onlineRecords;
+  state.currentPage = 1;
+  updateModeUI();
+  renderAll();
+}
+
+function updateModeUI(){
+  const local = state.mode === "local";
+  const badge = document.getElementById("modeBadge");
+  badge.textContent = local ? "Respaldo local" : "Firebase · en línea";
+  badge.className = "mode-badge " + (local ? "local" : "online");
+  const modeBtn = document.getElementById("modeBtn");
+  modeBtn.textContent = local ? "Volver a Firebase" : "Ver respaldo local";
+  modeBtn.style.display = db ? "" : "none";
+  document.getElementById("exportBtn").title = local
+    ? "Descarga el respaldo local en un archivo JSON"
+    : "Lee Firebase (sin modificarlo) y descarga todos los registros en un único JSON";
+}
+
+/* ============================================================
+   EXPORTAR / IMPORTAR JSON
+   ============================================================ */
+function downloadJSON(obj, filename){
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function exportJSON(){
+  let records;
+  const fromFirebase = state.mode === "online";
+
+  if(fromFirebase){
+    try{
+      // Solo lectura: no escribe ni elimina nada en Firebase
+      const snap = await Promise.race([
+        db.once("value"),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("tiempo de espera agotado")), 10000))
+      ]);
+      records = Object.values(snap.val() || {});
+    }catch(err){
+      showNotification("No se pudo leer Firebase: " + err.message, "error");
+      return;
+    }
+  } else {
+    records = state.localRecords;
+  }
+
+  if(!records.length){
+    showNotification("No hay registros para exportar", "warning");
+    return;
+  }
+
+  const t = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  const stamp = `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}_${pad(t.getHours())}${pad(t.getMinutes())}`;
+
+  downloadJSON({
+    app: "faltas-licencias",
+    version: 1,
+    exportedAt: t.toISOString(),
+    origen: fromFirebase ? "firebase" : "local",
+    total: records.length,
+    registros: records
+  }, `respaldo-faltas-licencias_${stamp}.json`);
+
+  showNotification(`Exportados ${records.length} registros`);
+}
+
+function normalizeImported(raw){
+  let arr = [];
+  if(Array.isArray(raw)) arr = raw;
+  else if(raw && Array.isArray(raw.registros)) arr = raw.registros;
+  else if(raw && raw.registros && typeof raw.registros === "object") arr = Object.values(raw.registros);
+  else if(raw && typeof raw === "object") arr = Object.values(raw);
+
+  const valid = [];
+  const seen = new Set();
+  let skipped = 0;
+
+  arr.forEach(r => {
+    const dias = parseInt(r && r.dias);
+    const ok = r && typeof r.nombre === "string" && r.nombre.trim() &&
+               typeof r.articulo === "string" && r.articulo.trim() &&
+               dias >= 1 && /^\d{4}-\d{2}-\d{2}$/.test(r.inicio);
+    if(!ok){ skipped++; return; }
+
+    let id = (typeof r.id === "string" && /^[\w-]+$/.test(r.id)) ? r.id : uuid();
+    if(seen.has(id)) id = uuid();
+    seen.add(id);
+
+    valid.push({
+      id,
+      nombre:   r.nombre.replace(/[<>"]/g, "").trim(),
+      articulo: r.articulo.replace(/[<>"]/g, "").trim(),
+      dias,
+      inicio: r.inicio,
+      color: /^#[0-9a-f]{6}$/i.test(r.color) ? r.color : "#2563eb"
+    });
+  });
+  return { valid, skipped };
+}
+
+document.getElementById("exportBtn").addEventListener("click", exportJSON);
+document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+document.getElementById("modeBtn").addEventListener("click", () => {
+  setMode(state.mode === "local" ? "online" : "local");
+  if(state.mode === "local" && !state.localRecords.length){
+    showNotification("El respaldo local está vacío. Use «Importar JSON».", "info");
+  }
+});
+
+document.getElementById("importFile").addEventListener("change", e => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onerror = () => showNotification("No se pudo leer el archivo", "error");
+  reader.onload = () => {
+    let raw;
+    try{ raw = JSON.parse(reader.result); }
+    catch(err){ showNotification("El archivo no es un JSON válido", "error"); return; }
+
+    const { valid, skipped } = normalizeImported(raw);
+    if(!valid.length){
+      showNotification("El archivo no contiene registros válidos", "error");
+      return;
+    }
+
+    const msg =
+      `Se encontraron ${valid.length} registros válidos` +
+      (skipped ? ` (${skipped} omitidos por datos incompletos)` : "") + ".\n\n" +
+      (state.localRecords.length ? `Esto reemplazará los ${state.localRecords.length} registros del respaldo local actual.\n` : "") +
+      "Firebase no se modifica.\n\n¿Cargar en modo respaldo local?";
+    if(!confirm(msg)) return;
+
+    state.localRecords = valid;
+    saveLocal();
+    setMode("local");
+    showNotification(`Respaldo cargado: ${valid.length} registros`);
+  };
+  reader.readAsText(file);
+});
+
+/* ============================================================
+   TABS
+   ============================================================ */
+document.getElementById("tabs").addEventListener("click", e => {
+  const btn = e.target.closest(".tab");
+  if(!btn) return;
+
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+
+  if(btn.dataset.tab === "calendario") renderCalendar();
+  if(btn.dataset.tab === "registros") renderTable();
+});
+
+function goToTab(name){
+  document.querySelector(`.tab[data-tab="${name}"]`)?.click();
+}
+
+/* ============================================================
+   FORM
+   ============================================================ */
+const form = document.getElementById("form");
+const $nombre = document.getElementById("nombre");
+const $inicio = document.getElementById("inicio");
+const $nombreError = document.getElementById("nombreError");
+const $inicioError = document.getElementById("inicioError");
+const $editingId = document.getElementById("editingId");
+const $submitBtn = document.getElementById("submitBtn");
+const $formHint = document.getElementById("formHint");
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+
+  const id = $editingId.value || uuid();
+  const isEditing = !!$editingId.value;
+  const nombre = $nombre.value.trim();
+  const articulo = document.getElementById("articulo").value.trim();
+  const dias = parseInt(document.getElementById("dias").value);
+  const inicio = $inicio.value;
+  const color = document.getElementById("color").value;
+
+  if(!nombre || !articulo || !dias || !inicio){
+    showNotification("Complete todos los campos obligatorios", "error");
+    return;
+  }
+  if(dias < 1){
+    showNotification("La cantidad de días debe ser al menos 1", "error");
+    return;
+  }
+
+  if(checkDuplicate(nombre, inicio, id)){
+    $nombre.classList.add("input-error");
+    $inicio.classList.add("input-error");
+    $nombreError.textContent = "Ya existe un registro para esta persona en esta fecha";
+    $nombreError.classList.add("show");
+    $inicioError.textContent = "Esta fecha ya está registrada para esta persona";
+    $inicioError.classList.add("show");
+    $nombre.focus();
+    return;
+  }
+
+  if(checkDateOverlap(nombre, inicio, dias, id)){
+    showNotification("Advertencia: el período se solapa con otro registro de la misma persona", "warning");
+  }
+
+  clearErrors();
+
+  upsertRecord({ id, nombre, articulo, dias, inicio, color });
+
+  form.reset();
+  $editingId.value = "";
+  $submitBtn.textContent = "Agregar registro";
+  $formHint.textContent = "Nuevo registro";
+  document.getElementById("color").value = "#2563eb";
+
+  showNotification(isEditing ? "Registro actualizado correctamente" : "Registro agregado correctamente");
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  form.reset();
+  $editingId.value = "";
+  $submitBtn.textContent = "Agregar registro";
+  $formHint.textContent = "Nuevo registro";
+  document.getElementById("color").value = "#2563eb";
+  clearErrors();
+});
+
+function clearErrors(){
+  $nombre.classList.remove("input-error");
+  $inicio.classList.remove("input-error");
+  $nombreError.classList.remove("show");
+  $inicioError.classList.remove("show");
+}
+$nombre.addEventListener("input", () => { $nombre.classList.remove("input-error"); $nombreError.classList.remove("show"); });
+$inicio.addEventListener("input", () => { $inicio.classList.remove("input-error"); $inicioError.classList.remove("show"); });
+
+/* ============================================================
+   SEARCH
+   ============================================================ */
+document.getElementById("search").addEventListener("input", e => {
+  state.searchFilter = e.target.value.toLowerCase();
+  state.currentPage = 1;
+  renderTable();
+});
+
+/* ============================================================
+   PRINT BUTTONS
+   ============================================================ */
+document.getElementById("printStatsBtn").addEventListener("click", () => {
+  printOnly("reportPrintArea", "Reporte · Ranking de días por empleado");
+});
+
+document.getElementById("printTableBtn").addEventListener("click", () => {
+  printOnly("tablePrintArea", "Registros de Días Concedidos");
+});
+
+document.getElementById("printCalBtn").addEventListener("click", () => {
+  printOnly("calendarPrintArea",
+    `Calendario · ${monthNames[state.currentMonth]} ${state.currentYear}`);
+});
+
+/* ============================================================
+   CALENDAR NAV
+   ============================================================ */
+document.getElementById("prevBtn").addEventListener("click", () => {
+  state.currentMonth--;
+  if(state.currentMonth < 0){ state.currentMonth = 11; state.currentYear--; }
+  renderCalendar();
+});
+document.getElementById("nextBtn").addEventListener("click", () => {
+  state.currentMonth++;
+  if(state.currentMonth > 11){ state.currentMonth = 0; state.currentYear++; }
+  renderCalendar();
+});
+document.getElementById("todayBtn").addEventListener("click", () => {
+  const t = new Date();
+  state.currentMonth = t.getMonth();
+  state.currentYear = t.getFullYear();
+  renderCalendar();
+});
+
+const monthPicker = document.getElementById("monthPicker");
+const yearPicker = document.getElementById("yearPicker");
+
+monthNames.forEach((m, i) => {
+  const o = document.createElement("option");
+  o.value = i; o.textContent = m;
+  monthPicker.appendChild(o);
+});
+for(let y = 2020; y <= 2030; y++){
+  const o = document.createElement("option");
+  o.value = y; o.textContent = y;
+  yearPicker.appendChild(o);
+}
+monthPicker.addEventListener("change", () => {
+  state.currentMonth = parseInt(monthPicker.value);
+  renderCalendar();
+});
+yearPicker.addEventListener("change", () => {
+  state.currentYear = parseInt(yearPicker.value);
+  renderCalendar();
+});
+
+/* ============================================================
+   FILTERS
+   ============================================================ */
+document.getElementById("applyFiltersBtn").addEventListener("click", () => {
+  state.reportFilters.dateStart = document.getElementById("filterDateStart").value;
+  state.reportFilters.dateEnd   = document.getElementById("filterDateEnd").value;
+  state.reportFilters.user      = document.getElementById("filterUser").value;
+  state.reportFilters.minDays   = parseInt(document.getElementById("filterDays").value) || 0;
+  state.reportFilters.month     = document.getElementById("filterMonth").value;
+  state.reportFilters.year      = document.getElementById("filterYear").value;
+  renderUserStats();
+});
+
+document.getElementById("clearFiltersBtn").addEventListener("click", () => {
+  document.getElementById("filterDateStart").value = "";
+  document.getElementById("filterDateEnd").value   = "";
+  document.getElementById("filterUser").value      = "";
+  document.getElementById("filterDays").value      = "";
+  document.getElementById("filterMonth").value     = "";
+  document.getElementById("filterYear").value      = "";
+
+  state.reportFilters = {
+    dateStart: "", dateEnd: "", user: "", minDays: 0, month: "", year: ""
+  };
+
+  renderUserStats();
+  showNotification("Filtros limpiados", "info");
+});
+
+/* ============================================================
+   CALENDAR RENDER
+   ============================================================ */
+function renderCalendar(){
+  const month = state.currentMonth;
+  const year  = state.currentYear;
+
+  document.getElementById("calTitle").innerHTML =
+    `${monthNames[month]} <span>${year}</span>`;
+
+  monthPicker.value = month;
+  yearPicker.value = year;
+
+  const weekdays = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+  document.getElementById("weekdays").innerHTML =
+    weekdays.map(d => `<div class="cal-weekday">${d}</div>`).join("");
+
+  const daysCurrent = daysInMonth(month, year);
+  const firstDay = firstDayOfMonth(month, year);
+  const daysPrev = daysInMonth(month - 1, year);
+
+  const grid = document.getElementById("calendarGrid");
+  grid.innerHTML = "";
+
+  for(let i = firstDay - 1; i >= 0; i--){
+    grid.appendChild(createDayElement(daysPrev - i, true));
+  }
+  const today = new Date();
+  for(let d = 1; d <= daysCurrent; d++){
+    const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+    grid.appendChild(createDayElement(d, false, isToday));
+  }
+  const totalCells = 42;
+  const remaining = totalCells - (firstDay + daysCurrent);
+  for(let d = 1; d <= remaining; d++){
+    grid.appendChild(createDayElement(d, true));
+  }
+
+  renderLegend();
+}
+
+function createDayElement(day, isOther, isToday = false){
+  const el = document.createElement("div");
+  el.className = "cal-day";
+  if(isOther) el.classList.add("other");
+  if(isToday) el.classList.add("today");
+
+  const dateString = isOther ? "" :
+    `${state.currentYear}-${String(state.currentMonth + 1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+
+  const events = [];
+  if(!isOther){
+    const currentDate = new Date(dateString + "T00:00:00");
+    state.records.forEach(r => {
+      const s = new Date(r.inicio + "T00:00:00");
+      const e = new Date(s);
+      e.setDate(s.getDate() + r.dias - 1);
+      if(currentDate >= s && currentDate <= e){
+        events.push({ name: r.nombre, color: r.color });
+      }
+    });
+  }
+
+  const shown = events.slice(0, 3);
+  el.innerHTML = `
+    <div class="num">${day}</div>
+    <div class="cal-events">
+      ${shown.map(ev => `
+        <div class="cal-chip">
+          <span class="dot" style="background:${ev.color}"></span>
+          ${ev.name}
+        </div>
+      `).join("")}
+      ${events.length > 3 ? `<div class="cal-more">+${events.length - 3} más</div>` : ""}
+    </div>
+  `;
+  return el;
+}
+
+function renderLegend(){
+  const box = document.getElementById("legend");
+  const users = {};
+  const firstDay = new Date(state.currentYear, state.currentMonth, 1);
+  const lastDay  = new Date(state.currentYear, state.currentMonth + 1, 0);
+
+  state.records.forEach(r => {
+    const s = new Date(r.inicio + "T00:00:00");
+    const e = new Date(s);
+    e.setDate(s.getDate() + r.dias - 1);
+    if(s <= lastDay && e >= firstDay) users[r.nombre] = r.color;
+  });
+
+  const entries = Object.entries(users);
+  if(!entries.length){
+    box.innerHTML = `<span style="font-size:11.5px;color:var(--text-soft);font-weight:500;">Sin registros este mes.</span>`;
+    return;
+  }
+  box.innerHTML = entries.map(([n, c]) => `
+    <div class="legend-item">
+      <span class="dot" style="background:${c}"></span>${n}
+    </div>
+  `).join("");
+}
+
+/* ============================================================
+   TABLE RENDER
+   ============================================================ */
+function renderTable(){
+  const tbody = document.getElementById("recordsTable");
+
+  let list = state.records.filter(r => {
+    if(!state.searchFilter) return true;
+    return r.nombre.toLowerCase().includes(state.searchFilter) ||
+           r.articulo.toLowerCase().includes(state.searchFilter);
+  });
+
+  list.sort((a, b) => new Date(b.inicio) - new Date(a.inicio));
+
+  const start = (state.currentPage - 1) * state.recordsPerPage;
+  const end = start + state.recordsPerPage;
+  const page = list.slice(start, end);
+
+  if(page.length === 0){
+    tbody.innerHTML = `
+      <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-soft);font-weight:500;">
+        No hay registros para mostrar
+      </td></tr>`;
+  } else {
+    tbody.innerHTML = page.map(r => {
+      const lic = isLicencia(r.articulo);
+      return `
+      <tr>
+        <td class="cell-date">${formatDate(r.inicio)}</td>
+        <td class="cell-name">${r.nombre}</td>
+        <td class="cell-art" title="${r.articulo}">${r.articulo}</td>
+        <td><span class="badge ${lic ? "badge-lic" : ""}">${r.dias}</span></td>
+        <td><span class="swatch" style="background:${r.color}"></span></td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-secondary btn-sm" onclick="editRecord('${r.id}')">Editar</button>
+            <button class="btn btn-secondary btn-sm" onclick="deleteRecord('${r.id}')">Eliminar</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join("");
+  }
+
+  document.getElementById("paginationInfo").innerHTML =
+    `Mostrando <strong>${list.length === 0 ? 0 : start + 1}–${Math.min(end, list.length)}</strong> de <strong>${list.length}</strong> registros`;
+
+  document.getElementById("tableSub").textContent =
+    `${state.records.length} registros totales ${state.mode === "local" ? "en el respaldo local" : "en el sistema"}`;
+
+  renderPagination(list.length);
+}
+
+function renderPagination(total){
+  const box = document.getElementById("paginationControls");
+  const totalPages = Math.ceil(total / state.recordsPerPage);
+  if(totalPages <= 1){ box.innerHTML = ""; return; }
+
+  let html = "";
+  html += `<button class="page-btn" ${state.currentPage === 1 ? "disabled" : ""} onclick="changePage(${state.currentPage - 1})">‹</button>`;
+
+  const range = [];
+  for(let i = 1; i <= totalPages; i++){
+    if(i === 1 || i === totalPages || Math.abs(i - state.currentPage) <= 1){
+      range.push(i);
+    } else if(range[range.length - 1] !== "..."){
+      range.push("...");
+    }
+  }
+  range.forEach(p => {
+    if(p === "...") html += `<span style="color:var(--text-soft);padding:0 4px;">…</span>`;
+    else html += `<button class="page-btn ${p === state.currentPage ? "active" : ""}" onclick="changePage(${p})">${p}</button>`;
+  });
+
+  html += `<button class="page-btn" ${state.currentPage === totalPages ? "disabled" : ""} onclick="changePage(${state.currentPage + 1})">›</button>`;
+
+  box.innerHTML = html;
+}
+
+window.changePage = function(page){
+  state.currentPage = page;
+  renderTable();
+};
+
+window.editRecord = function(id){
+  const r = state.records.find(x => x.id === id);
+  if(!r) return;
+
+  $nombre.value = r.nombre;
+  document.getElementById("articulo").value = r.articulo;
+  document.getElementById("dias").value = r.dias;
+  $inicio.value = r.inicio;
+  document.getElementById("color").value = r.color;
+  $editingId.value = r.id;
+
+  $submitBtn.textContent = "Guardar cambios";
+  $formHint.textContent = "Editando registro";
+
+  clearErrors();
+  goToTab("registro");
+};
+
+window.deleteRecord = function(id){
+  const r = state.records.find(x => x.id === id);
+  if(!r) return;
+  if(confirm(`¿Eliminar el registro de ${r.nombre} (${formatDate(r.inicio)})?`)){
+    removeRecord(id);
+    showNotification("Registro eliminado", "info");
+  }
+};
+
+/* ============================================================
+   USER STATS
+   ============================================================ */
+function renderUserStats(){
+  let list = [...state.records];
+
+  if(state.reportFilters.dateStart){
+    const s = new Date(state.reportFilters.dateStart);
+    list = list.filter(r => new Date(r.inicio + "T00:00:00") >= s);
+  }
+  if(state.reportFilters.dateEnd){
+    const e = new Date(state.reportFilters.dateEnd);
+    list = list.filter(r => new Date(r.inicio + "T00:00:00") <= e);
+  }
+  if(state.reportFilters.user){
+    list = list.filter(r => r.nombre === state.reportFilters.user);
+  }
+  if(state.reportFilters.minDays > 0){
+    list = list.filter(r => r.dias >= state.reportFilters.minDays);
+  }
+  if(state.reportFilters.month){
+    const m = parseInt(state.reportFilters.month);
+    list = list.filter(r => Number(r.inicio.split("-")[1]) === m);
+  }
+  if(state.reportFilters.year){
+    const y = parseInt(state.reportFilters.year);
+    list = list.filter(r => Number(r.inicio.split("-")[0]) === y);
+  }
+
+  const stats = {};
+  list.forEach(r => { stats[r.nombre] = (stats[r.nombre] || 0) + r.dias; });
+
+  const sorted = Object.entries(stats)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, days]) => ({ name, days }));
+
+  const totalDays = sorted.reduce((s, u) => s + u.days, 0);
+  const totalUsers = sorted.length;
+  const totalRecords = list.length;
+  const totalLicencias = list.filter(r => isLicencia(r.articulo)).length;
+  const totalInasistencias = totalRecords - totalLicencias;
+
+  document.getElementById("kpiRecords").textContent = totalRecords;
+  document.getElementById("kpiDays").textContent = totalDays;
+  document.getElementById("kpiUsers").textContent = totalUsers;
+  document.getElementById("kpiLicencias").textContent = totalLicencias;
+  document.getElementById("kpiInasistencias").textContent = totalInasistencias;
+
+  const activeFilters = [];
+  if(state.reportFilters.dateStart) activeFilters.push(`desde ${formatDate(state.reportFilters.dateStart)}`);
+  if(state.reportFilters.dateEnd) activeFilters.push(`hasta ${formatDate(state.reportFilters.dateEnd)}`);
+  if(state.reportFilters.user) activeFilters.push(state.reportFilters.user);
+  if(state.reportFilters.month) activeFilters.push(monthNames[parseInt(state.reportFilters.month) - 1]);
+  if(state.reportFilters.year) activeFilters.push(state.reportFilters.year);
+  if(state.reportFilters.minDays) activeFilters.push(`≥ ${state.reportFilters.minDays} días`);
+
+  document.getElementById("rankingSub").textContent =
+    activeFilters.length ? "Filtros: " + activeFilters.join(" · ") : "Sin filtros aplicados";
+
+  const box = document.getElementById("userStatsDetails");
+
+  if(sorted.length === 0){
+    box.innerHTML = `<div class="empty">No hay datos para mostrar con los filtros seleccionados</div>`;
+    return;
+  }
+
+  const max = sorted[0].days || 1;
+
+  box.innerHTML = sorted.map((u, i) => {
+    const pct = Math.max(4, (u.days / max) * 100);
+    return `
+      <div class="rank-row">
+        <div class="rank-name">
+          <span class="rank-pos">${i + 1}</span>
+          <span title="${u.name}">${u.name}</span>
+        </div>
+        <div class="rank-track">
+          <div class="rank-bar" style="width:${pct}%"></div>
+        </div>
+        <div class="rank-value">${u.days}<small>d</small></div>
+      </div>
+    `;
+  }).join("");
+}
+
+/* ============================================================
+   MASTER RENDER
+   ============================================================ */
+function renderAll(){
+  renderCalendar();
+  renderTable();
+  renderUserStats();
+}
+
+state.localRecords = loadLocal();
+if(!db){
+  state.mode = "local";
+  state.records = state.localRecords;
+  setTimeout(() => showNotification("Sin conexión a Firebase: trabajando con el respaldo local", "warning"), 400);
+}
+updateModeUI();
+renderAll();
+</script>
+</body>
+</html>
