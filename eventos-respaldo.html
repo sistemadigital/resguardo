@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos · Respaldo</title>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+    <!-- Font Awesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ===== VARIABLES MINIMALISTAS (coherentes con tabla.html) ===== */
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-soft: #eff6ff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --white: #ffffff;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-sm: 0.375rem;
+            --radius: 0.5rem;
+            --radius-lg: 0.75rem;
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --header-height: 0px; /* se actualiza con JS */
+        }
+
+        /* ===== RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+        body.calendar-open {
+            overflow: hidden !important;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background-color: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-refresh {
+            background-color: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.15s, border-color 0.15s;
+            box-shadow: var(--shadow-sm);
+            white-space: nowrap;
+        }
+
+        .btn-refresh:hover {
+            background-color: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        /* Botón calendario */
+        .btn-calendar {
+            background-color: var(--primary);
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--gray-200);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.15s;
+            box-shadow: var(--shadow-sm);
+            white-space: nowrap;
+        }
+
+        .btn-calendar:hover {
+            background-color: var(--primary-light);
+        }
+        .btn-calendar.active {
+            background-color: var(--gray-700);
+            color: white;
+        }
+
+        /* ===== MODO RESPALDO ===== */
+        .mode-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+        .mode-badge::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        .mode-badge.online { background: #dcfce7; color: #15803d; }
+        .mode-badge.local { background: #fef3c7; color: #b45309; }
+        .floating-alert.warning { background-color: #d97706; }
+
+        /* ===== LAYOUT PRINCIPAL ===== */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            padding: 1.5rem;
+            gap: 1.5rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            height: calc(100vh - var(--header-height));
+        }
+
+        /* ===== PANEL IZQUIERDO ===== */
+        .left-panel {
+            flex: 0 0 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: sticky;
+            top: 1.5rem;
+            height: fit-content;
+            transition: display 0.2s;
+        }
+        .left-panel.hidden {
+            display: none;
+        }
+
+        .time-panel {
+            background-color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 1rem;
+            color: var(--gray-800);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .month-year {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+            color: var(--gray-500);
+            margin-bottom: 0.75rem;
+        }
+
+        .day-number {
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--gray-800);
+            margin-bottom: 0.25rem;
+        }
+
+        .weekday {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            margin-bottom: 1.5rem;
+        }
+
+        .time {
+            font-size: 1.75rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--gray-100);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            color: var(--gray-800);
+            width: 100%;
+            border: 1px solid var(--gray-200);
+        }
+
+        .date-separator {
+            width: 60px;
+            height: 2px;
+            background-color: var(--gray-200);
+            margin: 1rem 0;
+        }
+
+        /* Panel de eventos de hoy */
+        .today-panel {
+            background-color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem 1rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+        }
+
+        .today-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .today-title i {
+            color: var(--primary);
+        }
+
+        .today-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .today-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--gray-50);
+            border-radius: var(--radius-sm);
+            transition: all 0.15s;
+            border: 1px solid var(--gray-200);
+            cursor: pointer;
+        }
+
+        .today-item:hover {
+            background-color: var(--primary-soft);
+            border-color: var(--primary);
+        }
+
+        .today-item.pasado {
+            opacity: 0.6;
+            background-color: var(--gray-100);
+        }
+
+        .today-expediente {
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .today-expediente span {
+            font-size: 0.75rem;
+            font-weight: normal;
+            color: var(--gray-500);
+        }
+
+        .today-hora {
+            font-size: 0.75rem;
+            background-color: var(--primary-soft);
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            color: var(--gray-700);
+        }
+
+        .today-empty {
+            color: var(--gray-500);
+            font-style: italic;
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+
+        /* Nuevo panel de estadísticas */
+        .stats-panel {
+            background-color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem 1rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+        }
+
+        .stats-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stats-title i {
+            color: var(--primary);
+        }
+
+        .stats-container {
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 0.875rem;
+        }
+
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .stats-item:last-child {
+            border-bottom: none;
+        }
+
+        .stats-category {
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .stats-count {
+            background-color: var(--primary-soft);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .stats-empty {
+            color: var(--gray-500);
+            font-style: italic;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        /* ===== PANEL DERECHO: contenedor de tabla y calendario ===== */
+        .right-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 500px;
+            position: relative;
+        }
+
+        .events-panel {
+            background-color: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .panel-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .panel-header h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-right: auto;
+        }
+
+        .filters-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background-color: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            padding: 0.25rem 0.25rem 0.25rem 1rem;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .search-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+
+        .search-box i {
+            color: var(--gray-400);
+            font-size: 0.875rem;
+        }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            width: 200px;
+            outline: none;
+            color: var(--gray-800);
+        }
+
+        .search-box input::placeholder {
+            color: var(--gray-400);
+        }
+
+        .search-box button {
+            background-color: var(--primary);
+            border: none;
+            color: white;
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .search-box button:hover {
+            background-color: var(--primary-light);
+        }
+
+        .date-filter {
+            display: flex;
+            align-items: center;
+            background-color: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            padding: 0.25rem 0.25rem 0.25rem 1rem;
+        }
+
+        .date-filter:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+
+        .date-filter i {
+            color: var(--gray-400);
+            font-size: 0.875rem;
+        }
+
+        .date-filter input[type="date"] {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 0.5rem;
+            font-size: 0.875rem;
+            width: 150px;
+            outline: none;
+            color: var(--gray-800);
+        }
+
+        .date-filter input[type="date"]::-webkit-calendar-picker-indicator {
+            opacity: 0.5;
+            cursor: pointer;
+        }
+
+        .date-filter button {
+            background-color: transparent;
+            border: none;
+            color: var(--gray-500);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.15s, color 0.15s;
+        }
+
+        .date-filter button:hover {
+            background-color: var(--gray-100);
+            color: var(--danger);
+        }
+
+        /* Filtro por tipo (existente) */
+        .type-filter {
+            display: flex;
+            align-items: center;
+            background-color: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            padding: 0.25rem 0.25rem 0.25rem 1rem;
+        }
+
+        .type-filter:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+
+        .type-filter i {
+            color: var(--gray-400);
+            font-size: 0.875rem;
+        }
+
+        .type-filter select {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 0.5rem;
+            font-size: 0.875rem;
+            width: 150px;
+            outline: none;
+            color: var(--gray-800);
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .type-filter button {
+            background-color: transparent;
+            border: none;
+            color: var(--gray-500);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.15s, color 0.15s;
+        }
+
+        .type-filter button:hover {
+            background-color: var(--gray-100);
+            color: var(--danger);
+        }
+
+        /* Filtro por proceso (existente) */
+        .process-filter {
+            display: flex;
+            align-items: center;
+            background-color: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            padding: 0.25rem 0.25rem 0.25rem 1rem;
+        }
+
+        .process-filter:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+
+        .process-filter i {
+            color: var(--gray-400);
+            font-size: 0.875rem;
+        }
+
+        .process-filter select {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 0.5rem;
+            font-size: 0.875rem;
+            width: 150px;
+            outline: none;
+            color: var(--gray-800);
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .process-filter button {
+            background-color: transparent;
+            border: none;
+            color: var(--gray-500);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.15s, color 0.15s;
+        }
+
+        .process-filter button:hover {
+            background-color: var(--gray-100);
+            color: var(--danger);
+        }
+
+        /* NUEVO FILTRO POR TRIMESTRE */
+        .quarter-filter {
+            display: flex;
+            align-items: center;
+            background-color: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            padding: 0.25rem 0.25rem 0.25rem 1rem;
+        }
+
+        .quarter-filter:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+
+        .quarter-filter i {
+            color: var(--gray-400);
+            font-size: 0.875rem;
+        }
+
+        .quarter-filter select {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 0.5rem;
+            font-size: 0.875rem;
+            width: 150px;
+            outline: none;
+            color: var(--gray-800);
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .quarter-filter button {
+            background-color: transparent;
+            border: none;
+            color: var(--gray-500);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.15s, color 0.15s;
+        }
+
+        .quarter-filter button:hover {
+            background-color: var(--gray-100);
+            color: var(--danger);
+        }
+
+        /* NUEVO FILTRO POR AÑO */
+        .year-filter {
+            display: flex;
+            align-items: center;
+            background-color: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            padding: 0.25rem 0.25rem 0.25rem 1rem;
+        }
+
+        .year-filter:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+
+        .year-filter i {
+            color: var(--gray-400);
+            font-size: 0.875rem;
+        }
+
+        .year-filter select {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 0.5rem;
+            font-size: 0.875rem;
+            width: 150px;
+            outline: none;
+            color: var(--gray-800);
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .year-filter button {
+            background-color: transparent;
+            border: none;
+            color: var(--gray-500);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.15s, color 0.15s;
+        }
+
+        .year-filter button:hover {
+            background-color: var(--gray-100);
+            color: var(--danger);
+        }
+
+        /* ===== TABLA ===== */
+        .table-responsive {
+            overflow-x: auto;
+            flex: 1;
+        }
+
+        .events-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+            font-size: 0.875rem;
+        }
+
+        .events-table th {
+            text-align: left;
+            padding: 1rem 1rem;
+            background-color: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-600);
+            border-bottom: 1px solid var(--gray-200);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        .events-table td {
+            padding: 1rem 1rem;
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--gray-700);
+            vertical-align: middle;
+        }
+
+        .events-table tbody tr:hover td {
+            background-color: var(--gray-50);
+        }
+
+        .event-type-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: white;
+        }
+
+        .type-audiencia { background-color: var(--primary); }
+        .type-gesell { background-color: var(--success); }
+        .type-vencimiento { background-color: var(--danger); }
+        .type-recurso { background-color: var(--warning); }
+        .type-diligencia { background-color: #8b5cf6; }
+
+        /* ===== PAGINACIÓN ===== */
+        .pagination {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--white);
+        }
+
+        .pagination-info {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .page-btn {
+            background-color: var(--white);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .page-btn:not(:disabled):hover {
+            background-color: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading-row td {
+            text-align: center;
+            padding: 3rem !important;
+            color: var(--gray-500);
+            font-style: italic;
+        }
+
+        /* ===== CONTENEDOR DEL CALENDARIO (pantalla completa) ===== */
+        .calendar-container {
+            display: none;
+            background-color: var(--white);
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            width: 100%;
+            height: calc(100vh - var(--header-height));
+            z-index: 999;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            border: none;
+            box-shadow: none;
+            border-radius: 0;
+        }
+        .calendar-container.active {
+            display: flex;
+            flex-direction: column;
+        }
+        .calendar-frame {
+            flex: 1;
+            border: none;
+            width: 100%;
+            height: 100%;
+            display: block;
+            min-width: 100%;
+        }
+
+        /* ===== ALERTA FLOTANTE ===== */
+        .floating-alert {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background-color: var(--gray-800);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .floating-alert.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .floating-alert.success {
+            background-color: var(--success);
+        }
+
+        .floating-alert i {
+            font-size: 1.25rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1000px) {
+            .main-layout {
+                flex-direction: column;
+                height: auto;
+            }
+            .left-panel {
+                position: static;
+                width: 100%;
+                flex: unset;
+            }
+            .left-panel.hidden {
+                display: none;
+            }
+            .right-content {
+                min-height: 400px;
+            }
+            .calendar-container {
+                top: var(--header-height);
+                height: calc(100vh - var(--header-height));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 0.5rem 0.75rem;
+            }
+            .logo {
+                font-size: 1rem;
+            }
+            .btn-refresh,
+            .btn-calendar {
+                padding: 0.35rem 0.75rem;
+                font-size: 0.75rem;
+                white-space: nowrap;
+            }
+            .btn-calendar i,
+            .btn-refresh i {
+                font-size: 0.75rem;
+            }
+            .header-actions {
+                gap: 0.3rem;
+            }
+            .panel-header {
+                padding: 0.75rem 1rem;
+            }
+            .panel-header h2 {
+                font-size: 1rem;
+            }
+            .filters-row {
+                gap: 0.5rem;
+            }
+            .search-box input {
+                width: 120px;
+                font-size: 0.75rem;
+            }
+            .search-box button {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+            .date-filter input[type="date"] {
+                width: 110px;
+                font-size: 0.75rem;
+            }
+            .type-filter select,
+            .process-filter select,
+            .quarter-filter select,
+            .year-filter select {
+                width: 110px;
+                font-size: 0.75rem;
+            }
+            .time-panel .day-number {
+                font-size: 3rem;
+            }
+            .time-panel .time {
+                font-size: 1.25rem;
+            }
+            .events-table {
+                min-width: 600px;
+                font-size: 0.75rem;
+            }
+            .events-table th,
+            .events-table td {
+                padding: 0.6rem 0.75rem;
+            }
+            .pagination {
+                flex-direction: column;
+                gap: 0.75rem;
+                padding: 0.75rem 1rem;
+            }
+            .calendar-container {
+                top: var(--header-height);
+                height: calc(100vh - var(--header-height));
+                /* Permitir scroll horizontal en móviles */
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .calendar-frame {
+                min-width: 100%;
+                width: 100%;
+                height: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header" id="mainHeader">
+        <div class="logo">
+            <span>Eventos Agendados</span>
+            <span class="mode-badge online" id="modeBadge">Firebase · en línea</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn-calendar" id="btnCalendar">
+                <i class="fas fa-calendar-alt"></i> <span id="btnCalendarText">Ver Calendario mensual</span>
+            </button>
+            <button class="btn-refresh" id="btnRefresh">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+            <button class="btn-refresh" id="btnExport" title="Descarga las causas de ambas bases en un único archivo JSON">
+                <i class="fas fa-file-export"></i> Exportar JSON
+            </button>
+            <button class="btn-refresh" id="btnImport" title="Carga un JSON exportado en el respaldo local (no modifica Firebase)">
+                <i class="fas fa-file-import"></i> Importar JSON
+            </button>
+            <button class="btn-refresh" id="btnMode">
+                <i class="fas fa-database"></i> <span id="btnModeText">Ver respaldo local</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="main-layout" id="mainLayout">
+        <!-- Panel izquierdo: fecha + eventos de hoy + estadísticas -->
+        <div class="left-panel" id="leftPanel">
+            <aside class="time-panel" id="timePanel">
+                <div class="month-year" id="currentMonthYear">MAYO 2026</div>
+                <div class="day-number" id="currentDay">13</div>
+                <div class="weekday" id="currentWeekday">MIÉRCOLES</div>
+                <div class="date-separator"></div>
+                <div class="time" id="currentTime">14:30:45</div>
+            </aside>
+
+            <div class="today-panel">
+                <div class="today-title">
+                    <i class="fas fa-calendar-check"></i> Eventos de hoy
+                </div>
+                <div id="todayListContainer">
+                    <div class="today-empty">Cargando...</div>
+                </div>
+            </div>
+
+            <div class="stats-panel">
+                <div class="stats-title">
+                    <i class="fas fa-chart-pie"></i> Estadísticas
+                </div>
+                <div id="statsContainer" class="stats-container">
+                    Cargando...
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel derecho: alterna entre tabla y calendario -->
+        <div class="right-content">
+            <!-- TABLA DE EVENTOS (visible por defecto) -->
+            <section class="events-panel" id="eventsPanel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-calendar-alt" style="color:#2563eb;"></i> Todos los eventos (Base Histórica + Activos)</h2>
+                    <div class="filters-row">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchInput" placeholder="Buscar N° o carátula...">
+                            <button id="btnSearch"><i class="fas fa-arrow-right"></i></button>
+                        </div>
+                        <div class="date-filter">
+                            <i class="fas fa-calendar-day"></i>
+                            <input type="date" id="filterDate">
+                            <button id="btnClearDate" title="Limpiar filtro de fecha"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="type-filter">
+                            <i class="fas fa-tag"></i>
+                            <select id="filterType">
+                                <option value="">Todos los tipos</option>
+                                <option value="audiencia">Audiencias</option>
+                                <option value="gesell">C. Gesell</option>
+                                <option value="vencimiento">Vencimientos</option>
+                                <option value="recurso">Recursos</option>
+                                <option value="diligencia">Diligencias</option>
+                            </select>
+                            <button id="btnClearType" title="Limpiar filtro de tipo"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="process-filter">
+                            <i class="fas fa-gavel"></i>
+                            <select id="filterProcess">
+                                <option value="">Todos los procesos</option>
+                            </select>
+                            <button id="btnClearProcess" title="Limpiar filtro de proceso"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="quarter-filter">
+                            <i class="fas fa-calendar-alt"></i>
+                            <select id="filterQuarter">
+                                <option value="">Trimestre</option>
+                                <option value="1">1T (Ene-Mar)</option>
+                                <option value="2">2T (Abr-Jun)</option>
+                                <option value="3">3T (Jul-Sep)</option>
+                                <option value="4">4T (Oct-Dic)</option>
+                            </select>
+                            <button id="btnClearQuarter" title="Limpiar trimestre"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="year-filter">
+                            <i class="fas fa-calendar"></i>
+                            <select id="filterYear">
+                                <option value="">Año</option>
+                            </select>
+                            <button id="btnClearYear" title="Limpiar año"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="events-table">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Fecha y hora</th>
+                                <th>Expediente</th>
+                                <th>Carátula</th>
+                                <th>Juzgado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaEventos">
+                            <tr class="loading-row">
+                                <td colspan="5"><i class="fas fa-spinner fa-pulse"></i> Cargando eventos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="paginacionContainer">
+                    <!-- se llena con JS -->
+                </div>
+            </section>
+
+            <!-- CALENDARIO (oculto por defecto) -->
+            <div class="calendar-container" id="calendarContainer">
+                <iframe class="calendar-frame" src="https://sistemadigital.github.io/defensor-secretarios/calendario-eventos" title="Calendario mensual" scrolling="yes"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+
+    <div class="floating-alert" id="floatingAlert">
+        <i class="fas fa-check-circle"></i>
+        <span id="alertMessage">Eventos actualizados</span>
+    </div>
+
+    <script>
+        // ====================================================
+        // Configuración de las DOS bases de datos
+        // ====================================================
+        // Base Histórica (original)
+        const firebaseConfigHistorica = {
+            apiKey: "AIzaSyBt6X0u0BpiNPcV2SNPrN-spCmjl2AhZaA",
+            authDomain: "causas-defensoria.firebaseapp.com",
+            projectId: "causas-defensoria",
+            storageBucket: "causas-defensoria.appspot.com",
+            messagingSenderId: "186064671470",
+            appId: "1:186064671470:web:b58bae5eadbe6e469f19ff"
+        };
+        // Base Nueva (activos, la misma que usa tabla.html)
+        const firebaseConfigNueva = {
+            apiKey: "AIzaSyBevCwkh4iOWVqhp3gG2ae1eCUMkFpnr6I",
+            authDomain: "causas-2defensoria.firebaseapp.com",
+            projectId: "causas-2defensoria",
+            storageBucket: "causas-2defensoria.firebasestorage.app",
+            messagingSenderId: "663905632804",
+            appId: "1:663905632804:web:4f686a88004dc642ad0eb1"
+        };
+
+        let dbHistorica, dbNueva;
+
+        try {
+            // Inicializar apps si no existen
+            let appHistorica, appNueva;
+            if (firebase.apps.length === 0) {
+                appHistorica = firebase.initializeApp(firebaseConfigHistorica, "historica");
+                appNueva = firebase.initializeApp(firebaseConfigNueva, "nueva");
+            } else {
+                // Ya hay apps inicializadas, intentamos obtener las específicas
+                appHistorica = firebase.app("historica") || firebase.initializeApp(firebaseConfigHistorica, "historica");
+                appNueva = firebase.app("nueva") || firebase.initializeApp(firebaseConfigNueva, "nueva");
+            }
+            dbHistorica = appHistorica.firestore();
+            dbNueva = appNueva.firestore();
+
+            // Habilitar persistencia opcional (sin bloqueo)
+            dbHistorica.enablePersistence().catch(err => console.warn("Persistencia histórica:", err));
+            dbNueva.enablePersistence().catch(err => console.warn("Persistencia nueva:", err));
+        } catch (e) {
+            console.error("Error inicializando Firebase:", e);
+        }
+
+        // ====================================================
+        // Variables globales
+        // ====================================================
+        let eventosPlanos = [];
+        let eventosFiltrados = [];
+        let paginaActual = 1;
+        const EVENTOS_POR_PAGINA = 15;
+
+        // Elementos DOM
+        const $ = id => document.getElementById(id);
+        const tablaBody = $("tablaEventos");
+        const paginacionDiv = $("paginacionContainer");
+        const searchInput = $("searchInput");
+        const btnSearch = $("btnSearch");
+        const btnRefresh = $("btnRefresh");
+        const floatingAlert = $("floatingAlert");
+        const alertMessage = $("alertMessage");
+        const todayListContainer = $("todayListContainer");
+        const filterDate = $("filterDate");
+        const btnClearDate = $("btnClearDate");
+        const filterType = $("filterType");
+        const btnClearType = $("btnClearType");
+        const filterProcess = $("filterProcess");
+        const btnClearProcess = $("btnClearProcess");
+        const filterQuarter = $("filterQuarter");
+        const btnClearQuarter = $("btnClearQuarter");
+        const filterYear = $("filterYear");
+        const btnClearYear = $("btnClearYear");
+        const statsContainer = $("statsContainer");
+        const btnCalendar = $("btnCalendar");
+        const btnCalendarText = $("btnCalendarText");
+        const eventsPanel = $("eventsPanel");
+        const calendarContainer = $("calendarContainer");
+        const leftPanel = $("leftPanel");
+        const mainHeader = $("mainHeader");
+
+        // ====================================================
+        // Utilidades de fecha
+        // ====================================================
+        function toDate(val) {
+            if (!val) return null;
+            if (val.toDate) return val.toDate();
+            if (val._tipo === "timestamp" && val.iso) return new Date(val.iso);
+            if (val.seconds) return new Date(val.seconds * 1000);
+            if (val instanceof Date) return val;
+            return new Date(val);
+        }
+
+        function formatearFecha(fecha, conHora = true) {
+            if (!fecha) return "";
+            const d = toDate(fecha);
+            if (!d || isNaN(d)) return "";
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const año = d.getFullYear();
+            if (!conHora) return `${dia}/${mes}/${año}`;
+            const horas = String(d.getHours()).padStart(2, '0');
+            const minutos = String(d.getMinutes()).padStart(2, '0');
+            return `${dia}/${mes}/${año} ${horas}:${minutos}`;
+        }
+
+        function formatearHora(fecha) {
+            const d = toDate(fecha);
+            if (!d || isNaN(d)) return "";
+            const horas = String(d.getHours()).padStart(2, '0');
+            const minutos = String(d.getMinutes()).padStart(2, '0');
+            return `${horas}:${minutos}`;
+        }
+
+        // ====================================================
+        // Panel de fecha/hora en tiempo real
+        // ====================================================
+        function updateDateTimePanel() {
+            const now = new Date();
+            const meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+            const diasSemana = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+            
+            $("currentMonthYear").textContent = `${meses[now.getMonth()]} ${now.getFullYear()}`;
+            $("currentDay").textContent = now.getDate();
+            $("currentWeekday").textContent = diasSemana[now.getDay()];
+            
+            const horas = String(now.getHours()).padStart(2, '0');
+            const minutos = String(now.getMinutes()).padStart(2, '0');
+            const segundos = String(now.getSeconds()).padStart(2, '0');
+            $("currentTime").textContent = `${horas}:${minutos}:${segundos}`;
+        }
+        setInterval(updateDateTimePanel, 1000);
+        updateDateTimePanel();
+
+        // ====================================================
+        // Función para determinar el proceso a partir del juzgado
+        // ====================================================
+        function determinarProceso(juzgado) {
+            if (!juzgado) return "Penal";
+            const j = juzgado.toLowerCase();
+            if (j.includes("violencia familiar")) return "Violencia Familiar";
+            if (j.includes("familia")) return "Familia";
+            if (j.includes("instruccion") || j.includes("penal")) return "Penal";
+            if (j.includes("civil")) return "Civil";
+            if (j.includes("laboral")) return "Laboral";
+            return "Penal";
+        }
+
+        // ====================================================
+        // MODO RESPALDO LOCAL · exportar / importar JSON
+        // ====================================================
+        let mode = "online";      // "online" (Firebase) | "local" (respaldo)
+        let localData = null;     // { importedAt, historica: [], nueva: [] }
+
+        const LOCAL_DB = "eventos_respaldo";
+        const LOCAL_STORE = "kv";
+        const LOCAL_KEY = "respaldo_v1";
+
+        function idbOpen() {
+            return new Promise((res, rej) => {
+                const rq = indexedDB.open(LOCAL_DB, 1);
+                rq.onupgradeneeded = () => rq.result.createObjectStore(LOCAL_STORE);
+                rq.onsuccess = () => res(rq.result);
+                rq.onerror = () => rej(rq.error);
+            });
+        }
+        async function idbGet(key) {
+            const idb = await idbOpen();
+            return new Promise((res, rej) => {
+                const rq = idb.transaction(LOCAL_STORE).objectStore(LOCAL_STORE).get(key);
+                rq.onsuccess = () => res(rq.result);
+                rq.onerror = () => rej(rq.error);
+            });
+        }
+        async function idbSet(key, val) {
+            const idb = await idbOpen();
+            return new Promise((res, rej) => {
+                const tx = idb.transaction(LOCAL_STORE, "readwrite");
+                tx.objectStore(LOCAL_STORE).put(val, key);
+                tx.oncomplete = () => res();
+                tx.onerror = () => rej(tx.error);
+            });
+        }
+
+        async function cargarLocal() {
+            try { return (await idbGet(LOCAL_KEY)) || null; }
+            catch (e) { return null; }
+        }
+        async function guardarLocal() {
+            try { await idbSet(LOCAL_KEY, localData); return true; }
+            catch (e) {
+                mostrarAlerta("No se pudo guardar el respaldo en el navegador. Deberá importarlo de nuevo al reabrir.", "warning");
+                return false;
+            }
+        }
+
+        // Convierte valores de Firestore (Timestamp, Date, referencias) a JSON puro
+        function serializarValor(v, depth = 0) {
+            if (v === null || v === undefined) return null;
+            if (depth > 20) return null;
+            if (typeof v !== "object") return v;
+            if (typeof v.toDate === "function" || v instanceof Date) {
+                const d = v instanceof Date ? v : v.toDate();
+                const ms = d.getTime();
+                if (isNaN(ms)) return null;
+                return {
+                    _tipo: "timestamp",
+                    seconds: v.seconds !== undefined ? v.seconds : Math.floor(ms / 1000),
+                    nanoseconds: v.nanoseconds !== undefined ? v.nanoseconds : (ms % 1000) * 1e6,
+                    iso: d.toISOString()
+                };
+            }
+            if (typeof v.path === "string" && v.firestore) return v.path; // DocumentReference
+            if (Array.isArray(v)) return v.map(x => serializarValor(x, depth + 1));
+            const out = {};
+            Object.keys(v).forEach(k => { out[k] = serializarValor(v[k], depth + 1); });
+            return out;
+        }
+
+        // Lectura (solo lectura) de las causas de ambas bases de Firebase
+        async function leerCausasFirebase() {
+            const [sh, sn] = await Promise.all([
+                dbHistorica.collection("causas").get(),
+                dbNueva.collection("causas").get()
+            ]);
+            const aArr = snap => {
+                const out = [];
+                snap.forEach(doc => out.push({ id: doc.id, ...doc.data() }));
+                return out;
+            };
+            return { historica: aArr(sh), nueva: aArr(sn) };
+        }
+
+        async function obtenerCausas() {
+            if (mode === "local") {
+                return {
+                    historica: localData ? localData.historica : [],
+                    nueva: localData ? localData.nueva : []
+                };
+            }
+            return leerCausasFirebase();
+        }
+
+        function setMode(m) {
+            if (m === "online" && (!dbHistorica || !dbNueva)) return;
+            mode = m;
+            actualizarModoUI();
+            refreshEventos();
+        }
+
+        function actualizarModoUI() {
+            const local = mode === "local";
+            const badge = $("modeBadge");
+            badge.textContent = local ? "Respaldo local" : "Firebase · en línea";
+            badge.className = "mode-badge " + (local ? "local" : "online");
+            $("btnModeText").textContent = local ? "Volver a Firebase" : "Ver respaldo local";
+            $("btnMode").style.display = (dbHistorica && dbNueva) ? "" : "none";
+            $("btnExport").title = local
+                ? "Descarga el respaldo local en un archivo JSON"
+                : "Lee ambas bases de Firebase (sin modificarlas) y descarga todas las causas en un único JSON";
+        }
+
+        async function iniciarRespaldo() {
+            localData = await cargarLocal();
+            if (!dbHistorica || !dbNueva) mode = "local"; // sin Firebase: arranca en respaldo
+            actualizarModoUI();
+        }
+
+        function descargarJSON(obj, filename) {
+            const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        async function exportarJSON() {
+            const desdeFirebase = mode === "online";
+            let causas;
+
+            if (desdeFirebase) {
+                try {
+                    // Solo lectura: no escribe ni elimina nada en Firebase
+                    causas = await Promise.race([
+                        leerCausasFirebase(),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error("tiempo de espera agotado")), 20000))
+                    ]);
+                } catch (err) {
+                    mostrarAlerta("No se pudo leer Firebase: " + err.message, "warning");
+                    return;
+                }
+            } else {
+                causas = {
+                    historica: localData ? localData.historica : [],
+                    nueva: localData ? localData.nueva : []
+                };
+            }
+
+            const nH = causas.historica.length, nN = causas.nueva.length;
+            if (nH + nN === 0) {
+                mostrarAlerta("No hay datos para exportar", "warning");
+                return;
+            }
+
+            const t = new Date();
+            const pad = n => String(n).padStart(2, "0");
+            const stamp = `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}_${pad(t.getHours())}${pad(t.getMinutes())}`;
+
+            descargarJSON({
+                app: "eventos",
+                version: 1,
+                exportedAt: t.toISOString(),
+                origen: desdeFirebase ? "firebase" : "local",
+                totales: { historica: nH, nueva: nN },
+                causas: {
+                    historica: causas.historica.map(c => serializarValor(c)),
+                    nueva: causas.nueva.map(c => serializarValor(c))
+                }
+            }, `respaldo-eventos_${stamp}.json`);
+
+            mostrarAlerta(`Exportadas ${nH + nN} causas (${nH} histórica · ${nN} nueva)`, "success");
+        }
+
+        function normalizarImportados(raw) {
+            const aLista = v => Array.isArray(v) ? v : (v && typeof v === "object" ? Object.values(v) : []);
+            let historica = [], nueva = [];
+
+            if (Array.isArray(raw)) {
+                nueva = raw;
+            } else if (raw && raw.causas && !Array.isArray(raw.causas) && (raw.causas.historica || raw.causas.nueva)) {
+                historica = aLista(raw.causas.historica);
+                nueva = aLista(raw.causas.nueva);
+            } else if (raw && Array.isArray(raw.causas)) {
+                nueva = raw.causas;
+            }
+
+            let omitidos = 0;
+            const limpiar = v => String(v).replace(/[<>"]/g, "");
+            const depurar = lista => {
+                const out = [];
+                lista.forEach(c => {
+                    if (!c || typeof c !== "object" || Array.isArray(c)) { omitidos++; return; }
+                    const causa = { ...c };
+                    ["numCausa", "caratula", "juzgado"].forEach(k => {
+                        if (causa[k] !== undefined && causa[k] !== null) causa[k] = limpiar(causa[k]);
+                    });
+                    out.push(causa);
+                });
+                return out;
+            };
+            return { historica: depurar(historica), nueva: depurar(nueva), omitidos };
+        }
+
+        $("btnExport").addEventListener("click", exportarJSON);
+        $("btnImport").addEventListener("click", () => $("importFile").click());
+        $("btnMode").addEventListener("click", () => setMode(mode === "local" ? "online" : "local"));
+
+        $("importFile").addEventListener("change", e => {
+            const file = e.target.files[0];
+            e.target.value = "";
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onerror = () => mostrarAlerta("No se pudo leer el archivo", "warning");
+            reader.onload = async () => {
+                let raw;
+                try { raw = JSON.parse(reader.result); }
+                catch (err) { mostrarAlerta("El archivo no es un JSON válido", "warning"); return; }
+
+                const { historica, nueva, omitidos } = normalizarImportados(raw);
+                const total = historica.length + nueva.length;
+                if (!total) {
+                    mostrarAlerta("El archivo no contiene causas válidas", "warning");
+                    return;
+                }
+
+                const actual = localData ? localData.historica.length + localData.nueva.length : 0;
+                const msg =
+                    `Se encontraron ${total} causas (${historica.length} histórica · ${nueva.length} nueva)` +
+                    (omitidos ? `, ${omitidos} omitidas por formato inválido` : "") + ".\n\n" +
+                    (actual ? `Esto reemplazará las ${actual} causas del respaldo local actual.\n` : "") +
+                    "Firebase no se modifica.\n\n¿Cargar en modo respaldo local?";
+                if (!confirm(msg)) return;
+
+                localData = { importedAt: new Date().toISOString(), historica, nueva };
+                await guardarLocal();
+                mode = "local";
+                actualizarModoUI();
+                refreshEventos();
+            };
+            reader.readAsText(file);
+        });
+
+        // ====================================================
+        // Cargar eventos desde AMBAS bases de datos y unificar
+        // ====================================================
+        async function cargarEventos() {
+            try {
+                // Obtener las causas de ambas bases (Firebase o respaldo local)
+                const { historica, nueva } = await obtenerCausas();
+
+                const eventos = [];
+                const procesosSet = new Set();
+                const añosSet = new Set();
+
+                // Función para procesar una causa (extraer eventos)
+                const procesarCausa = (causa) => {
+                    const juzgado = causa.juzgado || '';
+                    const proceso = determinarProceso(juzgado);
+                    if (proceso) procesosSet.add(proceso);
+
+                    // Audiencias
+                    if (Array.isArray(causa.audiencias)) {
+                        causa.audiencias.forEach(fecha => {
+                            const fechaObj = toDate(fecha);
+                            if (fechaObj) {
+                                const año = fechaObj.getFullYear();
+                                añosSet.add(año);
+                                eventos.push({
+                                    tipo: 'audiencia',
+                                    tipoLabel: 'Audiencia',
+                                    fecha: fechaObj,
+                                    fechaStr: formatearFecha(fechaObj, true),
+                                    numCausa: causa.numCausa || 'S/N',
+                                    caratula: causa.caratula || '',
+                                    juzgado: juzgado,
+                                    proceso: proceso
+                                });
+                            }
+                        });
+                    }
+
+                    // Cámara Gesell
+                    if (causa.audienciaGesell) {
+                        const fechaObj = toDate(causa.audienciaGesell);
+                        if (fechaObj) {
+                            const año = fechaObj.getFullYear();
+                            añosSet.add(año);
+                            eventos.push({
+                                tipo: 'gesell',
+                                tipoLabel: 'C. Gesell',
+                                fecha: fechaObj,
+                                fechaStr: formatearFecha(fechaObj, true),
+                                numCausa: causa.numCausa || 'S/N',
+                                caratula: causa.caratula || '',
+                                juzgado: juzgado,
+                                proceso: proceso
+                            });
+                        }
+                    }
+
+                    // Vencimiento
+                    if (causa.vencimiento) {
+                        const fechaObj = toDate(causa.vencimiento);
+                        if (fechaObj) {
+                            const año = fechaObj.getFullYear();
+                            añosSet.add(año);
+                            eventos.push({
+                                tipo: 'vencimiento',
+                                tipoLabel: 'Vencimiento',
+                                fecha: fechaObj,
+                                fechaStr: formatearFecha(fechaObj, true),
+                                numCausa: causa.numCausa || 'S/N',
+                                caratula: causa.caratula || '',
+                                juzgado: juzgado,
+                                proceso: proceso
+                            });
+                        }
+                    }
+
+                    // Vencimiento de Recursos
+                    if (causa.vencimientoRecursos) {
+                        const fechaObj = toDate(causa.vencimientoRecursos);
+                        if (fechaObj) {
+                            const año = fechaObj.getFullYear();
+                            añosSet.add(año);
+                            eventos.push({
+                                tipo: 'recurso',
+                                tipoLabel: 'Recurso',
+                                fecha: fechaObj,
+                                fechaStr: formatearFecha(fechaObj, true),
+                                numCausa: causa.numCausa || 'S/N',
+                                caratula: causa.caratula || '',
+                                juzgado: juzgado,
+                                proceso: proceso
+                            });
+                        }
+                    }
+
+                    // Diligencias
+                    if (Array.isArray(causa.diligencias)) {
+                        causa.diligencias.forEach(d => {
+                            const fechaObj = toDate(d.fecha);
+                            if (fechaObj) {
+                                const año = fechaObj.getFullYear();
+                                añosSet.add(año);
+                                eventos.push({
+                                    tipo: 'diligencia',
+                                    tipoLabel: 'Diligencia',
+                                    fecha: fechaObj,
+                                    fechaStr: formatearFecha(fechaObj, true),
+                                    numCausa: causa.numCausa || 'S/N',
+                                    caratula: causa.caratula || '',
+                                    juzgado: juzgado,
+                                    proceso: proceso
+                                });
+                            }
+                        });
+                    }
+                };
+
+                // Procesar documentos de la base histórica
+                historica.forEach(causa => procesarCausa(causa));
+
+                // Procesar documentos de la base nueva
+                nueva.forEach(causa => procesarCausa(causa));
+
+                // Ordenar todos los eventos por fecha descendente
+                eventos.sort((a, b) => b.fecha - a.fecha);
+                const procesos = Array.from(procesosSet).sort();
+                const años = Array.from(añosSet).sort((a,b) => a - b);
+                return { eventos, procesos, años };
+            } catch (error) {
+                console.error("Error al cargar eventos desde ambas bases:", error);
+                mostrarAlerta("Error al cargar eventos", 'danger');
+                return { eventos: [], procesos: [], años: [] };
+            }
+        }
+
+        // ====================================================
+        // Filtros: texto, fecha, tipo, proceso, trimestre, año
+        // ====================================================
+        function filtrarEventos() {
+            let resultados = eventosPlanos;
+
+            const texto = searchInput.value.trim();
+            if (texto) {
+                const busqueda = texto.toLowerCase();
+                resultados = resultados.filter(ev => 
+                    ev.numCausa.toLowerCase().includes(busqueda) || 
+                    ev.caratula.toLowerCase().includes(busqueda)
+                );
+            }
+
+            const fechaSeleccionada = filterDate.value;
+            if (fechaSeleccionada) {
+                const fechaInicio = new Date(fechaSeleccionada + "T00:00:00");
+                const fechaFin = new Date(fechaSeleccionada + "T23:59:59");
+                resultados = resultados.filter(ev => {
+                    const fechaEv = toDate(ev.fecha);
+                    return fechaEv >= fechaInicio && fechaEv <= fechaFin;
+                });
+            }
+
+            const tipoSeleccionado = filterType.value;
+            if (tipoSeleccionado) {
+                resultados = resultados.filter(ev => ev.tipo === tipoSeleccionado);
+            }
+
+            const procesoSeleccionado = filterProcess.value;
+            if (procesoSeleccionado) {
+                resultados = resultados.filter(ev => ev.proceso === procesoSeleccionado);
+            }
+
+            const trimestreSeleccionado = filterQuarter.value;
+            if (trimestreSeleccionado) {
+                resultados = resultados.filter(ev => {
+                    const mes = ev.fecha.getMonth() + 1;
+                    if (trimestreSeleccionado === '1') return mes >= 1 && mes <= 3;
+                    if (trimestreSeleccionado === '2') return mes >= 4 && mes <= 6;
+                    if (trimestreSeleccionado === '3') return mes >= 7 && mes <= 9;
+                    if (trimestreSeleccionado === '4') return mes >= 10 && mes <= 12;
+                    return true;
+                });
+            }
+
+            const añoSeleccionado = filterYear.value;
+            if (añoSeleccionado) {
+                resultados = resultados.filter(ev => ev.fecha.getFullYear() === parseInt(añoSeleccionado));
+            }
+
+            return resultados;
+        }
+
+        // ====================================================
+        // Obtener eventos de hoy (fecha actual)
+        // ====================================================
+        function getEventosHoy() {
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const manana = new Date(hoy);
+            manana.setDate(manana.getDate() + 1);
+
+            return eventosPlanos.filter(ev => {
+                const fechaEv = toDate(ev.fecha);
+                return fechaEv && fechaEv >= hoy && fechaEv < manana;
+            });
+        }
+
+        // ====================================================
+        // Renderizar lista de eventos de hoy
+        // ====================================================
+        function renderEventosHoy() {
+            const eventosHoy = getEventosHoy();
+            const ahora = new Date();
+
+            if (eventosHoy.length === 0) {
+                todayListContainer.innerHTML = '<div class="today-empty">No hay eventos para hoy</div>';
+                return;
+            }
+
+            eventosHoy.sort((a, b) => a.fecha - b.fecha);
+
+            let html = '<ul class="today-list">';
+            eventosHoy.forEach(ev => {
+                const hora = formatearHora(ev.fecha);
+                const pasado = ev.fecha < ahora;
+                const clasePasado = pasado ? 'pasado' : '';
+                html += `
+                    <li class="today-item ${clasePasado}" data-expediente="${ev.numCausa}">
+                        <span class="today-expediente">
+                            ${ev.numCausa}
+                            <span>${ev.tipoLabel}</span>
+                        </span>
+                        <span class="today-hora">${hora}</span>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            todayListContainer.innerHTML = html;
+
+            document.querySelectorAll('.today-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const exp = item.dataset.expediente;
+                    searchInput.value = exp;
+                    filterDate.value = '';
+                    filterType.value = '';
+                    filterProcess.value = '';
+                    filterQuarter.value = '';
+                    filterYear.value = '';
+                    aplicarFiltros();
+                });
+            });
+        }
+
+        // ====================================================
+        // Renderizar tabla
+        // ====================================================
+        function renderTabla() {
+            const inicio = (paginaActual - 1) * EVENTOS_POR_PAGINA;
+            const fin = inicio + EVENTOS_POR_PAGINA;
+            const eventosPagina = eventosFiltrados.slice(inicio, fin);
+
+            if (eventosFiltrados.length === 0) {
+                tablaBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:50px; color: var(--gray-500);">No se encontraron eventos</td></tr>`;
+            } else {
+                tablaBody.innerHTML = eventosPagina.map(ev => {
+                    let claseTipo = 'type-audiencia';
+                    if (ev.tipo === 'gesell') claseTipo = 'type-gesell';
+                    else if (ev.tipo === 'vencimiento') claseTipo = 'type-vencimiento';
+                    else if (ev.tipo === 'recurso') claseTipo = 'type-recurso';
+                    else if (ev.tipo === 'diligencia') claseTipo = 'type-diligencia';
+
+                    return `<tr>
+                        <td><span class="event-type-badge ${claseTipo}">${ev.tipoLabel}</span></td>
+                        <td>${ev.fechaStr}</td>
+                        <td><strong>${ev.numCausa}</strong></td>
+                        <td>${ev.caratula.substring(0, 80)}${ev.caratula.length > 80 ? '…' : ''}</td>
+                        <td>${ev.juzgado}</td>
+                    </tr>`;
+                }).join('');
+            }
+
+            renderPaginacion();
+        }
+
+        function renderPaginacion() {
+            const totalPaginas = Math.ceil(eventosFiltrados.length / EVENTOS_POR_PAGINA);
+            if (totalPaginas <= 1) {
+                paginacionDiv.innerHTML = '';
+                return;
+            }
+
+            paginacionDiv.innerHTML = `
+                <span class="pagination-info">Página ${paginaActual} de ${totalPaginas} (${eventosFiltrados.length} eventos)</span>
+                <div class="pagination-buttons">
+                    <button class="page-btn" id="btnPrevPage" ${paginaActual === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i> Anterior</button>
+                    <button class="page-btn" id="btnNextPage" ${paginaActual === totalPaginas ? 'disabled' : ''}>Siguiente <i class="fas fa-chevron-right"></i></button>
+                </div>
+            `;
+
+            $("btnPrevPage")?.addEventListener('click', () => {
+                if (paginaActual > 1) {
+                    paginaActual--;
+                    renderTabla();
+                }
+            });
+
+            $("btnNextPage")?.addEventListener('click', () => {
+                if (paginaActual < totalPaginas) {
+                    paginaActual++;
+                    renderTabla();
+                }
+            });
+        }
+
+        // ====================================================
+        // Renderizar estadísticas
+        // ====================================================
+        function renderEstadisticas() {
+            if (eventosFiltrados.length === 0) {
+                statsContainer.innerHTML = '<div class="stats-empty">Sin datos</div>';
+                return;
+            }
+
+            const conteo = {};
+            eventosFiltrados.forEach(ev => {
+                const clave = `${ev.proceso} - ${ev.tipoLabel}`;
+                conteo[clave] = (conteo[clave] || 0) + 1;
+            });
+
+            const claves = Object.keys(conteo).sort();
+
+            let html = '';
+            claves.forEach(clave => {
+                html += `
+                    <div class="stats-item">
+                        <span class="stats-category">${clave}</span>
+                        <span class="stats-count">${conteo[clave]}</span>
+                    </div>
+                `;
+            });
+
+            statsContainer.innerHTML = html;
+        }
+
+        // ====================================================
+        // Actualizar eventos, filtros y opciones
+        // ====================================================
+        async function refreshEventos() {
+            tablaBody.innerHTML = `<tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-pulse"></i> Cargando eventos desde ambas bases...</td></tr>`;
+            const { eventos, procesos, años } = await cargarEventos();
+            eventosPlanos = eventos;
+
+            // Actualizar select de procesos
+            filterProcess.innerHTML = '<option value="">Todos los procesos</option>';
+            if (procesos.length > 0) {
+                procesos.forEach(proc => {
+                    const option = document.createElement('option');
+                    option.value = proc;
+                    option.textContent = proc;
+                    filterProcess.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = "Penal";
+                option.textContent = "Penal";
+                filterProcess.appendChild(option);
+            }
+
+            // Actualizar select de años
+            filterYear.innerHTML = '<option value="">Año</option>';
+            if (años.length > 0) {
+                años.forEach(año => {
+                    const option = document.createElement('option');
+                    option.value = año;
+                    option.textContent = año;
+                    filterYear.appendChild(option);
+                });
+            } else {
+                for (let año = 2025; año <= 2030; año++) {
+                    const option = document.createElement('option');
+                    option.value = año;
+                    option.textContent = año;
+                    filterYear.appendChild(option);
+                }
+            }
+
+            aplicarFiltros();
+            renderEventosHoy();
+            if (mode === "local") {
+                mostrarAlerta(localData ? "Eventos del respaldo local cargados" : "El respaldo local está vacío. Use «Importar JSON».", 'warning');
+            } else {
+                mostrarAlerta("Eventos actualizados (Histórica + Activos)", 'success');
+            }
+        }
+
+        function aplicarFiltros() {
+            eventosFiltrados = filtrarEventos();
+            paginaActual = 1;
+            renderTabla();
+            renderEstadisticas();
+        }
+
+        function mostrarAlerta(mensaje, tipo = 'success') {
+            alertMessage.textContent = mensaje;
+            floatingAlert.classList.remove('success', 'warning');
+            if (tipo === 'success') floatingAlert.classList.add('success');
+            if (tipo === 'warning') floatingAlert.classList.add('warning');
+            floatingAlert.classList.add('show');
+            setTimeout(() => {
+                floatingAlert.classList.remove('show');
+            }, 3000);
+        }
+
+        // ====================================================
+        // Alternar vista (tabla <-> calendario) con pantalla completa
+        // ====================================================
+        function actualizarAlturaHeader() {
+            const headerHeight = mainHeader.offsetHeight;
+            document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
+        }
+
+        function mostrarCalendario() {
+            actualizarAlturaHeader();
+            eventsPanel.style.display = 'none';
+            calendarContainer.classList.add('active');
+            btnCalendarText.textContent = 'Volver a Eventos';
+            btnCalendar.classList.add('active');
+            leftPanel.classList.add('hidden');
+            document.body.classList.add('calendar-open');
+        }
+
+        function mostrarEventos() {
+            eventsPanel.style.display = 'flex';
+            calendarContainer.classList.remove('active');
+            btnCalendarText.textContent = 'Ver Calendario mensual';
+            btnCalendar.classList.remove('active');
+            leftPanel.classList.remove('hidden');
+            document.body.classList.remove('calendar-open');
+        }
+
+        // ====================================================
+        // Event listeners
+        // ====================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            iniciarRespaldo().then(() => refreshEventos());
+            actualizarAlturaHeader();
+
+            btnSearch.addEventListener('click', aplicarFiltros);
+            searchInput.addEventListener('keypress', e => {
+                if (e.key === 'Enter') aplicarFiltros();
+            });
+            btnRefresh.addEventListener('click', refreshEventos);
+            filterDate.addEventListener('change', aplicarFiltros);
+            btnClearDate.addEventListener('click', () => {
+                filterDate.value = '';
+                aplicarFiltros();
+            });
+
+            filterType.addEventListener('change', aplicarFiltros);
+            btnClearType.addEventListener('click', () => {
+                filterType.value = '';
+                aplicarFiltros();
+            });
+
+            filterProcess.addEventListener('change', aplicarFiltros);
+            btnClearProcess.addEventListener('click', () => {
+                filterProcess.value = '';
+                aplicarFiltros();
+            });
+
+            filterQuarter.addEventListener('change', aplicarFiltros);
+            btnClearQuarter.addEventListener('click', () => {
+                filterQuarter.value = '';
+                aplicarFiltros();
+            });
+
+            filterYear.addEventListener('change', aplicarFiltros);
+            btnClearYear.addEventListener('click', () => {
+                filterYear.value = '';
+                aplicarFiltros();
+            });
+
+            btnCalendar.addEventListener('click', () => {
+                if (calendarContainer.classList.contains('active')) {
+                    mostrarEventos();
+                } else {
+                    if (mode === "local") mostrarAlerta("El calendario mensual es una página externa: muestra datos en línea, no el respaldo.", "warning");
+                    mostrarCalendario();
+                }
+            });
+
+            window.addEventListener('resize', actualizarAlturaHeader);
+        });
+    </script>
+</body>
+</html>
