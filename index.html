@@ -628,7 +628,9 @@
 
         // ---------- Generador de Informe (iframe embebido) ----------
         function abrirInforme() {
-            if (!informeIframe.getAttribute('src')) {
+            // Cargar el informe si el iframe está vacío o si tiene otro recurso
+            // (por ejemplo "Escritos Json" o una Secretaría) cargado previamente.
+            if (informeIframe.getAttribute('src') !== URL_INFORME) {
                 informeIframe.setAttribute('src', URL_INFORME);
             }
             informeContainer.style.display = 'block';
